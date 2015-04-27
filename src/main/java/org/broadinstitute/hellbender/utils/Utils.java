@@ -1,6 +1,5 @@
 package org.broadinstitute.hellbender.utils;
 
-import com.google.common.base.Strings;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -338,6 +337,13 @@ public final class Utils {
         return newL;
     }
 
+    public static byte [] arrayFromArrayWithLength(byte[] array, int length) {
+        byte [] output = new byte[length];
+        for (int j = 0; j < length; j++)
+            output[j] = array[(j % array.length)];
+        return output;
+    }
+
     /**
      * Make all combinations of N size of objects
      *
@@ -455,5 +461,26 @@ public final class Utils {
         } else {
             return file;
         }
+    }
+
+    /**
+     * Concatenates byte arrays
+     * @return a concat of all bytes in allBytes in order
+     */
+    public static byte[] concat(final byte[] ... allBytes) {
+        Utils.nonNull(allBytes, "allBytes is null");
+        int size = 0;
+        for ( final byte[] bytes : allBytes ) {
+            size += bytes.length;
+        }
+
+        final byte[] c = new byte[size];
+        int offset = 0;
+        for ( final byte[] bytes : allBytes ) {
+            System.arraycopy(bytes, 0, c, offset, bytes.length);
+            offset += bytes.length;
+        }
+
+        return c;
     }
 }

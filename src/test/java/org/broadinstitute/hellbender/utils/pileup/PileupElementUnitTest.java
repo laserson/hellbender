@@ -29,7 +29,7 @@ public final class PileupElementUnitTest extends LocusIteratorByStateBaseTest {
     }
 
     @Test(dataProvider = "PileupElementTest")
-    public void testPileupElementTest(LIBSTest params) {
+    public void testPileupElementTest(final LIBSTest params) {
         final GATKRead read = params.makeRead();
         final AlignmentStateMachine state = new AlignmentStateMachine(read);
         final LIBS_position tester = new LIBS_position(read);
@@ -112,12 +112,14 @@ public final class PileupElementUnitTest extends LocusIteratorByStateBaseTest {
                 for ( final int nIntermediate : Arrays.asList(1, 2, 3) ) {
                     for ( final List<CigarOperator> combination : Utils.makePermutations(operators, nIntermediate, false) ) {
                         final int readLength = 2 + combination.size();
-                        GATKRead read = ArtificialReadUtils.createArtificialRead(header, "read", 0, 1, readLength);
+                        final GATKRead read = ArtificialReadUtils.createArtificialRead(header, "read", 0, 1, readLength);
                         read.setBases(Utils.dupBytes((byte) 'A', readLength));
                         read.setBaseQualities(Utils.dupBytes((byte) 30, readLength));
 
                         String cigar = "1" + firstOp;
-                        for ( final CigarOperator op : combination ) cigar += "1" + op;
+                        for ( final CigarOperator op : combination ) {
+                            cigar += "1" + op;
+                        }
                         cigar += "1" + lastOp;
                         read.setCigar(cigar);
 
