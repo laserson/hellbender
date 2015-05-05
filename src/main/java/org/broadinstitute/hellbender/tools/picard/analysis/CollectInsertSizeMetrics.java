@@ -16,7 +16,7 @@ import org.broadinstitute.hellbender.utils.R.RScriptExecutor;
 import org.broadinstitute.hellbender.utils.io.Resource;
 
 import java.io.File;
-import java.util.*;
+import java.util.Set;
 
 /**
  * Command line program to read non-duplicate insert sizes, create a Histogram

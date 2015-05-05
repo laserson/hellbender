@@ -101,7 +101,6 @@ public abstract class DataflowCommandLineProgram extends CommandLineProgram impl
         setupPipeline(p);
         runPipeline(p);
         afterPipeline(p);
-
         return null;
     }
 

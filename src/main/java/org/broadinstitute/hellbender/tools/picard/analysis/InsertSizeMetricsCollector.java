@@ -13,9 +13,11 @@ import org.broadinstitute.hellbender.metrics.PerUnitMetricCollector;
 import java.util.*;
 
 /**
- * Collects InserSizeMetrics on the specified accumulationLevels using
+ * Collects InsertSizeMetrics on the specified accumulationLevels using
  */
 public final class InsertSizeMetricsCollector extends MultiLevelCollector<InsertSizeMetrics, Integer, InsertSizeCollectorArgs> {
+    public final static long serialVersionUID = 1l;
+
     // When generating the Histogram, discard any data categories (out of FR, TANDEM, RF) that have fewer than this
     // percentage of overall reads. (Range: 0 to 1)
     private final double minimumPct;
@@ -182,7 +184,7 @@ public final class InsertSizeMetricsCollector extends MultiLevelCollector<Insert
 
 // Arguments that need to be calculated once per SAMRecord that are then passed to each PerUnitMetricCollector
 // for the given record
-final class InsertSizeCollectorArgs {
+final class InsertSizeCollectorArgs  {
     private final int insertSize;
     private final SamPairUtil.PairOrientation po;
 
