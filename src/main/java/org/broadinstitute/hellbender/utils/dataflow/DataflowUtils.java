@@ -20,7 +20,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.engine.ReadsDataSource;
 import org.broadinstitute.hellbender.engine.dataflow.coders.GATKReadCoder;
-import org.broadinstitute.hellbender.engine.dataflow.coders.ReadContextDataCoder;
 import org.broadinstitute.hellbender.engine.dataflow.coders.UUIDCoder;
 import org.broadinstitute.hellbender.engine.dataflow.coders.VariantCoder;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadContextData;
@@ -28,6 +27,7 @@ import org.broadinstitute.hellbender.engine.dataflow.datasources.RefAPIMetadata;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.RefAPISource;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReferenceShard;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.VariantShard;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.DataflowHistogram;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.InsertSizeMetricsDataflowTransform;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -88,7 +88,10 @@ public final class DataflowUtils {
         p.getCoderRegistry().registerCoder(ReadContextData.class, new ReadContextDataCoder());
         p.getCoderRegistry().registerCoder(ReferenceShard.class, ReferenceShard.CODER);
         p.getCoderRegistry().registerCoder(VariantShard.class, VariantShard.CODER);
+
+        //metrics coders
         p.getCoderRegistry().registerCoder(InsertSizeMetricsDataflowTransform.MetricsFileDataflow.class, SerializableCoder.of(InsertSizeMetricsDataflowTransform.MetricsFileDataflow.class));
+        p.getCoderRegistry().registerCoder(DataflowHistogram.class, SerializableCoder.of(DataflowHistogram.class));
     }
 
     /**

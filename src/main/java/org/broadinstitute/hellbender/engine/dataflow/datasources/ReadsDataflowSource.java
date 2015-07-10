@@ -24,6 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.broadinstitute.hellbender.engine.dataflow.transforms.GoogleGenomicsReadToGATKRead;
 import org.broadinstitute.hellbender.exceptions.GATKException;
+import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.dataflow.BucketUtils;
@@ -110,6 +111,15 @@ public final class ReadsDataflowSource {
      */
     public PCollection<GATKRead> getReadPCollection(List<SimpleInterval> intervals) {
         return getReadPCollection(intervals, ValidationStringency.SILENT);
+    }
+
+    /**
+     * Create a {@link PCollection<GATKRead>} containing all mapped reads.
+     * @return a PCollection containing all the reads that are mapped and wellformed
+     */
+    public PCollection<GATKRead> getReadPCollection(){
+        final List<SimpleInterval> allIntervals = IntervalUtils.getAllIntervalsForReference(getHeader().getSequenceDictionary());
+        return getReadPCollection(allIntervals);
     }
 
     /**

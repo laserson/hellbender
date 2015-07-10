@@ -23,13 +23,12 @@ import org.broadinstitute.hellbender.engine.dataflow.PTransformSAM;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
 import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.transformers.ReadTransformer;
-import org.broadinstitute.hellbender.utils.GenomeLocSortedSet;
+import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.dataflow.DataflowUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Handles lifting reads from a bams into a PCollection and provides hooks to apply {@link ReadFilter} and
@@ -80,7 +79,7 @@ public abstract class DataflowReadsPipeline extends DataflowCommandLineProgram {
         final SAMFileHeader header = readsDataflowSource.getHeader();
         final SAMSequenceDictionary sequenceDictionary = header.getSequenceDictionary();
         final List<SimpleInterval> intervals = intervalArgumentCollection.intervalsSpecified() ? intervalArgumentCollection.getIntervals(sequenceDictionary):
-                getAllIntervalsForReference(sequenceDictionary);
+                IntervalUtils.getAllIntervalsForReference(sequenceDictionary);
 
         final PCollection<GATKRead> preads = readsDataflowSource.getReadPCollection(intervals, ValidationStringency.SILENT);
 
@@ -88,13 +87,6 @@ public abstract class DataflowReadsPipeline extends DataflowCommandLineProgram {
 
         final PCollection<String> pstrings = presult.apply(DataflowUtils.convertToString());
         pstrings.apply(TextIO.Write.to(outputFile));
-    }
-
-    private List<SimpleInterval> getAllIntervalsForReference(SAMSequenceDictionary sequenceDictionary) {
-        return GenomeLocSortedSet.createSetFromSequenceDictionary(sequenceDictionary)
-                .stream()
-                .map(SimpleInterval::new)
-                .collect(Collectors.toList());
     }
 
     @VisibleForTesting

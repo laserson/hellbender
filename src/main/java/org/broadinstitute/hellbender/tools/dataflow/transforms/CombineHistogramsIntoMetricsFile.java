@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.tools.dataflow.transforms;
 import com.google.cloud.dataflow.sdk.transforms.Combine;
 import com.google.cloud.dataflow.sdk.values.KV;
 import htsjdk.samtools.util.Histogram;
+import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 
 import java.util.Comparator;
@@ -122,6 +123,11 @@ public class CombineHistogramsIntoMetricsFile
 
     @Override
     public CombineHistogramsIntoMetricsFile addInput(CombineHistogramsIntoMetricsFile accumulator, KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>> input) {
+        if(accumulator.histograms.containsKey(input.getKey())){
+            throw new GATKException("Cannot merge two histograms with the same key. " +
+                    "CombineHistogramsIntoMetrics file assumes that each key is represented only once. " +
+                    "Key:" + input.getKey().toString());
+        }
         accumulator.histograms.put(input.getKey(), input.getValue());
         return accumulator;
     }

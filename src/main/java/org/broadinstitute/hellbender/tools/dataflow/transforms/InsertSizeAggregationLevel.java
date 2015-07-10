@@ -27,6 +27,10 @@ public final class InsertSizeAggregationLevel extends GenericJson implements Ser
     @Key
     private String sample;
 
+    public SamPairUtil.PairOrientation getOrientation() {
+        return SamPairUtil.PairOrientation.valueOf(orientation);
+    }
+
     public String getReadGroup() {
         return readGroup;
     }
@@ -47,7 +51,10 @@ public final class InsertSizeAggregationLevel extends GenericJson implements Ser
         this.sample = includeSample ? ReadUtils.getSampleName(read, header) : null;
     }
 
-    private InsertSizeAggregationLevel() {
+    /**
+     * This is required by {@link GenericJsonCoder} but should not be used
+     */
+    public InsertSizeAggregationLevel() {
     }
 
     ;
@@ -77,9 +84,6 @@ public final class InsertSizeAggregationLevel extends GenericJson implements Ser
 
     }
 
-    public SamPairUtil.PairOrientation getOrientation() {
-        return SamPairUtil.PairOrientation.valueOf(orientation);
-    }
 
     @Override
     public String toString() {

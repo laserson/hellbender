@@ -93,10 +93,9 @@ public class InsertSizeMetricsDataflowTransform extends PTransformSAM<InsertSize
         })).setName("Calculate metric and key")
                 .setCoder(KvCoder.of(GenericJsonCoder.of(InsertSizeAggregationLevel.class),BigEndianIntegerCoder.of()));
 
-        CombineFn<Integer, DataflowHistogram<Integer>, DataflowHistogram<Integer>> combiner = new DataflowHistogrammer<>();
-
-
+        CombineFn<Integer, DataflowHistogram<Integer>, DataflowHistogram<Integer>> combiner = new DataflowHistogramCombiner<>();
         PCollection<KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>> histograms = kvPairs.apply(Combine.<InsertSizeAggregationLevel, Integer,DataflowHistogram<Integer>>perKey(combiner)).setName("Add reads to histograms");
+
         PCollection<KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>>> reKeyedHistograms = histograms.apply(ParDo.of(new DoFn<KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>,KV<InsertSizeAggregationLevel,KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>>>() {
             public final static long serialVersionUID = 1l;
 
@@ -127,7 +126,7 @@ public class InsertSizeMetricsDataflowTransform extends PTransformSAM<InsertSize
     }
 
 
-    public static class DataflowHistogrammer<K extends Comparable<K>> extends Combine.AccumulatingCombineFn<K, DataflowHistogram<K>, DataflowHistogram<K>>{
+    public static class DataflowHistogramCombiner<K extends Comparable<K>> extends Combine.AccumulatingCombineFn<K, DataflowHistogram<K>, DataflowHistogram<K>>{
         public static final long serialVersionUID = 1l;
         @Override
         public DataflowHistogram<K> createAccumulator() {
