@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.metrics;
 import htsjdk.samtools.metrics.MetricBase;
 
 import java.io.Serializable;
+import java.util.Comparator;
 
 public abstract class MultiLevelMetrics extends MetricBase implements Serializable{
     private static final long serialVersionUID = 1l;
@@ -18,6 +19,14 @@ public abstract class MultiLevelMetrics extends MetricBase implements Serializab
     /** The read group to which these metrics apply.  If null, it means that
      * the metrics were accumulated at the library or sample level.*/
     public String READ_GROUP;
+
+    private static final Comparator<MultiLevelMetrics> insertSizeSorting = Comparator.comparing((MultiLevelMetrics a) -> a.SAMPLE != null ? a.SAMPLE : "")
+            .thenComparing(a -> a.READ_GROUP != null ? a.READ_GROUP : "")
+            .thenComparing(a -> a.LIBRARY != null ? a.LIBRARY : "");
+
+    public static Comparator<MultiLevelMetrics> getComparator() {
+        return insertSizeSorting;
+    }
 
     @Override
     public boolean equals(Object o) {

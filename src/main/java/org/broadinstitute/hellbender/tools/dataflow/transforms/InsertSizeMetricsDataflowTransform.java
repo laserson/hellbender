@@ -24,6 +24,7 @@ import org.broadinstitute.hellbender.engine.dataflow.PTransformSAM;
 import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
+import org.broadinstitute.hellbender.metrics.MultiLevelMetrics;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
@@ -148,7 +149,7 @@ public class InsertSizeMetricsDataflowTransform extends PTransformSAM<InsertSize
     }
 
 
-    ReadFilter isSecondInMappedPair = r -> r.isPaired() &&
+    private final ReadFilter isSecondInMappedPair = r -> r.isPaired() &&
             !r.isUnmapped() &&
             !r.mateIsUnmapped() &&
             !r.isFirstOfPair() &&
@@ -196,19 +197,13 @@ public class InsertSizeMetricsDataflowTransform extends PTransformSAM<InsertSize
         @Override
         public MetricsFileDataflow<InsertSizeMetrics,Integer> extractOutput(MetricsFileDataflow<InsertSizeMetrics,Integer> accumulator) {
             List<InsertSizeMetrics> metrics = new ArrayList<>(accumulator.getMetrics());
-            metrics.sort(insertSizeSorting);
+            metrics.sort(MultiLevelMetrics.getComparator());
             MetricsFileDataflow<InsertSizeMetrics, Integer> sorted = new MetricsFileDataflow<>();
             sorted.addAllMetrics(metrics);
             accumulator.getAllHistograms().stream().sorted(Comparator.comparing(Histogram::getValueLabel)).forEach(sorted::addHistogram);
             accumulator.getHeaders().stream().forEach(sorted::addHeader);
             return sorted;
         }
-
-        public static final Comparator<InsertSizeMetrics> insertSizeSorting = Comparator.comparing((InsertSizeMetrics a) -> a.SAMPLE != null ? a.SAMPLE : "")
-                .thenComparing(a -> a.READ_GROUP != null ? a.READ_GROUP : "")
-                .thenComparing(a -> a.LIBRARY != null ? a.LIBRARY : "");
-
-
 
 
     }
