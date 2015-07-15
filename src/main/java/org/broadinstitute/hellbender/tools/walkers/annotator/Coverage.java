@@ -1,0 +1,75 @@
+package org.broadinstitute.hellbender.tools.walkers.annotator;
+
+import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.vcf.VCFConstants;
+import htsjdk.variant.vcf.VCFInfoHeaderLine;
+import htsjdk.variant.vcf.VCFStandardHeaderLines;
+import org.broadinstitute.hellbender.engine.ReferenceContext;
+import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
+import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
+import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
+import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
+import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Total depth of coverage per sample and over all samples.
+ *
+ * <p>This annotation is used to provide counts of read depth at two different levels, with some important differences. At the sample level (FORMAT), the DP value is the count of reads that passed the caller's internal quality control metrics (such as MAPQ > 17, for example). At the site level (INFO), the DP value is the unfiltered depth over all samples.</p>
+ *
+ * <p>See the method documentation on <a href="http://www.broadinstitute.org/gatk/guide/article?id=4721">using coverage information</a> for important interpretation details.</p>
+ *
+ * <h3>Caveats</h3>
+ * <ul>
+ *     <li>If downsampling is enabled (as is done by default for some analyses to remove excessive coverage), the depth of coverage effectively seen by the caller may be inferior to the actual depth of coverage in the original file. If using "-dcov D", the maximum depth that can be seen for N samples will be N * D.</li>
+ * </ul>
+ *
+ * <h3>Related annotations</h3>
+ * <ul>
+ *     <li><b><a href="https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_annotator_DepthPerAlleleBySample.php">DepthPerAlleleBySample</a></b> calculates depth of coverage for each allele per sample (AD).</li>
+ *     <li><b><a href="https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_annotator_DepthPerSampleHC.php">DepthPerSampleHC</a></b> calculates depth of coverage after filtering by HaplotypeCaller.</li>
+ * </ul>
+ */
+public class Coverage extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
+
+    public Map<String, Object> annotate(final RefMetaDataTracker tracker,
+                                        final AnnotatorCompatible walker,
+                                        final ReferenceContext ref,
+                                        final Map<String, AlignmentContext> stratifiedContexts,
+                                        final VariantContext vc,
+                                        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap ) {
+
+        int depth = 0;
+        if (stratifiedContexts != null) {
+            if ( stratifiedContexts.size() == 0 )
+                return null;
+
+            for ( Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() )
+                depth += sample.getValue().getBasePileup().depthOfCoverage();
+        }
+        else if (perReadAlleleLikelihoodMap != null) {
+            if ( perReadAlleleLikelihoodMap.size() == 0 )
+                return null;
+
+            for (PerReadAlleleLikelihoodMap maps : perReadAlleleLikelihoodMap.values() ) {
+                depth += maps.getLikelihoodReadMap().size();
+            }
+        }
+        else
+            return null;
+
+        Map<String, Object> map = new HashMap<>();
+        map.put(getKeyNames().get(0), String.format("%d", depth));
+        return map;
+    }
+
+    public List<String> getKeyNames() { return Arrays.asList(VCFConstants.DEPTH_KEY); }
+
+    public List<VCFInfoHeaderLine> getDescriptions() {
+        return Arrays.asList(VCFStandardHeaderLines.getInfoLine(getKeyNames().get(0)));
+    }
+}
