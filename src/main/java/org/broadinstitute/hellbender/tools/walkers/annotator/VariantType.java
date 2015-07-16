@@ -25,20 +25,22 @@ public class VariantType extends InfoFieldAnnotation {
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
 
-        StringBuffer type = new StringBuffer("");
-        if ( vc.isVariant() && !vc.isBiallelic() )
+        final StringBuffer type = new StringBuffer("");
+        if ( vc.isVariant() && !vc.isBiallelic() ) {
             type.append("MULTIALLELIC_");
+        }
 
         if ( !vc.isIndel() ) {
             type.append(vc.getType().toString());
         } else {
-            if (vc.isSimpleInsertion())
+            if (vc.isSimpleInsertion()) {
                 type.append("INSERTION.");
-            else if (vc.isSimpleDeletion())
+            } else if (vc.isSimpleDeletion()) {
                 type.append("DELETION.");
-            else
+            } else {
                 type.append("COMPLEX.");
-            ArrayList<Integer> inds = IndelUtils.findEventClassificationIndex(vc, ref);
+            }
+            final ArrayList<Integer> inds = IndelUtils.findEventClassificationIndex(vc, ref);
             type.append(IndelUtils.getIndelClassificationName(inds.get(0)));
 
             for (int i = 1; i < inds.size(); i++ ) {
@@ -47,7 +49,7 @@ public class VariantType extends InfoFieldAnnotation {
             }
         }
 
-        Map<String, Object> map = new HashMap<>();
+        final Map<String, Object> map = new HashMap<>();
         map.put(getKeyNames().get(0), String.format("%s", type));
         return map;
     }

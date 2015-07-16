@@ -3,16 +3,22 @@ package org.broadinstitute.hellbender.tools.walkers.annotator;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
+import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
 import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
+import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static org.apache.commons.math3.util.CombinatoricsUtils.factorialLog;
 
 
 /**
@@ -38,7 +44,7 @@ import java.util.Map;
  */
 public class FisherStrand extends StrandBiasTest implements StandardAnnotation, ActiveRegionBasedAnnotation {
     private final static boolean ENABLE_DEBUGGING = false;
-    private final static Logger logger = Logger.getLogger(FisherStrand.class);
+    private final static Logger logger = LogManager.getLogger(FisherStrand.class);
 
     private static final double MIN_PVALUE = 1E-320;
     private static final int MIN_QUAL_FOR_FILTERED_TEST = 17;
@@ -80,13 +86,13 @@ public class FisherStrand extends StrandBiasTest implements StandardAnnotation, 
      * @return annotation result for FS given tables
      */
     private Map<String, Object> pValueForBestTable(final int[][] table1, final int[][] table2) {
-        if ( table2 == null )
+        if ( table2 == null ) {
             return table1 == null ? null : annotationForOneTable(pValueForContingencyTable(table1));
-        else if (table1 == null)
+        } else if (table1 == null) {
             return annotationForOneTable(pValueForContingencyTable(table2));
-        else { // take the one with the best (i.e., least significant pvalue)
-            double pvalue1 = pValueForContingencyTable(table1);
-            double pvalue2 = pValueForContingencyTable(table2);
+        } else { // take the one with the best (i.e., least significant pvalue)
+            final double pvalue1 = pValueForContingencyTable(table1);
+            final double pvalue2 = pValueForContingencyTable(table2);
             return annotationForOneTable(Math.max(pvalue1, pvalue2));
         }
     }
@@ -131,17 +137,17 @@ public class FisherStrand extends StrandBiasTest implements StandardAnnotation, 
         return list;
     }
 
-    public static Double pValueForContingencyTable(int[][] originalTable) {
+    public static Double pValueForContingencyTable(final int[][] originalTable) {
         final int[][] normalizedTable = normalizeContingencyTable(originalTable);
 
         int[][] table = copyContingencyTable(normalizedTable);
 
-        double pCutoff = computePValue(table);
+        final double pCutoff = computePValue(table);
         //printTable(table, pCutoff);
 
         double pValue = pCutoff;
         while (rotateTable(table)) {
-            double pValuePiece = computePValue(table);
+            final double pValuePiece = computePValue(table);
 
             //printTable(table, pValuePiece);
 
@@ -152,7 +158,7 @@ public class FisherStrand extends StrandBiasTest implements StandardAnnotation, 
 
         table = copyContingencyTable(normalizedTable);
         while (unrotateTable(table)) {
-            double pValuePiece = computePValue(table);
+            final double pValuePiece = computePValue(table);
 
             //printTable(table, pValuePiece);
 
@@ -180,32 +186,35 @@ public class FisherStrand extends StrandBiasTest implements StandardAnnotation, 
      */
     private static int[][] normalizeContingencyTable(final int[][] table) {
         final int sum = table[0][0] + table[0][1] + table[1][0] + table[1][1];
-        if ( sum <= TARGET_TABLE_SIZE * 2 )
+        if ( sum <= TARGET_TABLE_SIZE * 2 ) {
             return table;
+        }
 
         final double normalizationFactor = (double)sum / TARGET_TABLE_SIZE;
 
         final int[][] normalized = new int[ARRAY_DIM][ARRAY_DIM];
         for ( int i = 0; i < ARRAY_DIM; i++ ) {
-            for ( int j = 0; j < ARRAY_DIM; j++ )
-                normalized[i][j] = (int)(table[i][j] / normalizationFactor);
+            for ( int j = 0; j < ARRAY_DIM; j++ ) {
+                normalized[i][j] = (int) (table[i][j] / normalizationFactor);
+            }
         }
 
         return normalized;
     }
 
-    private static int [][] copyContingencyTable(int [][] t) {
-        int[][] c = new int[ARRAY_DIM][ARRAY_DIM];
+    private static int [][] copyContingencyTable(final int [][] t) {
+        final int[][] c = new int[ARRAY_DIM][ARRAY_DIM];
 
-        for ( int i = 0; i < ARRAY_DIM; i++ )
-            for ( int j = 0; j < ARRAY_DIM; j++ )
+        for ( int i = 0; i < ARRAY_DIM; i++ ) {
+            for (int j = 0; j < ARRAY_DIM; j++)
                 c[i][j] = t[i][j];
+        }
 
         return c;
     }
 
 
-    private static void printTable(int[][] table, double pValue) {
+    private static void printTable(final int[][] table, final double pValue) {
         logger.info(String.format("%d %d; %d %d : %f", table[0][0], table[0][1], table[1][0], table[1][1], pValue));
     }
 
@@ -223,7 +232,7 @@ public class FisherStrand extends StrandBiasTest implements StandardAnnotation, 
         }
     }
 
-    private static boolean rotateTable(int[][] table) {
+    private static boolean rotateTable(final int[][] table) {
         table[0][0]--;
         table[1][0]++;
 
@@ -233,7 +242,7 @@ public class FisherStrand extends StrandBiasTest implements StandardAnnotation, 
         return (table[0][0] >= 0 && table[1][1] >= 0);
     }
 
-    private static boolean unrotateTable(int[][] table) {
+    private static boolean unrotateTable(final int[][] table) {
         table[0][0]++;
         table[1][0]--;
 
@@ -243,26 +252,26 @@ public class FisherStrand extends StrandBiasTest implements StandardAnnotation, 
         return (table[0][1] >= 0 && table[1][0] >= 0);
     }
 
-    private static double computePValue(int[][] table) {
+    private static double computePValue(final int[][] table) {
 
-        int[] rowSums = { sumRow(table, 0), sumRow(table, 1) };
-        int[] colSums = { sumColumn(table, 0), sumColumn(table, 1) };
-        int N = rowSums[0] + rowSums[1];
+        final int[] rowSums = { sumRow(table, 0), sumRow(table, 1) };
+        final int[] colSums = { sumColumn(table, 0), sumColumn(table, 1) };
+        final int N = rowSums[0] + rowSums[1];
 
         // calculate in log space so we don't die with high numbers
-        double pCutoff = Arithmetic.logFactorial(rowSums[0])
-                + Arithmetic.logFactorial(rowSums[1])
-                + Arithmetic.logFactorial(colSums[0])
-                + Arithmetic.logFactorial(colSums[1])
-                - Arithmetic.logFactorial(table[0][0])
-                - Arithmetic.logFactorial(table[0][1])
-                - Arithmetic.logFactorial(table[1][0])
-                - Arithmetic.logFactorial(table[1][1])
-                - Arithmetic.logFactorial(N);
+        final double pCutoff = factorialLog(rowSums[0])
+                + factorialLog(rowSums[1])
+                + factorialLog(colSums[0])
+                + factorialLog(colSums[1])
+                - factorialLog(table[0][0])
+                - factorialLog(table[0][1])
+                - factorialLog(table[1][0])
+                - factorialLog(table[1][1])
+                - factorialLog(N);
         return Math.exp(pCutoff);
     }
 
-    private static int sumRow(int[][] table, int column) {
+    private static int sumRow(final int[][] table, final int column) {
         int sum = 0;
         for (int r = 0; r < table.length; r++) {
             sum += table[r][column];
@@ -271,7 +280,7 @@ public class FisherStrand extends StrandBiasTest implements StandardAnnotation, 
         return sum;
     }
 
-    private static int sumColumn(int[][] table, int row) {
+    private static int sumColumn(final int[][] table, final int row) {
         int sum = 0;
         for (int c = 0; c < table[row].length; c++) {
             sum += table[row][c];

@@ -45,24 +45,28 @@ public class Coverage extends InfoFieldAnnotation implements StandardAnnotation,
 
         int depth = 0;
         if (stratifiedContexts != null) {
-            if ( stratifiedContexts.size() == 0 )
+            if ( stratifiedContexts.size() == 0 ) {
                 return null;
+            }
 
-            for ( Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() )
+            for ( final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
                 depth += sample.getValue().getBasePileup().depthOfCoverage();
+            }
         }
         else if (perReadAlleleLikelihoodMap != null) {
-            if ( perReadAlleleLikelihoodMap.size() == 0 )
+            if ( perReadAlleleLikelihoodMap.size() == 0 ) {
                 return null;
+            }
 
-            for (PerReadAlleleLikelihoodMap maps : perReadAlleleLikelihoodMap.values() ) {
+            for (final PerReadAlleleLikelihoodMap maps : perReadAlleleLikelihoodMap.values() ) {
                 depth += maps.getLikelihoodReadMap().size();
             }
         }
-        else
+        else {
             return null;
+        }
 
-        Map<String, Object> map = new HashMap<>();
+        final Map<String, Object> map = new HashMap<>();
         map.put(getKeyNames().get(0), String.format("%d", depth));
         return map;
     }

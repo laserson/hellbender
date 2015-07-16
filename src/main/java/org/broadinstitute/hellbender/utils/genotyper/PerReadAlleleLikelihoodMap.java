@@ -15,15 +15,15 @@ import java.util.*;
  *   Wrapper class that holds a set of maps of the form (Read -> Map(Allele->Double))
  *   For each read, this holds underlying alleles represented by an aligned read, and corresponding relative likelihood.
  */
-public class PerReadAlleleLikelihoodMap {
+public final class PerReadAlleleLikelihoodMap {
     /** A set of all of the allele, so we can efficiently determine if an allele is already present */
     private final Map<Allele,Integer> allelesSet = new HashMap<>();
     /** A list of the unique allele, as an ArrayList so we can call get(i) efficiently */
-    protected final List<Allele> alleles = new ArrayList<>();
+    final List<Allele> alleles = new ArrayList<>();
 
 
 
-    protected final Map<GATKRead, Map<Allele, Double>> likelihoodReadMap = new LinkedHashMap<>();
+    final Map<GATKRead, Map<Allele, Double>> likelihoodReadMap = new LinkedHashMap<>();
 
     public PerReadAlleleLikelihoodMap() { }
 
@@ -88,7 +88,7 @@ public class PerReadAlleleLikelihoodMap {
     protected Map<Allele,List<GATKRead>> getAlleleStratifiedReadMap() {
         final Map<Allele, List<GATKRead>> alleleReadMap = new HashMap<>(alleles.size());
         for ( final Allele allele : alleles )
-            alleleReadMap.put(allele, new ArrayList<GATKRead>());
+            alleleReadMap.put(allele, new ArrayList<>());
 
         for ( final Map.Entry<GATKRead, Map<Allele, Double>> entry : likelihoodReadMap.entrySet() ) {
             final MostLikelyAllele bestAllele = getMostLikelyAllele(entry.getValue());

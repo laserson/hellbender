@@ -39,8 +39,9 @@ public class GenotypeSummaries extends InfoFieldAnnotation implements ActiveRegi
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap ) {
-        if ( ! vc.hasGenotypes() )
+        if ( ! vc.hasGenotypes() ) {
             return null;
+        }
 
         final Map<String,Object> returnMap = new HashMap<>();
         returnMap.put(GATKVCFConstants.NOCALL_CHROM_KEY, vc.getNoCallCount());

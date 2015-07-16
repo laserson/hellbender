@@ -49,10 +49,11 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
         }
 
         // Are there reads from a SAM/BAM file?
-        if (toolkit.getReadsDataSource().getReaderIDs().isEmpty())
+        if (toolkit.getReadsDataSource().getReaderIDs().isEmpty()) {
             logger.warn("No StrandBiasBySample annotation or read data was found. Strand bias annotations will not be output.");
-        else
+        } else {
             logger.info("SAM/BAM data was found. Attempting to use read data to calculate strand bias annotations values.");
+        }
     }
 
     @Override
@@ -65,8 +66,9 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
                                         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
 
         // do not process if not a variant
-        if ( !vc.isVariant() )
+        if ( !vc.isVariant() ) {
             return null;
+        }
 
         // if the genotype and strand bias are provided, calculate the annotation from the Genotype (GT) field
         if ( vc.hasGenotypes() ) {
@@ -124,8 +126,9 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
         boolean foundData = false;
 
         for( final Genotype g : genotypes ) {
-            if( g.isNoCall() || ! g.hasAnyAttribute(GATKVCFConstants.STRAND_BIAS_BY_SAMPLE_KEY) )
+            if( g.isNoCall() || ! g.hasAnyAttribute(GATKVCFConstants.STRAND_BIAS_BY_SAMPLE_KEY) ) {
                 continue;
+            }
 
             foundData = true;
             final String sbbsString = (String) g.getAnyAttribute(GATKVCFConstants.STRAND_BIAS_BY_SAMPLE_KEY);
@@ -152,17 +155,20 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
                                                   final List<Allele> allAlts,
                                                   final int minQScoreToConsider,
                                                   final int minCount ) {
-        int[][] table = new int[ARRAY_DIM][ARRAY_DIM];
+        final int[][] table = new int[ARRAY_DIM][ARRAY_DIM];
 
         for (final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
             final int[] myTable = new int[ARRAY_SIZE];
             for (final PileupElement p : sample.getValue().getBasePileup()) {
 
                 if ( ! isUsableBase(p) ) // ignore deletions and bad MQ
+                {
                     continue;
+                }
 
-                if ( p.getQual() < minQScoreToConsider || p.getMappingQual() < minQScoreToConsider )
+                if ( p.getQual() < minQScoreToConsider || p.getMappingQual() < minQScoreToConsider ) {
                     continue;
+                }
 
                 updateTable(myTable, Allele.create(p.getBase(), false), p.getRead(), ref, allAlts);
             }
@@ -213,8 +219,9 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
                 final GATKRead read = el.getKey();
                 updateTable(myTable, mostLikelyAllele.getAlleleIfInformative(), read, ref, allAlts);
             }
-            if ( passesMinimumThreshold(myTable, minCount) )
+            if ( passesMinimumThreshold(myTable, minCount) ) {
                 copyToMainTable(myTable, table);
+            }
         }
 
         return table;

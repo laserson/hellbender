@@ -27,10 +27,11 @@ public class AnnotationUtils {
 
         if ( !(walker instanceof HaplotypeCaller) ) {
             if ( !warningsLogged[0] ) {
-                if ( walker != null )
+                if ( walker != null ) {
                     logger.warn("Annotation will not be calculated, must be called from HaplotyepCaller, not " + walker.getClass().getName());
-                else
+                } else {
                     logger.warn("Annotation will not be calculated, must be called from HaplotyepCaller");
+                }
                 warningsLogged[0] = true;
             }
             return false;

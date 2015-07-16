@@ -5,6 +5,10 @@ import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypeBuilder;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFormatHeaderLine;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.engine.ReferenceContext;
+import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.GenotypeAnnotation;
 import org.broadinstitute.hellbender.utils.genotyper.MostLikelyAllele;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
@@ -48,7 +52,7 @@ import java.util.Map;
 
 
 public class StrandAlleleCountsBySample extends GenotypeAnnotation {
-    private final static Logger logger = Logger.getLogger(StrandAlleleCountsBySample.class);
+    private final static Logger logger = LogManager.getLogger(StrandAlleleCountsBySample.class);
     boolean[] warningsLogged = new boolean[4];
 
     @Override
@@ -91,8 +95,9 @@ public class StrandAlleleCountsBySample extends GenotypeAnnotation {
             for (final Map.Entry<GATKRead,Map<Allele,Double>> el : maps.getLikelihoodReadMap().entrySet()) {
                 final MostLikelyAllele mostLikelyAllele = PerReadAlleleLikelihoodMap.getMostLikelyAllele(el.getValue());
                 final GATKRead read = el.getKey();
-                if (mostLikelyAllele.isInformative())
+                if (mostLikelyAllele.isInformative()) {
                     updateTable(table, vc.getAlleleIndex(mostLikelyAllele.getAlleleIfInformative()), read);
+                }
             }
         }
 
@@ -100,7 +105,9 @@ public class StrandAlleleCountsBySample extends GenotypeAnnotation {
     }
 
     private void updateTable(final int[] table, final int alleleIndex, final GATKRead read) {
-        if (alleleIndex < 0 || (alleleIndex+1)*2 > table.length) return;
+        if (alleleIndex < 0 || (alleleIndex+1)*2 > table.length) {
+            return;
+        }
         final int offset = alleleIndex * 2;
 
         //Unstranded reads are not meaningful for this annotation, they can be found in the AD annotation

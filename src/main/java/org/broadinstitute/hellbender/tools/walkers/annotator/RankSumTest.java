@@ -36,8 +36,9 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
         // either stratifiedContexts or stratifiedPerReadAlleleLikelihoodMap has to be non-null
 
         final GenotypesContext genotypes = vc.getGenotypes();
-        if (genotypes == null || genotypes.size() == 0)
+        if (genotypes == null || genotypes.size() == 0) {
             return null;
+        }
 
         final ArrayList<Double> refQuals = new ArrayList<>();
         final ArrayList<Double> altQuals = new ArrayList<>();
@@ -59,14 +60,16 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
                 final AlignmentContext context = stratifiedContexts.get(genotype.getSampleName());
                 if ( context != null ) {
                     final ReadBackedPileup pileup = context.getBasePileup();
-                    if ( pileup != null )
+                    if ( pileup != null ) {
                         fillQualsFromPileup(vc.getAlleles(), pileup, refQuals, altQuals);
+                    }
                 }
             }
         }
 
-        if ( refQuals.isEmpty() && altQuals.isEmpty() )
+        if ( refQuals.isEmpty() && altQuals.isEmpty() ) {
             return null;
+        }
 
         final MannWhitneyU mannWhitneyU = new MannWhitneyU(useDithering);
         for (final Double qual : altQuals) {
@@ -78,12 +81,14 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
 
         if (DEBUG) {
             System.out.format("%s, REF QUALS:", this.getClass().getName());
-            for (final Double qual : refQuals)
+            for (final Double qual : refQuals) {
                 System.out.format("%4.1f ", qual);
+            }
             System.out.println();
             System.out.format("%s, ALT QUALS:", this.getClass().getName());
-            for (final Double qual : altQuals)
+            for (final Double qual : altQuals) {
                 System.out.format("%4.1f ", qual);
+            }
             System.out.println();
 
         }
@@ -91,8 +96,9 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
         final Pair<Double, Double> testResults = mannWhitneyU.runOneSidedTest(MannWhitneyU.USet.SET1);
 
         final Map<String, Object> map = new HashMap<>();
-        if (!Double.isNaN(testResults.first))
-            map.put(getKeyNames().get(0), String.format("%.3f", testResults.first));
+        if (!Double.isNaN(testResults.getLeft())) {
+            map.put(getKeyNames().get(0), String.format("%.3f", testResults.getLeft()));
+        }
         return map;
     }
 
@@ -103,13 +109,15 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
         for ( final PileupElement p : pileup ) {
             if ( isUsableBase(p) ) {
                 final Double value = getElementForPileupElement(p);
-                if ( value == null )
+                if ( value == null ) {
                     continue;
+                }
 
-                if ( alleles.get(0).equals(Allele.create(p.getBase(), true)) )
+                if ( alleles.get(0).equals(Allele.create(p.getBase(), true)) ) {
                     refQuals.add(value);
-                else if ( alleles.contains(Allele.create(p.getBase())) )
+                } else if ( alleles.contains(Allele.create(p.getBase())) ) {
                     altQuals.add(value);
+                }
             }
         }
      }
@@ -121,19 +129,22 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
                                             final List<Double> altQuals) {
         for ( final Map.Entry<GATKRead, Map<Allele,Double>> el : likelihoodMap.getLikelihoodReadMap().entrySet() ) {
             final MostLikelyAllele a = PerReadAlleleLikelihoodMap.getMostLikelyAllele(el.getValue());
-            if ( ! a.isInformative() )
+            if ( ! a.isInformative() ) {
                 continue; // read is non-informative
+            }
 
             final GATKRead read = el.getKey();
             if ( isUsableRead(read, refLoc) ) {
                 final Double value = getElementForRead(read, refLoc, a);
-                if ( value == null )
+                if ( value == null ) {
                     continue;
+                }
 
-                if ( a.getMostLikelyAllele().isReference() )
+                if ( a.getMostLikelyAllele().isReference() ) {
                     refQuals.add(value);
-                else if ( alleles.contains(a.getMostLikelyAllele()) )
+                } else if ( alleles.contains(a.getMostLikelyAllele()) ) {
                     altQuals.add(value);
+                }
             }
         }
     }
@@ -208,7 +219,7 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
      * @param toolkit           the GATK engine
      * @param headerLines       the header lines
      */
-    public void initialize ( AnnotatorCompatible walker, GenomeAnalysisEngine toolkit, Set<VCFHeaderLine> headerLines ) {
+    public void initialize ( final AnnotatorCompatible walker, final GenomeAnalysisEngine toolkit, final Set<VCFHeaderLine> headerLines ) {
         useDithering = ! toolkit.getArguments().disableDithering;
     }
 }

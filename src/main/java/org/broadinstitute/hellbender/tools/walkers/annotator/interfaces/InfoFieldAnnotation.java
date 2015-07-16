@@ -20,11 +20,11 @@ public abstract class InfoFieldAnnotation extends VariantAnnotatorAnnotation {
         return annotate(tracker, walker, ref, stratifiedContexts, vc, null);
     }
 
-    public Map<String, Object> annotate(Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap, VariantContext vc) {
+    public Map<String, Object> annotate(final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap, final VariantContext vc) {
         return annotate(null, null, null, null, vc, perReadAlleleLikelihoodMap);
     }
 
-    public Map<String, Object> annotate(ReferenceContext referenceContext, Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap, VariantContext vc) {
+    public Map<String, Object> annotate(final ReferenceContext referenceContext, final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap, final VariantContext vc) {
 
         return annotate(null, null, referenceContext, null, vc, perReadAlleleLikelihoodMap);
     }

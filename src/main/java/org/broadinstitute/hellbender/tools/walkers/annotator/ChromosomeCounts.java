@@ -10,6 +10,7 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.Annotato
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
+import org.broadinstitute.hellbender.utils.variant.ChromosomeCountConstants;
 
 import java.util.*;
 
@@ -40,13 +41,14 @@ public class ChromosomeCounts extends InfoFieldAnnotation implements StandardAnn
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap ) {
-        if ( ! vc.hasGenotypes() )
+        if ( ! vc.hasGenotypes() ) {
             return null;
+        }
 
         return VariantContextUtils.calculateChromosomeCounts(vc, new HashMap<>(), true, founderIds);
     }
 
-    public void initialize ( AnnotatorCompatible walker, GenomeAnalysisEngine toolkit, Set<VCFHeaderLine> headerLines ){
+    public void initialize ( final AnnotatorCompatible walker, final GenomeAnalysisEngine toolkit, final Set<VCFHeaderLine> headerLines ){
         //If families were given, get the founders ids
         founderIds = ((Walker)walker).getSampleDB().getFounderIds();
     }

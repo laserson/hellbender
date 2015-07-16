@@ -8,6 +8,7 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFiel
 import org.broadinstitute.hellbender.utils.BaseUtils;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
+import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,8 +32,8 @@ public class GCContent extends InfoFieldAnnotation {
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
-        double content = computeGCContent(ref);
-        Map<String, Object> map = new HashMap<>();
+        final double content = computeGCContent(ref);
+        final Map<String, Object> map = new HashMap<>();
         map.put(getKeyNames().get(0), String.format("%.2f", content));
         return map;
     }
@@ -43,20 +44,21 @@ public class GCContent extends InfoFieldAnnotation {
 
     public boolean useZeroQualityReads() { return false; }
 
-    private static double computeGCContent(ReferenceContext ref) {
+    private static double computeGCContent(final ReferenceContext ref) {
         int gc = 0, at = 0;
 
-        for ( byte base : ref.getBases() ) {
-            int baseIndex = BaseUtils.simpleBaseToBaseIndex(base);
-            if ( baseIndex == BaseUtils.Base.G.ordinal() || baseIndex == BaseUtils.Base.C.ordinal() )
+        for ( final byte base : ref.getBases() ) {
+            final int baseIndex = BaseUtils.simpleBaseToBaseIndex(base);
+            if ( baseIndex == BaseUtils.Base.G.ordinal() || baseIndex == BaseUtils.Base.C.ordinal() ) {
                 gc++;
-            else if ( baseIndex == BaseUtils.Base.A.ordinal() || baseIndex == BaseUtils.Base.T.ordinal() )
+            } else if ( baseIndex == BaseUtils.Base.A.ordinal() || baseIndex == BaseUtils.Base.T.ordinal() ) {
                 at++;
-            else
+            } else {
                 ; // ignore
+            }
         }
 
-        int sum = gc + at;
+        final int sum = gc + at;
         return (100.0*gc) / (sum == 0 ? 1 : sum);
      }
 }

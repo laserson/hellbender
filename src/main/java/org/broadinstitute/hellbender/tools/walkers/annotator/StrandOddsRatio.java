@@ -55,7 +55,7 @@ public class StrandOddsRatio extends StrandBiasTest implements StandardAnnotatio
     private static final int MIN_COUNT = 0;
 
     @Override
-    protected Map<String, Object> calculateAnnotationFromGTfield(GenotypesContext genotypes){
+    protected Map<String, Object> calculateAnnotationFromGTfield(final GenotypesContext genotypes){
         final int[][] tableFromPerSampleAnnotations = getTableFromSamples( genotypes, MIN_COUNT );
         if ( tableFromPerSampleAnnotations != null ) {
             final double ratio = calculateSOR(tableFromPerSampleAnnotations);
@@ -65,7 +65,7 @@ public class StrandOddsRatio extends StrandBiasTest implements StandardAnnotatio
     }
 
     @Override
-    protected Map<String, Object> calculateAnnotationFromStratifiedContexts(Map<String, AlignmentContext> stratifiedContexts,
+    protected Map<String, Object> calculateAnnotationFromStratifiedContexts(final Map<String, AlignmentContext> stratifiedContexts,
                                                                                      final VariantContext vc){
         final int[][] tableNoFiltering = getSNPContingencyTable(stratifiedContexts, vc.getReference(), vc.getAlternateAlleles(), -1, MIN_COUNT);
         final double ratio = calculateSOR(tableNoFiltering);
@@ -73,7 +73,7 @@ public class StrandOddsRatio extends StrandBiasTest implements StandardAnnotatio
     }
 
     @Override
-    protected Map<String, Object> calculateAnnotationFromLikelihoodMap(Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap,
+    protected Map<String, Object> calculateAnnotationFromLikelihoodMap(final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap,
                                                                                 final VariantContext vc){
         // either SNP with no alignment context, or indels: per-read likelihood map needed
         final int[][] table = getContingencyTable(stratifiedPerReadAlleleLikelihoodMap, vc, MIN_COUNT);
@@ -115,10 +115,11 @@ public class StrandOddsRatio extends StrandBiasTest implements StandardAnnotatio
      * @return the augmented table
      */
     private static double[][] augmentContingencyTable(final int[][] table) {
-        double[][] augmentedTable = new double[ARRAY_DIM][ARRAY_DIM];
+        final double[][] augmentedTable = new double[ARRAY_DIM][ARRAY_DIM];
         for ( int i = 0; i < ARRAY_DIM; i++ ) {
-            for ( int j = 0; j < ARRAY_DIM; j++ )
+            for ( int j = 0; j < ARRAY_DIM; j++ ) {
                 augmentedTable[i][j] = table[i][j] + AUGMENTATION_CONSTANT;
+            }
         }
 
         return augmentedTable;

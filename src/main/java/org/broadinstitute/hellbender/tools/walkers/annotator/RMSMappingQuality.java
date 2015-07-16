@@ -43,26 +43,31 @@ public class RMSMappingQuality extends InfoFieldAnnotation implements StandardAn
 
         final List<Integer> qualities = new ArrayList<>();
         if ( stratifiedContexts != null ) {
-            if ( stratifiedContexts.size() == 0 )
+            if ( stratifiedContexts.size() == 0 ) {
                 return null;
+            }
 
             for ( final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
                 final AlignmentContext context = sample.getValue();
-                for ( final PileupElement p : context.getBasePileup() )
+                for ( final PileupElement p : context.getBasePileup() ) {
                     fillMappingQualitiesFromPileup(p.getRead().getMappingQuality(), qualities);
+                }
             }
         }
         else if (perReadAlleleLikelihoodMap != null) {
-            if ( perReadAlleleLikelihoodMap.size() == 0 )
+            if ( perReadAlleleLikelihoodMap.size() == 0 ) {
                 return null;
+            }
 
             for ( final PerReadAlleleLikelihoodMap perReadLikelihoods : perReadAlleleLikelihoodMap.values() ) {
-                for ( final GATKRead read : perReadLikelihoods.getStoredElements() )
+                for ( final GATKRead read : perReadLikelihoods.getStoredElements() ) {
                     fillMappingQualitiesFromPileup(read.getMappingQuality(), qualities);
+                }
             }
         }
-        else
+        else {
             return null;
+        }
 
         final double rms = MathUtils.rms(qualities);
         return Collections.singletonMap(getKeyNames().get(0), (Object) String.format("%.2f", rms));

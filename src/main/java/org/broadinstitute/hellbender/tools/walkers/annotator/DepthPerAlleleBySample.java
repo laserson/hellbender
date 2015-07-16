@@ -51,32 +51,37 @@ public class DepthPerAlleleBySample extends GenotypeAnnotation implements Standa
                          final Genotype g,
                          final GenotypeBuilder gb,
                          final PerReadAlleleLikelihoodMap alleleLikelihoodMap) {
-        if ( g == null || !g.isCalled() || ( stratifiedContext == null && alleleLikelihoodMap == null) )
+        if ( g == null || !g.isCalled() || ( stratifiedContext == null && alleleLikelihoodMap == null) ) {
             return;
+        }
 
-        if (alleleLikelihoodMap != null && !alleleLikelihoodMap.isEmpty())
+        if (alleleLikelihoodMap != null && !alleleLikelihoodMap.isEmpty()) {
             annotateWithLikelihoods(alleleLikelihoodMap, vc, gb);
-        else if ( stratifiedContext != null && (vc.isSNP()))
+        } else if ( stratifiedContext != null && (vc.isSNP())) {
             annotateWithPileup(stratifiedContext, vc, gb);
+        }
     }
 
     private void annotateWithPileup(final AlignmentContext stratifiedContext, final VariantContext vc, final GenotypeBuilder gb) {
 
         final HashMap<Byte, Integer> alleleCounts = new HashMap<>();
-        for ( final Allele allele : vc.getAlleles() )
+        for ( final Allele allele : vc.getAlleles() ) {
             alleleCounts.put(allele.getBases()[0], 0);
+        }
 
         final ReadBackedPileup pileup = stratifiedContext.getBasePileup();
         for ( final PileupElement p : pileup ) {
-            if ( alleleCounts.containsKey(p.getBase()) )
-                alleleCounts.put(p.getBase(), alleleCounts.get(p.getBase())+1);
+            if ( alleleCounts.containsKey(p.getBase()) ) {
+                alleleCounts.put(p.getBase(), alleleCounts.get(p.getBase()) + 1);
+            }
         }
 
         // we need to add counts in the correct order
         final int[] counts = new int[alleleCounts.size()];
         counts[0] = alleleCounts.get(vc.getReference().getBases()[0]);
-        for (int i = 0; i < vc.getAlternateAlleles().size(); i++)
-            counts[i+1] = alleleCounts.get(vc.getAlternateAllele(i).getBases()[0]);
+        for (int i = 0; i < vc.getAlternateAlleles().size(); i++) {
+            counts[i + 1] = alleleCounts.get(vc.getAlternateAllele(i).getBases()[0]);
+        }
 
         gb.AD(counts);
     }
@@ -85,15 +90,18 @@ public class DepthPerAlleleBySample extends GenotypeAnnotation implements Standa
         final Set<Allele> alleles = new HashSet<>(vc.getAlleles());
 
         // make sure that there's a meaningful relationship between the alleles in the perReadAlleleLikelihoodMap and our VariantContext
-        if ( ! perReadAlleleLikelihoodMap.getAllelesSet().containsAll(alleles) )
+        if ( ! perReadAlleleLikelihoodMap.getAllelesSet().containsAll(alleles) ) {
             throw new IllegalStateException("VC alleles " + alleles + " not a strict subset of per read allele map alleles " + perReadAlleleLikelihoodMap.getAllelesSet());
+        }
 
         final HashMap<Allele, Integer> alleleCounts = new HashMap<>();
         for ( final Allele allele : vc.getAlleles() ) { alleleCounts.put(allele, 0); }
 
         for ( final Map.Entry<GATKRead,Map<Allele,Double>> el : perReadAlleleLikelihoodMap.getLikelihoodReadMap().entrySet()) {
             final MostLikelyAllele a = PerReadAlleleLikelihoodMap.getMostLikelyAllele(el.getValue(), alleles);
-            if (! a.isInformative() ) continue; // read is non-informative
+            if (! a.isInformative() ) {
+                continue; // read is non-informative
+            }
             final GATKRead read = el.getKey();
             final int prevCount = alleleCounts.get(a.getMostLikelyAllele());
             alleleCounts.put(a.getMostLikelyAllele(), prevCount + 1);
@@ -101,8 +109,9 @@ public class DepthPerAlleleBySample extends GenotypeAnnotation implements Standa
 
         final int[] counts = new int[alleleCounts.size()];
         counts[0] = alleleCounts.get(vc.getReference());
-        for (int i = 0; i < vc.getAlternateAlleles().size(); i++)
-            counts[i+1] = alleleCounts.get( vc.getAlternateAllele(i) );
+        for (int i = 0; i < vc.getAlternateAlleles().size(); i++) {
+            counts[i + 1] = alleleCounts.get(vc.getAlternateAllele(i));
+        }
 
         gb.AD(counts);
     }

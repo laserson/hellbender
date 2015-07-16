@@ -5,6 +5,8 @@ import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
@@ -36,7 +38,7 @@ import java.util.*;
  */
 public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
 
-    private final static Logger logger = Logger.getLogger(InbreedingCoeff.class);
+    private final static Logger logger = LogManager.getLogger(InbreedingCoeff.class);
     private static final int MIN_SAMPLES = 10;
     private Set<String> founderIds;
     private int sampleCount;
@@ -84,9 +86,11 @@ public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnno
 
         for ( final Genotype g : genotypes ) {
             if ( g.isCalled() && g.hasLikelihoods() && g.getPloidy() == 2)  // only work for diploid samples
+            {
                 sampleCount++;
-            else
+            } else {
                 continue;
+            }
             final double[] normalizedLikelihoods = MathUtils.normalizeFromLog10(g.getLikelihoods().getAsVector());
             if (doMultiallelicMapping)
             {
@@ -128,11 +132,13 @@ public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnno
 
     protected Map<String, Object> makeCoeffAnnotation(final VariantContext vc) {
         final GenotypesContext genotypes = (founderIds == null || founderIds.isEmpty()) ? vc.getGenotypes() : vc.getGenotypes(founderIds);
-        if (genotypes == null || genotypes.size() < MIN_SAMPLES || !vc.isVariant())
+        if (genotypes == null || genotypes.size() < MIN_SAMPLES || !vc.isVariant()) {
             return null;
-        double F = calculateIC(vc, genotypes);
-        if (sampleCount < MIN_SAMPLES)
+        }
+        final double F = calculateIC(vc, genotypes);
+        if (sampleCount < MIN_SAMPLES) {
             return null;
+        }
         return Collections.singletonMap(getKeyNames().get(0), (Object) String.format("%.4f", F));
     }
 
@@ -141,13 +147,14 @@ public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnno
     // is derived from the sampleDB, which comes from the input sample names, but vc will have uniquified (i.e. different)
     // sample names. Without this check, the founderIds won't be found in the vc and the annotation won't be calculated.
     protected void checkSampleNames(final VariantContext vc) {
-        Set<String> vcSamples = new HashSet<>();
+        final Set<String> vcSamples = new HashSet<>();
         vcSamples.addAll(vc.getSampleNames());
         if (!vcSamples.isEmpty()) {
             if (founderIds!=null) {
                 vcSamples.removeAll(founderIds);
-                if (vcSamples.equals(vc.getSampleNames()))
+                if (vcSamples.equals(vc.getSampleNames())) {
                     founderIds = vc.getSampleNames();
+                }
             }
         }
     }

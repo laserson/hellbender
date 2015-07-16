@@ -55,12 +55,14 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap ) {
-        if ( !vc.hasLog10PError() )
+        if ( !vc.hasLog10PError() ) {
             return null;
+        }
 
         final GenotypesContext genotypes = vc.getGenotypes();
-        if ( genotypes == null || genotypes.size() == 0 )
+        if ( genotypes == null || genotypes.size() == 0 ) {
             return null;
+        }
 
         int standardDepth = 0;
         int ADrestrictedDepth = 0;
@@ -68,8 +70,9 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
         for ( final Genotype genotype : genotypes ) {
 
             // we care only about variant calls with likelihoods
-            if ( !genotype.isHet() && !genotype.isHomVar() )
+            if ( !genotype.isHet() && !genotype.isHomVar() ) {
                 continue;
+            }
 
             // if we have the AD values for this sample, let's make sure that the variant depth is greater than 1!
             // TODO -- If we like how this is working and want to apply it to a situation other than the single sample HC pipeline,
@@ -79,22 +82,25 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
             if ( genotype.hasAD() ) {
                 final int[] AD = genotype.getAD();
                 final int totalADdepth = (int) MathUtils.sum(AD);
-                if ( totalADdepth - AD[0] > 1 )
+                if ( totalADdepth - AD[0] > 1 ) {
                     ADrestrictedDepth += totalADdepth;
+                }
                 standardDepth += totalADdepth;
                 continue;
             }
 
             if (stratifiedContexts!= null && !stratifiedContexts.isEmpty()) {
                 final AlignmentContext context = stratifiedContexts.get(genotype.getSampleName());
-                if ( context == null )
+                if ( context == null ) {
                     continue;
+                }
                 standardDepth += context.getBasePileup().depthOfCoverage();
 
             } else if (perReadAlleleLikelihoodMap != null) {
                 final PerReadAlleleLikelihoodMap perReadAlleleLikelihoods = perReadAlleleLikelihoodMap.get(genotype.getSampleName());
-                if (perReadAlleleLikelihoods == null || perReadAlleleLikelihoods.isEmpty())
+                if (perReadAlleleLikelihoods == null || perReadAlleleLikelihoods.isEmpty()) {
                     continue;
+                }
 
                 standardDepth += perReadAlleleLikelihoods.getNumberOfStoredElements();
             } else if ( genotype.hasDP() ) {
@@ -103,11 +109,13 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
         }
 
         // if the AD-restricted depth is a usable value (i.e. not zero), then we should use that one going forward
-        if ( ADrestrictedDepth > 0 )
+        if ( ADrestrictedDepth > 0 ) {
             standardDepth = ADrestrictedDepth;
+        }
 
-        if ( standardDepth == 0 )
+        if ( standardDepth == 0 ) {
             return null;
+        }
 
         final double altAlleleLength = GATKVariantContextUtils.getMeanAltAlleleLength(vc);
         // Hack: UnifiedGenotyper (but not HaplotypeCaller or GenotypeGVCFs) over-estimates the quality of long indels

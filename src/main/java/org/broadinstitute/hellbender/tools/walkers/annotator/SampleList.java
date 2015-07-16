@@ -28,22 +28,25 @@ public class SampleList extends InfoFieldAnnotation {
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
-        if ( vc.isMonomorphicInSamples() || !vc.hasGenotypes() )
+        if ( vc.isMonomorphicInSamples() || !vc.hasGenotypes() ) {
             return null;
+        }
 
         final StringBuilder samples = new StringBuilder();
-        for ( Genotype genotype : vc.getGenotypesOrderedByName() ) {
+        for ( final Genotype genotype : vc.getGenotypesOrderedByName() ) {
             if ( genotype.isCalled() && !genotype.isHomRef() ){
-                if ( samples.length() > 0 )
+                if ( samples.length() > 0 ) {
                     samples.append(",");
+                }
                 samples.append(genotype.getSampleName());
             }
         }
 
-        if ( samples.length() == 0 )
+        if ( samples.length() == 0 ) {
             return null;
+        }
 
-        Map<String, Object> map = new HashMap<>();
+        final Map<String, Object> map = new HashMap<>();
         map.put(getKeyNames().get(0), samples.toString());
         return map;
     }

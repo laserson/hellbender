@@ -6,6 +6,7 @@ import htsjdk.samtools.CigarOperator;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
+import org.broadinstitute.hellbender.tools.walkers.indels.PairHMMIndelErrorModel;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
 import org.broadinstitute.hellbender.utils.read.AlignmentUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -45,13 +46,15 @@ public class ReadPosRankSumTest extends RankSumTest implements StandardAnnotatio
     @Override
     protected Double getElementForRead(final GATKRead read, final int refLoc) {
         final int offset = ReadUtils.getReadCoordinateForReferenceCoordinate(read.getSoftStart(), read.getCigar(), refLoc, ReadUtils.ClippingTail.RIGHT_TAIL, true);
-        if ( offset == ReadUtils.CLIPPING_GOAL_NOT_REACHED )
+        if ( offset == ReadUtils.CLIPPING_GOAL_NOT_REACHED ) {
             return null;
+        }
 
         int readPos = AlignmentUtils.calcAlignmentByteArrayOffset(read.getCigar(), offset, false, 0, 0);
         final int numAlignedBases = AlignmentUtils.getNumAlignedBasesCountingSoftClips( read );
-        if (readPos > numAlignedBases / 2)
+        if (readPos > numAlignedBases / 2) {
             readPos = numAlignedBases - (readPos + 1);
+        }
         return (double)readPos;
     }
 
@@ -98,10 +101,11 @@ public class ReadPosRankSumTest extends RankSumTest implements StandardAnnotatio
         // Do a stricter base clipping than provided by CIGAR string, since this one may be too conservative,
         // and may leave a string of Q2 bases still hanging off the reads.
         for (int i = numStartClippedBases; i < unclippedReadBases.length; i++) {
-            if (unclippedReadQuals[i] < PairHMMIndelErrorModel.BASE_QUAL_THRESHOLD)
+            if (unclippedReadQuals[i] < PairHMMIndelErrorModel.BASE_QUAL_THRESHOLD) {
                 numStartClippedBases++;
-            else
+            } else {
                 break;
+            }
 
         }
 
@@ -116,7 +120,7 @@ public class ReadPosRankSumTest extends RankSumTest implements StandardAnnotatio
         // compute total number of clipped bases (soft or hard clipped)
         // check for hard clips (never consider these bases):
         final Cigar c = read.getCigar();
-        CigarElement last = c.getCigarElement(c.numCigarElements() - 1);
+        final CigarElement last = c.getCigarElement(c.numCigarElements() - 1);
 
         int numEndClippedBases = 0;
         if (last.getOperator() == CigarOperator.H) {
@@ -128,10 +132,11 @@ public class ReadPosRankSumTest extends RankSumTest implements StandardAnnotatio
         // Do a stricter base clipping than provided by CIGAR string, since this one may be too conservative,
         // and may leave a string of Q2 bases still hanging off the reads.
         for (int i = unclippedReadBases.length - numEndClippedBases - 1; i >= 0; i--) {
-            if (unclippedReadQuals[i] < PairHMMIndelErrorModel.BASE_QUAL_THRESHOLD)
+            if (unclippedReadQuals[i] < PairHMMIndelErrorModel.BASE_QUAL_THRESHOLD) {
                 numEndClippedBases++;
-            else
+            } else {
                 break;
+            }
         }
 
         return numEndClippedBases;

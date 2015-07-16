@@ -4,6 +4,8 @@ import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypeBuilder;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFormatHeaderLine;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.GenotypeAnnotation;
@@ -45,7 +47,7 @@ import java.util.List;
 
 
 public class StrandBiasBySample extends GenotypeAnnotation {
-    private final static Logger logger = Logger.getLogger(StrandBiasBySample.class);
+    private final static Logger logger = LogManager.getLogger(StrandBiasBySample.class);
     boolean[] warningsLogged = new boolean[4];
 
     @Override
