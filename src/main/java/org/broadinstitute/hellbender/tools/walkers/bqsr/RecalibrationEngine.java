@@ -32,8 +32,12 @@ public final class RecalibrationEngine {
      * @param numReadGroups the number of read groups we should use for the recalibration tables
      */
     public RecalibrationEngine(final StandardCovariateList covariates, final int numReadGroups) {
-        if ( covariates == null ) throw new IllegalArgumentException("Covariates cannot be null");
-        if ( numReadGroups < 1 ) throw new IllegalArgumentException("numReadGroups must be >= 1 but got " + numReadGroups);
+        if ( covariates == null ) {
+            throw new IllegalArgumentException("Covariates cannot be null");
+        }
+        if ( numReadGroups < 1 ) {
+            throw new IllegalArgumentException("numReadGroups must be >= 1 but got " + numReadGroups);
+        }
 
         this.covariates = covariates;
         this.tables = new RecalibrationTables(covariates, numReadGroups);
@@ -44,7 +48,9 @@ public final class RecalibrationEngine {
      * @param recalInfo data structure holding information about the recalibration values for a single read
      */
     public void updateDataForRead( final ReadRecalibrationInfo recalInfo ) {
-        if ( finalized ) throw new IllegalStateException("FinalizeData() has already been called");
+        if ( finalized ) {
+            throw new IllegalStateException("FinalizeData() has already been called");
+        }
 
         final GATKRead read = recalInfo.getRead();
         final ReadCovariates readCovariates = recalInfo.getCovariatesValues();
@@ -62,8 +68,9 @@ public final class RecalibrationEngine {
                     RecalUtils.incrementDatumOrPutIfNecessary(qualityScoreTable, qual, isError, keys[0], keys[1], eventIndex);
 
                     for (int i = 2; i < covariates.size(); i++) { //XXX the 2 is hard-wired here as the number of special covariates
-                        if (keys[i] < 0)
+                        if (keys[i] < 0) {
                             continue;
+                        }
 
                         RecalUtils.incrementDatumOrPutIfNecessary(tables.getTable(i), qual, isError, keys[0], keys[1], keys[i], eventIndex);
                     }
@@ -82,7 +89,9 @@ public final class RecalibrationEngine {
      * and walks over this data to create summary data tables like by read group table.
      */
     public void finalizeData() {
-        if ( finalized ) throw new IllegalStateException("FinalizeData() has already been called");
+        if ( finalized ) {
+            throw new IllegalStateException("FinalizeData() has already been called");
+        }
 
         final NestedIntegerArray<RecalDatum> byReadGroupTable = tables.getReadGroupTable();
         final NestedIntegerArray<RecalDatum> byQualTable = tables.getQualityScoreTable();
@@ -152,7 +161,9 @@ public final class RecalibrationEngine {
      * @return the finalized recalibration table collected by this engine
      */
     public RecalibrationTables getFinalRecalibrationTables() {
-        if ( ! finalized ) throw new IllegalStateException("Cannot get final recalibration tables until finalizeData() has been called");
+        if ( ! finalized ) {
+            throw new IllegalStateException("Cannot get final recalibration tables until finalizeData() has been called");
+        }
         return tables;
     }
 }

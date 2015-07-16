@@ -95,12 +95,14 @@ public class PairHMMIndelErrorModel {
         // all of the following is computed in QUal-space
         for (int i=START_HRUN_GAP_IDX; i < MAX_HRUN_GAP_IDX; i++) {
             gop -= GAP_PENALTY_HRUN_STEP;
-            if (gop < MIN_GAP_OPEN_PENALTY)
+            if (gop < MIN_GAP_OPEN_PENALTY) {
                 gop = MIN_GAP_OPEN_PENALTY;
+            }
 
             gcp -= step;
-            if(gcp < MIN_GAP_CONT_PENALTY)
+            if(gcp < MIN_GAP_CONT_PENALTY) {
                 gcp = MIN_GAP_CONT_PENALTY;
+            }
             GAP_OPEN_PROB_TABLE[i] = gop;
             GAP_CONT_PROB_TABLE[i] = gcp;
         }
@@ -116,10 +118,11 @@ public class PairHMMIndelErrorModel {
         int[] hreverse = new int[hrunArray.length];
 
         for (int i = 1; i < refBytes.length; i++) {
-            if (refBytes[i] == refBytes[i-1])
-                hforward[i] = hforward[i-1]+1;
-            else
+            if (refBytes[i] == refBytes[i-1]) {
+                hforward[i] = hforward[i - 1] + 1;
+            } else {
                 hforward[i] = 0;
+            }
         }
 
         // do similar thing for reverse length, example:
@@ -130,12 +133,14 @@ public class PairHMMIndelErrorModel {
         // AGGTGACCCCCCTGAGAG
         // 022000555555000000
         for (int i=refBytes.length-1; i > 0; i--) {
-            if (refBytes[i-1] == refBytes[i])
-                hreverse[i-1] += hreverse[i]+1;
+            if (refBytes[i-1] == refBytes[i]) {
+                hreverse[i - 1] += hreverse[i] + 1;
+            }
         }
 
-        for (int i = 1; i < refBytes.length; i++)
-            hrunArray[i] = hforward[i]+hreverse[i];
+        for (int i = 1; i < refBytes.length; i++) {
+            hrunArray[i] = hforward[i] + hreverse[i];
+        }
     }
 
 
@@ -169,25 +174,30 @@ public class PairHMMIndelErrorModel {
                                                            long startLocationInRefForHaplotypes,
                                                            long stopLocationInRefForHaplotypes,
                                                            final ReferenceContext ref) {
-        if ( haplotypeMap == null ) throw new IllegalArgumentException("The input allele to haplotype map cannot be null");
+        if ( haplotypeMap == null ) {
+            throw new IllegalArgumentException("The input allele to haplotype map cannot be null");
+        }
 
         final LinkedHashMap<Allele, Haplotype> trimmedHaplotypeMap = new LinkedHashMap<>();
         for (final Allele a: haplotypeMap.keySet()) {
 
             final Haplotype haplotype = haplotypeMap.get(a);
 
-            if (stopLocationInRefForHaplotypes > haplotype.getStopPosition())
+            if (stopLocationInRefForHaplotypes > haplotype.getStopPosition()) {
                 stopLocationInRefForHaplotypes = haplotype.getStopPosition();
+            }
 
-            if (startLocationInRefForHaplotypes < haplotype.getStartPosition())
+            if (startLocationInRefForHaplotypes < haplotype.getStartPosition()) {
                 startLocationInRefForHaplotypes = haplotype.getStartPosition();
-            else if (startLocationInRefForHaplotypes > haplotype.getStopPosition())
+            } else if (startLocationInRefForHaplotypes > haplotype.getStopPosition()) {
                 startLocationInRefForHaplotypes = haplotype.getStopPosition();
+            }
 
             final long indStart = startLocationInRefForHaplotypes - haplotype.getStartPosition();
             final long indStop =  stopLocationInRefForHaplotypes - haplotype.getStartPosition();
-            if ( indStart >= indStop )
+            if ( indStart >= indStop ) {
                 continue;
+            }
 
             // commented out here because we need to make this method static for unit testing
             //if (DEBUG)
@@ -272,21 +282,25 @@ public class PairHMMIndelErrorModel {
                 GATKRead read = ReadClipper.hardClipAdaptorSequence(p.getRead());
 
                 // if the read extends beyond the downstream (right) end of the reference window, clip it
-                if ( mustClipDownstream(read, refWindowStop) )
+                if ( mustClipDownstream(read, refWindowStop) ) {
                     read = ReadClipper.hardClipByReadCoordinates(read, refWindowStop - read.getSoftStart() + 1, read.getReadLength() - 1);
+                }
 
                 // if the read extends beyond the upstream (left) end of the reference window, clip it
-                if ( mustClipUpstream(read, refWindowStart) )
+                if ( mustClipUpstream(read, refWindowStart) ) {
                     read = ReadClipper.hardClipByReferenceCoordinatesLeftTail(read, refWindowStart);
+                }
 
-                if (read.isEmpty())
+                if (read.isEmpty()) {
                     continue;
+                }
 
                 // hard-clip low quality ends - this may introduce extra H elements in CIGAR string
                 read = ReadClipper.hardClipLowQualEnds(read, (byte) BASE_QUAL_THRESHOLD );
 
-                if (read.isEmpty())
+                if (read.isEmpty()) {
                     continue;
+                }
 
                 // get bases of candidate haplotypes that overlap with reads
                 final long readStart = read.getSoftStart();
@@ -319,8 +333,9 @@ public class PairHMMIndelErrorModel {
                 long startLocationInRefForHaplotypes = Math.max(readStart + numStartSoftClippedBases - trailingBases - ReadUtils.getFirstInsertionOffset(read) - absEventLength, 0);
                 long stopLocationInRefForHaplotypes = readEnd - numEndSoftClippedBases + trailingBases + ReadUtils.getLastInsertionOffset(read) + absEventLength;
 
-                if (DEBUG)
+                if (DEBUG) {
                     System.out.format("orig Start:%d orig stop: %d\n", startLocationInRefForHaplotypes, stopLocationInRefForHaplotypes);
+                }
 
                 int readLength = read.getReadLength()-numStartSoftClippedBases-numEndSoftClippedBases;
 
@@ -343,9 +358,10 @@ public class PairHMMIndelErrorModel {
                 // ok, we now figured out the total number of clipped bases on both ends.
                 // Figure out where we want to place the haplotype to score read against
 
-                if (DEBUG)
+                if (DEBUG) {
                     System.out.format("numStartSoftClippedBases: %d numEndSoftClippedBases: %d WinStart:%d WinStop:%d start: %d stop: %d readLength: %d\n",
                             numStartSoftClippedBases, numEndSoftClippedBases, ref.getWindow().getStart(), ref.getWindow().getStop(), startLocationInRefForHaplotypes, stopLocationInRefForHaplotypes, read.getReadLength());
+                }
 
                // LinkedHashMap<Allele,Double> readEl = new LinkedHashMap<Allele,Double>();
 
@@ -420,8 +436,9 @@ public class PairHMMIndelErrorModel {
             System.out.println("\nLikelihood summary");
             for (readIdx=0; readIdx < pileup.getNumberOfElements(); readIdx++) {
                 System.out.format("Read Index: %d ",readIdx);
-                for (int i=0; i < readLikelihoods[readIdx].length; i++)
-                    System.out.format("L%d: %f ",i,readLikelihoods[readIdx][i]);
+                for (int i=0; i < readLikelihoods[readIdx].length; i++) {
+                    System.out.format("L%d: %f ", i, readLikelihoods[readIdx][i]);
+                }
                 System.out.println();
             }
 
@@ -457,8 +474,9 @@ public class PairHMMIndelErrorModel {
                 for (int readIdx = 0; readIdx < readLikelihoods.length; readIdx++) {
                     // Compute log10(10^x1/2 + 10^x2/2) = log10(10^x1+10^x2)-log10(2)
                     // First term is approximated by Jacobian log with table lookup.
-                    if (Double.isInfinite(readLikelihoods[readIdx][i]) && Double.isInfinite(readLikelihoods[readIdx][j]))
+                    if (Double.isInfinite(readLikelihoods[readIdx][i]) && Double.isInfinite(readLikelihoods[readIdx][j])) {
                         continue;
+                    }
                     final double li = readLikelihoods[readIdx][i];
                     final double lj = readLikelihoods[readIdx][j];
                     haplotypeLikehoodMatrix[i][j] += MathUtils.approximateLog10SumLog10(li, lj) + MathUtils.LOG_ONE_HALF;

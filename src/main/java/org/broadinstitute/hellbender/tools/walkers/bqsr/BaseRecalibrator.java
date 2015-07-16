@@ -174,11 +174,14 @@ public final class BaseRecalibrator extends ReadWalker {
 
         baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
 
-        if (RAC.FORCE_PLATFORM != null)
+        if (RAC.FORCE_PLATFORM != null) {
             RAC.DEFAULT_PLATFORM = RAC.FORCE_PLATFORM;
+        }
 
         if (RAC.knownSites.isEmpty() && !RAC.RUN_WITHOUT_DBSNP) // Warn the user if no dbSNP file or other variant mask was specified
+        {
             throw new UserException.CommandLineException(NO_DBSNP_EXCEPTION);
+        }
 
         covariates = new StandardCovariateList(RAC, getHeaderForReads());
 
@@ -443,7 +446,9 @@ public final class BaseRecalibrator extends ReadWalker {
     private static void updateIndel(final int[] indel, final int index, final EventType mode, final EventType requiredMode) {
         if ( mode == requiredMode && index >= 0 && index < indel.length )
             // protect ourselves from events at the start or end of the read (1D3M or 3M1D)
+        {
             indel[index] = 1;
+        }
     }
 
     protected static double[] calculateFractionalErrorArray( final int[] errorArray, final byte[] baqArray ) {

@@ -206,8 +206,9 @@ public class FisherStrand extends StrandBiasTest implements StandardAnnotation, 
         final int[][] c = new int[ARRAY_DIM][ARRAY_DIM];
 
         for ( int i = 0; i < ARRAY_DIM; i++ ) {
-            for (int j = 0; j < ARRAY_DIM; j++)
+            for (int j = 0; j < ARRAY_DIM; j++) {
                 c[i][j] = t[i][j];
+            }
         }
 
         return c;
