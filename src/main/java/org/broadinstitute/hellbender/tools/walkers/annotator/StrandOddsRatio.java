@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.tools.walkers.annotator;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;

@@ -6,6 +6,9 @@ import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFormatHeaderLine;
 import htsjdk.variant.vcf.VCFHeaderLine;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
@@ -25,7 +28,7 @@ import java.util.StringTokenizer;
  * Class of tests to detect strand bias.
  */
 public abstract class StrandBiasTest extends InfoFieldAnnotation {
-    private final static Logger logger = Logger.getLogger(StrandBiasTest.class);
+    private final static Logger logger = LogManager.getLogger(StrandBiasTest.class);
     private static boolean stratifiedPerReadAlleleLikelihoodMapWarningLogged = false;
     private static boolean inputVariantContextWarningLogged = false;
     private static boolean getTableFromSamplesWarningLogged = false;
@@ -35,7 +38,7 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
     protected static final int ARRAY_SIZE = ARRAY_DIM * ARRAY_DIM;
 
     @Override
-    public void initialize(final AnnotatorCompatible walker, final GenomeAnalysisEngine toolkit, final Set<VCFHeaderLine> headerLines) {
+    public void initialize(final AnnotatorCompatible walker, final Set<VCFHeaderLine> headerLines) {
         // Does the VCF header contain strand bias (SB) by sample annotation?
         for ( final VCFHeaderLine line : headerLines) {
             if ( line instanceof VCFFormatHeaderLine) {
@@ -58,8 +61,7 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
 
     @Override
     //template method for calculating strand bias annotations using the three different methods
-    public Map<String, Object> annotate(final RefMetaDataTracker tracker,
-                                        final AnnotatorCompatible walker,
+    public Map<String, Object> annotate(final AnnotatorCompatible walker,
                                         final ReferenceContext ref,
                                         final Map<String,AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
@@ -264,17 +266,9 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
         if ( matchesRef || matchesAnyAlt ) {
             final int offset = matchesRef ? 0 : ARRAY_DIM;
 
-            if ( read.isStrandless() ) {
-                // a strandless read counts as observations on both strand, at 50% weight, with a minimum of 1
-                // (the 1 is to ensure that a strandless read always counts as an observation on both strands, even
-                // if the read is only seen once, because it's a merged read or other)
-                table[offset]++;
-                table[offset + 1]++;
-            } else {
-                // a normal read with an actual strand
-                final boolean isFW = !read.getReadNegativeStrandFlag();
-                table[offset + (isFW ? 0 : 1)]++;
-            }
+            // a normal read with an actual strand
+            final boolean isFW = !read.isReverseStrand();
+            table[offset + (isFW ? 0 : 1)]++;
         }
     }
 

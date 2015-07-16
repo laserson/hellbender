@@ -6,6 +6,7 @@ import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeaderLine;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
@@ -27,8 +28,7 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
     static final boolean DEBUG = false;
     private boolean useDithering = true;
 
-    public Map<String, Object> annotate(final RefMetaDataTracker tracker,
-                                        final AnnotatorCompatible walker,
+    public Map<String, Object> annotate(final AnnotatorCompatible walker,
                                         final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
@@ -219,7 +219,7 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
      * @param toolkit           the GATK engine
      * @param headerLines       the header lines
      */
-    public void initialize ( final AnnotatorCompatible walker, final GenomeAnalysisEngine toolkit, final Set<VCFHeaderLine> headerLines ) {
+    public void initialize ( final AnnotatorCompatible walker, final Set<VCFHeaderLine> headerLines ) {
         useDithering = ! toolkit.getArguments().disableDithering;
     }
 }

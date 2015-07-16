@@ -4,6 +4,7 @@ import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
@@ -42,8 +43,7 @@ import java.util.Map;
 
 public class AlleleBalance extends InfoFieldAnnotation {
 
-    public Map<String, Object> annotate(final RefMetaDataTracker tracker,
-                                        final AnnotatorCompatible walker,
+    public Map<String, Object> annotate(final AnnotatorCompatible walker,
                                         final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,

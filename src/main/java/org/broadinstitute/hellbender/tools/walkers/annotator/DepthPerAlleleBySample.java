@@ -8,6 +8,7 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFConstants;
 import htsjdk.variant.vcf.VCFFormatHeaderLine;
 import htsjdk.variant.vcf.VCFStandardHeaderLines;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.GenotypeAnnotation;
@@ -38,13 +39,11 @@ import java.util.*;
  *     <li><b><a href="https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_annotator_Coverage.php">Coverage</a></b> gives the filtered depth of coverage for each sample and the unfiltered depth across all samples.</li>
  *     <li><b><a href="https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_annotator_AlleleBalance.php">AlleleBalance</a></b> is a generalization of this annotation over all samples.</li>
  *     <li><b><a href="https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_annotator_AlleleBalanceBySample.php">AlleleBalanceBySample</a></b> calculates allele balance for each individual sample.</li>
- *     <li><b><a href="https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandAlleleCountsBySample.php">StrandAlleleCountsBySample</a></b> stratifies depths by allele and strand.</li>
  * </ul>
  */
 public class DepthPerAlleleBySample extends GenotypeAnnotation implements StandardAnnotation {
 
-    public void annotate(final RefMetaDataTracker tracker,
-                         final AnnotatorCompatible walker,
+    public void annotate(final AnnotatorCompatible walker,
                          final ReferenceContext ref,
                          final AlignmentContext stratifiedContext,
                          final VariantContext vc,

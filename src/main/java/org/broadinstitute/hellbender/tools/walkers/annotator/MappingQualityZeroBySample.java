@@ -4,6 +4,7 @@ import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypeBuilder;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFormatHeaderLine;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.GenotypeAnnotation;
@@ -30,8 +31,7 @@ import java.util.List;
  * </ul>
  */
 public class MappingQualityZeroBySample extends GenotypeAnnotation {
-    public void annotate(final RefMetaDataTracker tracker,
-                         final AnnotatorCompatible walker,
+    public void annotate(final AnnotatorCompatible walker,
                          final ReferenceContext ref,
                          final AlignmentContext stratifiedContext,
                          final VariantContext vc,

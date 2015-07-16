@@ -3,7 +3,6 @@ package org.broadinstitute.hellbender.tools.walkers.annotator;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.indels.PairHMMIndelErrorModel;
@@ -45,7 +44,7 @@ public class ReadPosRankSumTest extends RankSumTest implements StandardAnnotatio
 
     @Override
     protected Double getElementForRead(final GATKRead read, final int refLoc) {
-        final int offset = ReadUtils.getReadCoordinateForReferenceCoordinate(read.getSoftStart(), read.getCigar(), refLoc, ReadUtils.ClippingTail.RIGHT_TAIL, true);
+        final int offset = ReadUtils.getReadCoordinateForReferenceCoordinate(ReadUtils.getSoftStart(read), read.getCigar(), refLoc, ReadUtils.ClippingTail.RIGHT_TAIL, true);
         if ( offset == ReadUtils.CLIPPING_GOAL_NOT_REACHED ) {
             return null;
         }
@@ -71,7 +70,7 @@ public class ReadPosRankSumTest extends RankSumTest implements StandardAnnotatio
 
     @Override
     protected boolean isUsableRead(final GATKRead read, final int refLoc) {
-        return super.isUsableRead(read, refLoc) && read.getSoftStart() + read.getCigar().getReadLength() > refLoc;
+        return super.isUsableRead(read, refLoc) && ReadUtils.getSoftStart(read) + read.getCigar().getReadLength() > refLoc;
     }
 
     private int getFinalReadPosition(final GATKRead read, final int initialReadPosition) {
@@ -85,7 +84,7 @@ public class ReadPosRankSumTest extends RankSumTest implements StandardAnnotatio
 
     }
 
-    private int getNumClippedBasesAtStart(final SAMRecord read) {
+    private int getNumClippedBasesAtStart(final GATKRead read) {
         // compute total number of clipped bases (soft or hard clipped)
         // check for hard clips (never consider these bases):
         final Cigar c = read.getCigar();
@@ -95,7 +94,7 @@ public class ReadPosRankSumTest extends RankSumTest implements StandardAnnotatio
         if (first.getOperator() == CigarOperator.H) {
             numStartClippedBases = first.getLength();
         }
-        final byte[] unclippedReadBases = read.getReadBases();
+        final byte[] unclippedReadBases = read.getBases();
         final byte[] unclippedReadQuals = read.getBaseQualities();
 
         // Do a stricter base clipping than provided by CIGAR string, since this one may be too conservative,

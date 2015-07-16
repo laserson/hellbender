@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.tools.walkers.annotator;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
@@ -22,8 +23,7 @@ import java.util.Map;
  */
 public class SampleList extends InfoFieldAnnotation {
 
-    public Map<String, Object> annotate(final RefMetaDataTracker tracker,
-                                        final AnnotatorCompatible walker,
+    public Map<String, Object> annotate(final AnnotatorCompatible walker,
                                         final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,

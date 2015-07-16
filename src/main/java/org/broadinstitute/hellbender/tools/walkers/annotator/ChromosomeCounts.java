@@ -4,6 +4,7 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextUtils;
 import htsjdk.variant.vcf.VCFHeaderLine;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
@@ -35,8 +36,7 @@ public class ChromosomeCounts extends InfoFieldAnnotation implements StandardAnn
 
     private Set<String> founderIds = new HashSet<>();
 
-    public Map<String, Object> annotate(final RefMetaDataTracker tracker,
-                                        final AnnotatorCompatible walker,
+    public Map<String, Object> annotate(final AnnotatorCompatible walker,
                                         final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
@@ -48,7 +48,7 @@ public class ChromosomeCounts extends InfoFieldAnnotation implements StandardAnn
         return VariantContextUtils.calculateChromosomeCounts(vc, new HashMap<>(), true, founderIds);
     }
 
-    public void initialize ( final AnnotatorCompatible walker, final GenomeAnalysisEngine toolkit, final Set<VCFHeaderLine> headerLines ){
+    public void initialize ( final AnnotatorCompatible walker, final Set<VCFHeaderLine> headerLines ){
         //If families were given, get the founders ids
         founderIds = ((Walker)walker).getSampleDB().getFounderIds();
     }
