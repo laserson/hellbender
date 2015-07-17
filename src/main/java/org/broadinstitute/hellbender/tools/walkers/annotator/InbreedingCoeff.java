@@ -1,11 +1,12 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
+import com.google.common.annotations.VisibleForTesting;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
-import htsjdk.variant.vcf.VCFHeaderLine;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
@@ -19,7 +20,10 @@ import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -38,12 +42,11 @@ import java.util.*;
  * </ul>
  *
  */
-public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
+public final class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
 
-    private final static Logger logger = LogManager.getLogger(InbreedingCoeff.class);
+    private static final Logger logger = LogManager.getLogger(InbreedingCoeff.class);
     private static final int MIN_SAMPLES = 10;
-    private Set<String> founderIds;
-    private int sampleCount;
+    private final Set<String> founderIds;
 
     public InbreedingCoeff(final Set<String> founderIds){
         //If available, get the founder IDs and cache them. the IC will only be computed on founders then.
@@ -68,14 +71,17 @@ public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnno
         if (genotypes == null || genotypes.size() < MIN_SAMPLES || !vc.isVariant()) {
             return null;
         }
-        final double F = calculateIC(vc, genotypes);
+        final Pair<Integer, Double> sampleCountCoeff = calculateIC(vc, genotypes);
+        final int sampleCount = sampleCountCoeff.getLeft();
+        final double F = sampleCountCoeff.getRight();
         if (sampleCount < MIN_SAMPLES) {
             return null;
         }
         return Collections.singletonMap(getKeyNames().get(0), (Object) String.format("%.4f", F));
     }
 
-    protected double calculateIC(final VariantContext vc, final GenotypesContext genotypes) {
+    @VisibleForTesting
+    Pair<Integer, Double> calculateIC(final VariantContext vc, final GenotypesContext genotypes) {
 
         final boolean doMultiallelicMapping = !vc.isBiallelic();
 
@@ -84,7 +90,7 @@ public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnno
         double refCount = 0.0;
         double hetCount = 0.0;
         double homCount = 0.0;
-        sampleCount = 0; // number of samples that have likelihoods
+        int sampleCount = 0; // number of samples that have likelihoods
 
         for ( final Genotype g : genotypes ) {
             if ( g.isCalled() && g.hasLikelihoods() && g.getPloidy() == 2)  // only work for diploid samples
@@ -129,7 +135,7 @@ public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnno
         final double q = 1.0 - p; // expected alternative allele frequency
         final double F = 1.0 - ( hetCount / ( 2.0 * p * q * sampleCount) ); // inbreeding coefficient
 
-        return F;
+        return Pair.of(sampleCount, F);
     }
 
     @Override
