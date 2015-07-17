@@ -16,6 +16,7 @@ import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.genotyper.MostLikelyAllele;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
+import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.*;
@@ -27,6 +28,14 @@ import java.util.*;
 public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveRegionBasedAnnotation {
     static final boolean DEBUG = false;
     private boolean useDithering = true;
+
+    public RankSumTest(final boolean useDithering){
+        this.useDithering = useDithering;
+    }
+
+    public RankSumTest(){
+        this(true);
+    }
 
     public Map<String, Object> annotate(final AnnotatorCompatible walker,
                                         final ReferenceContext ref,
@@ -59,7 +68,7 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
             if ( usePileup && stratifiedContexts != null ) {
                 final AlignmentContext context = stratifiedContexts.get(genotype.getSampleName());
                 if ( context != null ) {
-                    final ReadBackedPileup pileup = context.getBasePileup();
+                    final ReadPileup pileup = context.getBasePileup();
                     if ( pileup != null ) {
                         fillQualsFromPileup(vc.getAlleles(), pileup, refQuals, altQuals);
                     }
@@ -103,7 +112,7 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
     }
 
     private void fillQualsFromPileup(final List<Allele> alleles,
-                                     final ReadBackedPileup pileup,
+                                     final ReadPileup pileup,
                                      final List<Double> refQuals,
                                      final List<Double> altQuals) {
         for ( final PileupElement p : pileup ) {
@@ -210,16 +219,5 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
     protected boolean isUsableRead(final GATKRead read, final int refLoc) {
         return !( read.getMappingQuality() == 0 ||
                 read.getMappingQuality() == QualityUtils.MAPPING_QUALITY_UNAVAILABLE );
-    }
-
-    /**
-     * Initialize the rank sum test annotation using walker and engine information. Right now this checks to see if
-     * engine randomization is turned off, and if so does not dither.
-     * @param walker            the walker
-     * @param toolkit           the GATK engine
-     * @param headerLines       the header lines
-     */
-    public void initialize ( final AnnotatorCompatible walker, final Set<VCFHeaderLine> headerLines ) {
-        useDithering = ! toolkit.getArguments().disableDithering;
     }
 }

@@ -10,6 +10,7 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.Annotato
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.GenotypeAnnotation;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
+import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
@@ -43,7 +44,7 @@ public class MappingQualityZeroBySample extends GenotypeAnnotation {
         }
 
         int mq0 = 0;
-        final ReadBackedPileup pileup = stratifiedContext.getBasePileup();
+        final ReadPileup pileup = stratifiedContext.getBasePileup();
         for (final PileupElement p : pileup ) {
             if ( p.getMappingQual() == 0 ) {
                 mq0++;

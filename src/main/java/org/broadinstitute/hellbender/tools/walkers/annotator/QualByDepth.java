@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
+import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
@@ -94,7 +95,7 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
                 if ( context == null ) {
                     continue;
                 }
-                standardDepth += context.getBasePileup().depthOfCoverage();
+                standardDepth += context.getBasePileup().size();
 
             } else if (perReadAlleleLikelihoodMap != null) {
                 final PerReadAlleleLikelihoodMap perReadAlleleLikelihoods = perReadAlleleLikelihoodMap.get(genotype.getSampleName());
@@ -117,7 +118,7 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
             return null;
         }
 
-        final double altAlleleLength = GATKVariantContextUtils.getMeanAltAlleleLength(vc);
+        final double altAlleleLength = getMeanAltAlleleLength(vc);
         // Hack: UnifiedGenotyper (but not HaplotypeCaller or GenotypeGVCFs) over-estimates the quality of long indels
         //       Penalize the QD calculation for UG indels to compensate for this
         double QD = -10.0 * vc.getLog10PError() / ((double)standardDepth * indelNormalizationFactor(altAlleleLength, false));
@@ -128,6 +129,46 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
         final Map<String, Object> map = new HashMap<>();
         map.put(getKeyNames().get(0), String.format("%.2f", QD));
         return map;
+    }
+
+    /**
+     * Refactored out of the AverageAltAlleleLength annotation class
+     * @param vc the variant context
+     * @return the average length of the alt allele (a double)
+     */
+    private static double getMeanAltAlleleLength(VariantContext vc) {
+        double averageLength = 1.0;
+        if ( ! vc.isSNP() && ! vc.isSymbolic() ) {
+            // adjust for the event length
+            int averageLengthNum = 0;
+            int averageLengthDenom = 0;
+            int refLength = vc.getReference().length();
+            for ( final Allele a : vc.getAlternateAlleles() ) {
+                int numAllele = vc.getCalledChrCount(a);
+                int alleleSize;
+                if ( a.length() == refLength ) {
+                    // SNP or MNP
+                    byte[] a_bases = a.getBases();
+                    byte[] ref_bases = vc.getReference().getBases();
+                    int n_mismatch = 0;
+                    for ( int idx = 0; idx < a_bases.length; idx++ ) {
+                        if ( a_bases[idx] != ref_bases[idx] )
+                            n_mismatch++;
+                    }
+                    alleleSize = n_mismatch;
+                }
+                else if ( a.isSymbolic() ) {
+                    alleleSize = 1;
+                } else {
+                    alleleSize = Math.abs(refLength-a.length());
+                }
+                averageLengthNum += alleleSize*numAllele;
+                averageLengthDenom += numAllele;
+            }
+            averageLength = ( (double) averageLengthNum )/averageLengthDenom;
+        }
+
+        return averageLength;
     }
 
     /**

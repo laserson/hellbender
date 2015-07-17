@@ -16,6 +16,7 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.Standard
 import org.broadinstitute.hellbender.utils.genotyper.MostLikelyAllele;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
+import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.*;
@@ -68,7 +69,7 @@ public class DepthPerAlleleBySample extends GenotypeAnnotation implements Standa
             alleleCounts.put(allele.getBases()[0], 0);
         }
 
-        final ReadBackedPileup pileup = stratifiedContext.getBasePileup();
+        final ReadPileup pileup = stratifiedContext.getBasePileup();
         for ( final PileupElement p : pileup ) {
             if ( alleleCounts.containsKey(p.getBase()) ) {
                 alleleCounts.put(p.getBase(), alleleCounts.get(p.getBase()) + 1);

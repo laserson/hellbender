@@ -1,17 +1,19 @@
 package org.broadinstitute.hellbender.engine;
 
 import htsjdk.samtools.SAMReadGroupRecord;
+import htsjdk.samtools.util.Locatable;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.GenomeLoc;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
+import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 
 import java.util.*;
 
 /**
  * Useful utilities for storing different AlignmentContexts
  */
-public class AlignmentContextUtils {
+public final class AlignmentContextUtils {
 
     // Definitions:
     //   COMPLETE = full alignment context
@@ -37,9 +39,9 @@ public class AlignmentContextUtils {
             case COMPLETE:
                 return context;
             case FORWARD:
-                return new AlignmentContext(context.getLocation(),context.getPileup().getPositiveStrandPileup());
+                return new AlignmentContext(context.getLocation(), context.getBasePileup().getPositiveStrandPileup());
             case REVERSE:
-                return new AlignmentContext(context.getLocation(),context.getPileup().getNegativeStrandPileup());
+                return new AlignmentContext(context.getLocation(), context.getBasePileup().getNegativeStrandPileup());
             default:
                 throw new GATKException("Unable to get alignment context for type = " + type);
         }
@@ -59,14 +61,14 @@ public class AlignmentContextUtils {
      *
      **/
     public static Map<String, AlignmentContext> splitContextBySampleName(AlignmentContext context, String assumedSingleSample) {
-        GenomeLoc loc = context.getLocation();
+        Locatable loc = context.getLocation();
         HashMap<String, AlignmentContext> contexts = new HashMap<>();
 
-        for(String sample: context.getPileup().getSamples()) {
-            ReadBackedPileup pileupBySample = context.getPileup().getPileupForSample(sample);
+        for(String sample: context.getBasePileup().getSamples()) {
+            ReadPileup pileupBySample = context.getBasePileup().getPileupForSample(sample);
 
             // Don't add empty pileups to the split context.
-            if(pileupBySample.getNumberOfElements() == 0)
+            if(pileupBySample.isEmpty())
                 continue;
 
             if(sample != null)
@@ -93,7 +95,7 @@ public class AlignmentContextUtils {
         HashMap<SAMReadGroupRecord, AlignmentContext> contexts = new HashMap<>();
 
         for (SAMReadGroupRecord rg : readGroups) {
-            ReadBackedPileup rgPileup = context.getBasePileup().getPileupForReadGroup(rg.getReadGroupId());
+            ReadPileup rgPileup = context.getBasePileup().getPileupForReadGroup(rg.getReadGroupId());
             if ( rgPileup != null ) // there we some reads for RG
                 contexts.put(rg, new AlignmentContext(context.getLocation(), rgPileup));
         }
@@ -101,24 +103,24 @@ public class AlignmentContextUtils {
         return contexts;
     }
 
-    public static Map<String, AlignmentContext> splitContextBySampleName(ReadBackedPileup pileup) {
+    public static Map<String, AlignmentContext> splitContextBySampleName(ReadPileup pileup) {
         return splitContextBySampleName(new AlignmentContext(pileup.getLocation(), pileup));
     }
 
 
     public static AlignmentContext joinContexts(Collection<AlignmentContext> contexts) {
         // validation
-        GenomeLoc loc = contexts.iterator().next().getLocation();
+        Locatable loc = contexts.iterator().next().getLocation();
         for(AlignmentContext context: contexts) {
             if(!loc.equals(context.getLocation()))
                 throw new GATKException("Illegal attempt to join contexts from different genomic locations");
         }
 
-        List<PileupElement> pe = new ArrayList<PileupElement>();
+        List<PileupElement> pe = new ArrayList<>();
         for(AlignmentContext context: contexts) {
-            for(PileupElement pileupElement: context.basePileup)
+            for(PileupElement pileupElement: context.getBasePileup())
                 pe.add(pileupElement);
         }
-        return new AlignmentContext(loc, new ReadBackedPileupImpl(loc,pe));
+        return new AlignmentContext(loc, new ReadPileup(loc,pe));
     }
 }

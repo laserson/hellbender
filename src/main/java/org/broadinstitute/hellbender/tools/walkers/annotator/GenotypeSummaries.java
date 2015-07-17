@@ -2,6 +2,7 @@ package org.broadinstitute.hellbender.tools.walkers.annotator;
 
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.VariantContext;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
@@ -46,16 +47,16 @@ public class GenotypeSummaries extends InfoFieldAnnotation implements ActiveRegi
         final Map<String,Object> returnMap = new HashMap<>();
         returnMap.put(GATKVCFConstants.NOCALL_CHROM_KEY, vc.getNoCallCount());
 
-        final MathUtils.RunningAverage average = new MathUtils.RunningAverage();
+        final DescriptiveStatistics stats = new DescriptiveStatistics();
         for( final Genotype g : vc.getGenotypes() ) {
             if( g.hasGQ() ) {
-                average.add(g.getGQ());
+                stats.addValue(g.getGQ());
             }
         }
-        if( average.observationCount() > 0L ) {
-            returnMap.put(GATKVCFConstants.GQ_MEAN_KEY, String.format("%.2f", average.mean()));
-            if( average.observationCount() > 1L ) {
-                returnMap.put(GATKVCFConstants.GQ_STDEV_KEY, String.format("%.2f", average.stddev()));
+        if( stats.getN() > 0L ) {
+            returnMap.put(GATKVCFConstants.GQ_MEAN_KEY, String.format("%.2f", stats.getMean()));
+            if( stats.getN() > 1L ) {
+                returnMap.put(GATKVCFConstants.GQ_STDEV_KEY, String.format("%.2f", stats.getStandardDeviation()));
             }
         }
 

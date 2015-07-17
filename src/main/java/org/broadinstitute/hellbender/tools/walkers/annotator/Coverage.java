@@ -50,7 +50,7 @@ public class Coverage extends InfoFieldAnnotation implements StandardAnnotation,
             }
 
             for ( final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
-                depth += sample.getValue().getBasePileup().depthOfCoverage();
+                depth += sample.getValue().getBasePileup().size();
             }
         }
         else if (perReadAlleleLikelihoodMap != null) {

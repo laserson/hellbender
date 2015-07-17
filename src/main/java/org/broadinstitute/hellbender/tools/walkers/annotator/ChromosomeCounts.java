@@ -36,6 +36,15 @@ public class ChromosomeCounts extends InfoFieldAnnotation implements StandardAnn
 
     private Set<String> founderIds = new HashSet<>();
 
+    ChromosomeCounts(final Set<String> founderIds){
+        //If families were given, get the founders ids
+        this.founderIds = founderIds;
+    }
+
+    ChromosomeCounts(){
+        this(null);
+    }
+
     public Map<String, Object> annotate(final AnnotatorCompatible walker,
                                         final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
@@ -46,11 +55,6 @@ public class ChromosomeCounts extends InfoFieldAnnotation implements StandardAnn
         }
 
         return VariantContextUtils.calculateChromosomeCounts(vc, new HashMap<>(), true, founderIds);
-    }
-
-    public void initialize ( final AnnotatorCompatible walker, final Set<VCFHeaderLine> headerLines ){
-        //If families were given, get the founders ids
-        founderIds = ((Walker)walker).getSampleDB().getFounderIds();
     }
 
     public List<String> getKeyNames() {

@@ -37,8 +37,7 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
     protected static final int ARRAY_DIM = 2;
     protected static final int ARRAY_SIZE = ARRAY_DIM * ARRAY_DIM;
 
-    @Override
-    public void initialize(final AnnotatorCompatible walker, final Set<VCFHeaderLine> headerLines) {
+    StrandBiasTest(final Set<VCFHeaderLine> headerLines){
         // Does the VCF header contain strand bias (SB) by sample annotation?
         for ( final VCFHeaderLine line : headerLines) {
             if ( line instanceof VCFFormatHeaderLine) {
@@ -46,16 +45,8 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
                 if ( formatline.getID().equals(GATKVCFConstants.STRAND_BIAS_BY_SAMPLE_KEY) ) {
                     logger.warn("StrandBiasBySample annotation exists in input VCF header. Attempting to use StrandBiasBySample " +
                             "values to calculate strand bias annotation values. If no sample has the SB genotype annotation, annotation may still fail.");
-                    return;
                 }
             }
-        }
-
-        // Are there reads from a SAM/BAM file?
-        if (toolkit.getReadsDataSource().getReaderIDs().isEmpty()) {
-            logger.warn("No StrandBiasBySample annotation or read data was found. Strand bias annotations will not be output.");
-        } else {
-            logger.info("SAM/BAM data was found. Attempting to use read data to calculate strand bias annotations values.");
         }
     }
 

@@ -6,6 +6,7 @@ import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
+import org.broadinstitute.hellbender.utils.IndelUtils;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
@@ -40,7 +41,7 @@ public class VariantType extends InfoFieldAnnotation {
             } else {
                 type.append("COMPLEX.");
             }
-            final ArrayList<Integer> inds = IndelUtils.findEventClassificationIndex(vc, ref);
+            final List<Integer> inds = IndelUtils.findEventClassificationIndex(vc, ref);
             type.append(IndelUtils.getIndelClassificationName(inds.get(0)));
 
             for (int i = 1; i < inds.size(); i++ ) {

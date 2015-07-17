@@ -1,8 +1,9 @@
 package org.broadinstitute.hellbender.engine;
 
+import htsjdk.samtools.util.Locatable;
 import org.broadinstitute.hellbender.exceptions.GATKException;
-import org.broadinstitute.hellbender.utils.GenomeLoc;
 import org.broadinstitute.hellbender.utils.HasGenomeLocation;
+import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.List;
@@ -10,10 +11,10 @@ import java.util.List;
 /**
  * Useful class for forwarding on locusContext data from this iterator
  */
-public class AlignmentContext implements HasGenomeLocation {
-    protected GenomeLoc loc = null;
-    protected ReadBackedPileup basePileup = null;
-    protected boolean hasPileupBeenDownsampled;
+public final class AlignmentContext implements HasGenomeLocation {
+    private Locatable loc = null;
+    private ReadPileup basePileup = null;
+    private boolean hasPileupBeenDownsampled;
 
     /**
      * The number of bases we've skipped over in the reference since the last map invocation.
@@ -21,19 +22,19 @@ public class AlignmentContext implements HasGenomeLocation {
      */
     private long skippedBases = 0;
 
-    public AlignmentContext(GenomeLoc loc, ReadBackedPileup basePileup) {
+    public AlignmentContext(Locatable loc, ReadPileup basePileup) {
         this(loc, basePileup, 0, false);
     }
 
-    public AlignmentContext(GenomeLoc loc, ReadBackedPileup basePileup, boolean hasPileupBeenDownsampled) {
+    public AlignmentContext(Locatable loc, ReadPileup basePileup, boolean hasPileupBeenDownsampled) {
         this(loc, basePileup, 0, hasPileupBeenDownsampled);
     }
 
-    public AlignmentContext(GenomeLoc loc, ReadBackedPileup basePileup, long skippedBases) {
+    public AlignmentContext(Locatable loc, ReadPileup basePileup, long skippedBases) {
         this(loc, basePileup, skippedBases, false);
     }
 
-    public AlignmentContext(GenomeLoc loc, ReadBackedPileup basePileup, long skippedBases, boolean hasPileupBeenDownsampled) {
+    public AlignmentContext(Locatable loc, ReadPileup basePileup, long skippedBases, boolean hasPileupBeenDownsampled) {
         if ( loc == null ) throw new GATKException("BUG: GenomeLoc in Alignment context is null");
         if ( basePileup == null ) throw new GATKException("BUG: ReadBackedPileup in Alignment context is null");
         if ( skippedBases < 0 ) throw new GATKException("BUG: skippedBases is -1 in Alignment context");
@@ -44,13 +45,13 @@ public class AlignmentContext implements HasGenomeLocation {
         this.hasPileupBeenDownsampled = hasPileupBeenDownsampled;
     }
 
-    /** Returns base pileup over the current genomic location. May return null if this context keeps only
+    /**
+     * Returns base pileup over the current genomic location. May return null if this context keeps only
      * extended event (indel) pileup.
      * @return
      */
-    public ReadBackedPileup getBasePileup() {
-        return basePileup;
-    }
+    public ReadPileup getBasePileup() { return basePileup; }
+
 
     /**
      * Returns true if any reads have been filtered out of the pileup due to excess DoC.
@@ -73,7 +74,7 @@ public class AlignmentContext implements HasGenomeLocation {
      * @return
      */
     public boolean hasReads() {
-        return basePileup != null && basePileup.getNumberOfElements() > 0 ;
+        return basePileup != null && basePileup.size() > 0 ;
     }
 
     /**
@@ -81,7 +82,7 @@ public class AlignmentContext implements HasGenomeLocation {
      * @return
      */
     public int size() {
-        return basePileup.getNumberOfElements();
+        return basePileup.size();
     }
 
     /**
@@ -96,12 +97,7 @@ public class AlignmentContext implements HasGenomeLocation {
 
     public String getContig() { return getLocation().getContig(); }
     public long getPosition() { return getLocation().getStart(); }
-    public GenomeLoc getLocation() { return loc; }
-
-    public void downsampleToCoverage(int coverage) {
-        basePileup = basePileup.getDownsampledPileup(coverage);
-        hasPileupBeenDownsampled = true;
-    }
+    public Locatable getLocation() { return loc; }
 
     /**
      * Returns the number of bases we've skipped over in the reference since the last map invocation.

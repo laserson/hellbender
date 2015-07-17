@@ -10,6 +10,7 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.Annotato
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
 import org.broadinstitute.hellbender.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
+import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 
 import java.util.Arrays;
@@ -163,8 +164,8 @@ public class AlleleBalance extends InfoFieldAnnotation {
             // Also, b/c of the assignment check in the if statement above,
             // we know we have a valid AlignmentContext for this sample!
 
-            final ReadBackedPileup pileup = context.getBasePileup();
-            final String bases = new String(pileup.getBases());
+            final ReadPileup pileup = context.getBasePileup();
+            final byte[] bases = pileup.getBases();
             final List<Allele> alleles = vc.getAlleles();
             final int n_allele = alleles.size();
             retVal = new int[n_allele];

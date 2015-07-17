@@ -4,6 +4,7 @@ import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.vcf.VCFHeaderLine;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,8 +44,19 @@ public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnno
     private static final int MIN_SAMPLES = 10;
     private Set<String> founderIds;
     private int sampleCount;
-    private boolean pedigreeCheckWarningLogged = false;
-    private boolean didUniquifiedSampleNameCheck = false;
+
+    public InbreedingCoeff(final Set<String> founderIds){
+        //If available, get the founder IDs and cache them. the IC will only be computed on founders then.
+        this.founderIds = founderIds;
+
+        if ( founderIds == null || founderIds.isEmpty() ) {
+            logger.warn("Annotation will not be calculated, must provide a valid PED file (-ped) from the command line.");
+        }
+    }
+
+    public InbreedingCoeff(){
+        this(null);
+    }
 
     @Override
     public Map<String, Object> annotate(final AnnotatorCompatible walker,
@@ -52,25 +64,15 @@ public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnno
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap ) {
-        //If available, get the founder IDs and cache them. the IC will only be computed on founders then.
-        if(founderIds == null && walker != null) {
-            founderIds = ((Walker) walker).getSampleDB().getFounderIds();
-        }
-        //if none of the "founders" are in the vc samples, assume we uniquified the samples upstream and they are all founders
-        if (!didUniquifiedSampleNameCheck) {
-            checkSampleNames(vc);
-            didUniquifiedSampleNameCheck = true;
-        }
-        if ( founderIds == null || founderIds.isEmpty() ) {
-            if ( !pedigreeCheckWarningLogged ) {
-                logger.warn("Annotation will not be calculated, must provide a valid PED file (-ped) from the command line.");
-                pedigreeCheckWarningLogged = true;
-            }
+        final GenotypesContext genotypes = (founderIds == null || founderIds.isEmpty()) ? vc.getGenotypes() : vc.getGenotypes(founderIds);
+        if (genotypes == null || genotypes.size() < MIN_SAMPLES || !vc.isVariant()) {
             return null;
         }
-        else{
-            return makeCoeffAnnotation(vc);
+        final double F = calculateIC(vc, genotypes);
+        if (sampleCount < MIN_SAMPLES) {
+            return null;
         }
+        return Collections.singletonMap(getKeyNames().get(0), (Object) String.format("%.4f", F));
     }
 
     protected double calculateIC(final VariantContext vc, final GenotypesContext genotypes) {
@@ -125,38 +127,9 @@ public class InbreedingCoeff extends InfoFieldAnnotation implements StandardAnno
 
         final double p = ( 2.0 * refCount + hetCount ) / ( 2.0 * (refCount + hetCount + homCount) ); // expected reference allele frequency
         final double q = 1.0 - p; // expected alternative allele frequency
-        final double F = 1.0 - ( hetCount / ( 2.0 * p * q * (double) sampleCount) ); // inbreeding coefficient
+        final double F = 1.0 - ( hetCount / ( 2.0 * p * q * sampleCount) ); // inbreeding coefficient
 
         return F;
-    }
-
-    protected Map<String, Object> makeCoeffAnnotation(final VariantContext vc) {
-        final GenotypesContext genotypes = (founderIds == null || founderIds.isEmpty()) ? vc.getGenotypes() : vc.getGenotypes(founderIds);
-        if (genotypes == null || genotypes.size() < MIN_SAMPLES || !vc.isVariant()) {
-            return null;
-        }
-        final double F = calculateIC(vc, genotypes);
-        if (sampleCount < MIN_SAMPLES) {
-            return null;
-        }
-        return Collections.singletonMap(getKeyNames().get(0), (Object) String.format("%.4f", F));
-    }
-
-    //this method is intended to reconcile uniquified sample names
-    // it comes into play when calling this annotation from GenotypeGVCFs with --uniquifySamples because founderIds
-    // is derived from the sampleDB, which comes from the input sample names, but vc will have uniquified (i.e. different)
-    // sample names. Without this check, the founderIds won't be found in the vc and the annotation won't be calculated.
-    protected void checkSampleNames(final VariantContext vc) {
-        final Set<String> vcSamples = new HashSet<>();
-        vcSamples.addAll(vc.getSampleNames());
-        if (!vcSamples.isEmpty()) {
-            if (founderIds!=null) {
-                vcSamples.removeAll(founderIds);
-                if (vcSamples.equals(vc.getSampleNames())) {
-                    founderIds = vc.getSampleNames();
-                }
-            }
-        }
     }
 
     @Override

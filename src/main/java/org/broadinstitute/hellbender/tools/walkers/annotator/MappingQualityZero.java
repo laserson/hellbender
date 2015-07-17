@@ -11,6 +11,7 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.Annotato
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
+import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.Arrays;
@@ -60,7 +61,7 @@ public class MappingQualityZero extends InfoFieldAnnotation implements ActiveReg
         int mq0 = 0;
         for ( final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
             final AlignmentContext context = sample.getValue();
-            final ReadBackedPileup pileup = context.getBasePileup();
+            final ReadPileup pileup = context.getBasePileup();
             for (final PileupElement p : pileup ) {
                 if ( p.getMappingQual() == 0 ) {
                     mq0++;

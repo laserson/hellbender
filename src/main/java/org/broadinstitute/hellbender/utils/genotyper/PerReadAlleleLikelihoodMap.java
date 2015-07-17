@@ -6,6 +6,7 @@ import org.broadinstitute.hellbender.utils.GenomeLoc;
 import org.broadinstitute.hellbender.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
+import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 import org.broadinstitute.hellbender.utils.read.AlignmentUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
@@ -53,7 +54,7 @@ public final class PerReadAlleleLikelihoodMap {
         likelihoodMap.put(a,likelihood);
     }
 
-    public ReadBackedPileup createPerAlleleDownsampledBasePileup(final ReadBackedPileup pileup, final double downsamplingFraction) {
+    public ReadPileup createPerAlleleDownsampledBasePileup(final ReadPileup pileup, final double downsamplingFraction) {
         return AlleleBiasedDownsamplingUtils.createAlleleBiasedBasePileup(pileup, downsamplingFraction);
     }
 
