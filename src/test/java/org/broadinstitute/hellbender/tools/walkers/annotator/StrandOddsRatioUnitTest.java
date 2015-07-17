@@ -1,5 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
+import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
+import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -48,5 +50,9 @@ public class StrandOddsRatioUnitTest {
         contingencyTable[1][1] = altneg;
         final double ratio = new StrandOddsRatio(Collections.emptySet()).calculateSOR(contingencyTable);
         Assert.assertEquals(ratio, expectedOddsRatio, DELTA_PRECISION, "Pass");
+        Assert.assertEquals(Double.parseDouble((String)new StrandOddsRatio(Collections.emptySet()).annotationForOneTable(ratio).get(GATKVCFConstants.STRAND_ODDS_RATIO_KEY)), expectedOddsRatio, DELTA_PRECISION, "Pass");
+
+        Assert.assertEquals(new StrandOddsRatio(Collections.emptySet()).getKeyNames(), Collections.singletonList(GATKVCFConstants.STRAND_ODDS_RATIO_KEY));
+        Assert.assertEquals(new StrandOddsRatio(Collections.emptySet()).getDescriptions(), Collections.singletonList(GATKVCFHeaderLines.getInfoLine(GATKVCFConstants.STRAND_ODDS_RATIO_KEY)));
     }
 }

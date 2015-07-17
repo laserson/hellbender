@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
+import com.google.common.annotations.VisibleForTesting;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeaderLine;
@@ -64,28 +65,20 @@ public final class StrandOddsRatio extends StrandBiasTest implements StandardAnn
     @Override
     protected Map<String, Object> calculateAnnotationFromGTfield(final GenotypesContext genotypes){
         final int[][] tableFromPerSampleAnnotations = getTableFromSamples( genotypes, MIN_COUNT );
-        if ( tableFromPerSampleAnnotations != null ) {
-            final double ratio = calculateSOR(tableFromPerSampleAnnotations);
-            return annotationForOneTable(ratio);
-        }
-        return null;
+        return tableFromPerSampleAnnotations != null ? annotationForOneTable(calculateSOR(tableFromPerSampleAnnotations)) : null;
     }
 
     @Override
-    protected Map<String, Object> calculateAnnotationFromStratifiedContexts(final Map<String, AlignmentContext> stratifiedContexts,
-                                                                                     final VariantContext vc){
+    protected Map<String, Object> calculateAnnotationFromStratifiedContexts(final Map<String, AlignmentContext> stratifiedContexts, final VariantContext vc){
         final int[][] tableNoFiltering = getSNPContingencyTable(stratifiedContexts, vc.getReference(), vc.getAlternateAlleles(), -1, MIN_COUNT);
-        final double ratio = calculateSOR(tableNoFiltering);
-        return annotationForOneTable(ratio);
+        return annotationForOneTable(calculateSOR(tableNoFiltering));
     }
 
     @Override
-    protected Map<String, Object> calculateAnnotationFromLikelihoodMap(final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap,
-                                                                                final VariantContext vc){
+    protected Map<String, Object> calculateAnnotationFromLikelihoodMap(final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap, final VariantContext vc){
         // either SNP with no alignment context, or indels: per-read likelihood map needed
         final int[][] table = getContingencyTable(stratifiedPerReadAlleleLikelihoodMap, vc, MIN_COUNT);
-        final double ratio = calculateSOR(table);
-        return annotationForOneTable(ratio);
+        return annotationForOneTable(calculateSOR(table));
     }
 
     /**
@@ -93,12 +86,13 @@ public final class StrandOddsRatio extends StrandBiasTest implements StandardAnn
      * low values when the reference +/- read count ratio is skewed but the alt count ratio is not.  Natural log is taken
      * to keep values within roughly the same range as other annotations.
      *
-     * Augmentation avoids quotient by zero.
+     * Augmentation avoids division by zero.
      *
      * @param originalTable The table before augmentation
      * @return the SOR annotation value
      */
-    final protected double calculateSOR(final int[][] originalTable) {
+    @VisibleForTesting
+    double calculateSOR(final int[][] originalTable) {
         final double[][] augmentedTable = augmentContingencyTable(originalTable);
 
         double ratio = 0;
@@ -109,9 +103,7 @@ public final class StrandOddsRatio extends StrandBiasTest implements StandardAnn
         final double refRatio = (Math.min(augmentedTable[0][0], augmentedTable[0][1])/ Math.max(augmentedTable[0][0], augmentedTable[0][1]));
         final double altRatio = (Math.min(augmentedTable[1][0], augmentedTable[1][1])/ Math.max(augmentedTable[1][0], augmentedTable[1][1]));
 
-        ratio = ratio*refRatio/altRatio;
-
-        return Math.log(ratio);
+        return Math.log(ratio) + Math.log(refRatio) - Math.log(altRatio);
     }
 
 
@@ -138,18 +130,19 @@ public final class StrandOddsRatio extends StrandBiasTest implements StandardAnn
      * @param ratio the symmetric odds ratio of the contingency table
      * @return a hash map from SOR
      */
-    protected Map<String, Object> annotationForOneTable(final double ratio) {
+    @VisibleForTesting
+    Map<String, Object> annotationForOneTable(final double ratio) {
         final Object value = String.format("%.3f", ratio);
         return Collections.singletonMap(getKeyNames().get(0), value);
     }
 
     @Override
-    public List<VCFInfoHeaderLine> getDescriptions() {
-        return Collections.singletonList(GATKVCFHeaderLines.getInfoLine(getKeyNames().get(0)));
+    public List<String> getKeyNames() {
+        return Collections.singletonList(GATKVCFConstants.STRAND_ODDS_RATIO_KEY);
     }
 
     @Override
-    public List<String> getKeyNames() {
-        return Collections.singletonList(GATKVCFConstants.STRAND_ODDS_RATIO_KEY);
+    public List<VCFInfoHeaderLine> getDescriptions() {
+        return Collections.singletonList(GATKVCFHeaderLines.getInfoLine(getKeyNames().get(0)));
     }
 }
