@@ -1,6 +1,8 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
-import org.broadinstitute.hellbender.utils.MannWhitneyU;
+import org.apache.commons.math3.stat.inference.MannWhitneyUTest;
+import org.apache.commons.math3.stat.ranking.NaNStrategy;
+import org.apache.commons.math3.stat.ranking.TiesStrategy;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -12,7 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class RankSumUnitTest {
+public final class RankSumUnitTest {
 
     List<Integer> distribution20, distribution30, distribution20_40;
     static final int observations = 100;
@@ -68,10 +70,12 @@ public class RankSumUnitTest {
 
     @Test(enabled = true, dataProvider = "DistributionData")
     public void testDistribution(final List<Integer> distribution1, final List<Integer> distribution2, final int numToReduceIn2, final boolean distributionsShouldBeEqual, final String debugString) {
-        final MannWhitneyU mannWhitneyU = new MannWhitneyU(true);
+        final MannWhitneyUTest mwu = new MannWhitneyUTest(NaNStrategy.FIXED, TiesStrategy.RANDOM);
 
-        for ( final Integer num : distribution1 )
-            mannWhitneyU.add(num, MannWhitneyU.USet.SET1);
+        final double[] set1 = new double[distribution1.size()];
+        for (int i = 0; i < distribution1.size(); i++){
+            set1[i] = distribution1.get(i);
+        }
 
         final List<Integer> dist2 = new ArrayList<>(distribution2);
         if ( numToReduceIn2 > 0 ) {
@@ -88,10 +92,11 @@ public class RankSumUnitTest {
                 dist2.add(qual);
         }
 
-        for ( final Integer num : dist2 )
-            mannWhitneyU.add(num, MannWhitneyU.USet.SET2);
-
-        final Double result = mannWhitneyU.runTwoSidedTest().getRight();
+        final double[] set2 = new double[distribution2.size()];
+        for (int i = 0; i < distribution2.size(); i++){
+            set2[i] = distribution2.get(i);
+        }
+        final double result = mwu.mannWhitneyUTest(set1, set2);
         Assert.assertFalse(Double.isNaN(result));
 
         if ( distributionsShouldBeEqual ) {
