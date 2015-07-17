@@ -1,10 +1,10 @@
 package org.broadinstitute.hellbender.engine;
 
+import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMReadGroupRecord;
 import htsjdk.samtools.util.Locatable;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
-import org.broadinstitute.hellbender.utils.GenomeLoc;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
 import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 
@@ -47,8 +47,8 @@ public final class AlignmentContextUtils {
         }
     }
 
-    public static Map<String, AlignmentContext> splitContextBySampleName(AlignmentContext context) {
-        return splitContextBySampleName(context, null);
+    public static Map<String, AlignmentContext> splitContextBySampleName(AlignmentContext context, final SAMFileHeader header) {
+        return splitContextBySampleName(context, null, header);
     }
 
     /**
@@ -57,15 +57,16 @@ public final class AlignmentContextUtils {
      *
      * @param context                the original pileup
      *
+     * @param header
      * @return a Map of sample name to StratifiedAlignmentContext
      *
      **/
-    public static Map<String, AlignmentContext> splitContextBySampleName(AlignmentContext context, String assumedSingleSample) {
+    public static Map<String, AlignmentContext> splitContextBySampleName(AlignmentContext context, String assumedSingleSample, final SAMFileHeader header) {
         Locatable loc = context.getLocation();
         HashMap<String, AlignmentContext> contexts = new HashMap<>();
 
-        for(String sample: context.getBasePileup().getSamples()) {
-            ReadPileup pileupBySample = context.getBasePileup().getPileupForSample(sample);
+        for(String sample: context.getBasePileup().getSamples(header)) {
+            ReadPileup pileupBySample = context.getBasePileup().getPileupForSample(sample, header);
 
             // Don't add empty pileups to the split context.
             if(pileupBySample.isEmpty())
@@ -103,8 +104,8 @@ public final class AlignmentContextUtils {
         return contexts;
     }
 
-    public static Map<String, AlignmentContext> splitContextBySampleName(ReadPileup pileup) {
-        return splitContextBySampleName(new AlignmentContext(pileup.getLocation(), pileup));
+    public static Map<String, AlignmentContext> splitContextBySampleName(ReadPileup pileup, final SAMFileHeader header) {
+        return splitContextBySampleName(new AlignmentContext(pileup.getLocation(), pileup), header);
     }
 
 

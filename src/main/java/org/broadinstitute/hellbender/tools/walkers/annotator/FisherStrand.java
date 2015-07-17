@@ -2,6 +2,7 @@ package org.broadinstitute.hellbender.tools.walkers.annotator;
 
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.vcf.VCFHeaderLine;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,10 +14,7 @@ import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.apache.commons.math3.util.CombinatoricsUtils.factorialLog;
 
@@ -42,13 +40,17 @@ import static org.apache.commons.math3.util.CombinatoricsUtils.factorialLog;
  * </ul>
  *
  */
-public class FisherStrand extends StrandBiasTest implements StandardAnnotation, ActiveRegionBasedAnnotation {
+public final class FisherStrand extends StrandBiasTest implements StandardAnnotation, ActiveRegionBasedAnnotation {
     private final static boolean ENABLE_DEBUGGING = false;
     private final static Logger logger = LogManager.getLogger(FisherStrand.class);
 
     private static final double MIN_PVALUE = 1E-320;
     private static final int MIN_QUAL_FOR_FILTERED_TEST = 17;
     private static final int MIN_COUNT = ARRAY_DIM;
+
+    FisherStrand(final Set<VCFHeaderLine> headerLines){
+        super(headerLines);
+    }
 
     @Override
     protected Map<String, Object> calculateAnnotationFromGTfield(final GenotypesContext genotypes){

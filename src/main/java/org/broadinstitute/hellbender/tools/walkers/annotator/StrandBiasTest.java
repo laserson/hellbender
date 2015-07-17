@@ -37,7 +37,7 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
     protected static final int ARRAY_DIM = 2;
     protected static final int ARRAY_SIZE = ARRAY_DIM * ARRAY_DIM;
 
-    StrandBiasTest(final Set<VCFHeaderLine> headerLines){
+    protected StrandBiasTest(final Set<VCFHeaderLine> headerLines){
         // Does the VCF header contain strand bias (SB) by sample annotation?
         for ( final VCFHeaderLine line : headerLines) {
             if ( line instanceof VCFFormatHeaderLine) {

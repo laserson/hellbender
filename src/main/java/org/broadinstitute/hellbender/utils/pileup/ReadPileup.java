@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * Represents a pileup of reads at a given position.
  */
-public final class ReadPileup implements Iterable<PileupElement>{
+public final class ReadPileup implements Iterable<PileupElement> {
     private final Locatable loc;
     private final List<PileupElement> pileupElements;
 
@@ -98,7 +98,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
     /**
      * Make a new pileup consisting of elements of this pileup that satisfy the predicate.
      */
-    public ReadPileup makeFilteredPileup(final Predicate<PileupElement> filter){
+    public ReadPileup makeFilteredPileup(final Predicate<PileupElement> filter) {
         return new ReadPileup(loc, pileupElements.stream().filter(filter).collect(Collectors.toList()));
     }
 
@@ -141,6 +141,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
     /**
      * Makes a new pileup by subsetting reads from a given read group.
      * Returns null if no reads are from the given read group.
+     *
      * @param targetReadGroupId Identifier for the read group.
      * @return A read-backed pileup containing only the reads in the given read group.
      */
@@ -158,7 +159,18 @@ public final class ReadPileup implements Iterable<PileupElement>{
             }
             return false;
         });
-        return pu.isEmpty() ? null: pu;
+        return pu.isEmpty() ? null : pu;
+    }
+
+
+    /**
+     * Gets the particular subset of this pileup with the given sample name.
+     * @param sampleName Name of the sample to use.
+     * @return A subset of this pileup containing only reads with the given sample.
+     */
+    public ReadPileup getPileupForSample(final String sampleName, final SAMFileHeader header) {
+        final ReadPileup pu = makeFilteredPileup(p -> Objects.equals(ReadUtils.getSampleName(p.getRead(),header),sampleName));
+        return pu.isEmpty() ? null : pu;
     }
 
     /**
@@ -206,9 +218,9 @@ public final class ReadPileup implements Iterable<PileupElement>{
 
     /**
      * The best way to access PileupElements where you only care about the bases and quals in the pileup.
-     * <p/>
+     * <p>
      * for (PileupElement p : this) { doSomething(p); }
-     * <p/>
+     * <p>
      * Provides efficient iteration of the data.
      */
     public Iterator<PileupElement> iterator() {
@@ -281,7 +293,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
      */
     public int getNumberOfDeletions() {
         //Note: pileups are small so int is fine.
-        return (int)pileupElements.stream().filter(p -> p.isDeletion()).count();
+        return (int) pileupElements.stream().filter(p -> p.isDeletion()).count();
     }
 
     /**
@@ -289,7 +301,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
      */
     public int getNumberOfMappingQualityZeroReads() {
         //Note: pileups are small so int is fine.
-        return (int)pileupElements.stream().filter(p -> p.getRead().getMappingQuality() == 0).count();
+        return (int) pileupElements.stream().filter(p -> p.getRead().getMappingQuality() == 0).count();
     }
 
     /**
@@ -297,7 +309,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
      */
     public int getNumberOfDeletionsAfterThisElement() {
         //Note: pileups are small so int is fine.
-        return (int)pileupElements.stream().filter(pe -> pe.isBeforeDeletionStart()).count();
+        return (int) pileupElements.stream().filter(pe -> pe.isBeforeDeletionStart()).count();
     }
 
     /**
@@ -305,7 +317,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
      */
     public int getNumberOfInsertionsAfterThisElement() {
         //Note: pileups are small so int is fine.
-        return (int)pileupElements.stream().filter(pe -> pe.isBeforeInsertion()).count();
+        return (int) pileupElements.stream().filter(pe -> pe.isBeforeInsertion()).count();
     }
 
     /**
@@ -389,4 +401,5 @@ public final class ReadPileup implements Iterable<PileupElement>{
     public FragmentCollection<PileupElement> toFragments() {
         return FragmentCollection.create(this);
     }
+
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.hellbender.tools.walkers.annotator;
 
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.vcf.VCFHeaderLine;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
@@ -13,6 +14,7 @@ import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Strand bias estimated by the Symmetric Odds Ratio test
@@ -51,9 +53,13 @@ import java.util.Map;
  * </ul>
  *
  */
-public class StrandOddsRatio extends StrandBiasTest implements StandardAnnotation, ActiveRegionBasedAnnotation {
-    private final static double AUGMENTATION_CONSTANT = 1.0;
+public final class StrandOddsRatio extends StrandBiasTest implements StandardAnnotation, ActiveRegionBasedAnnotation {
+    private static final double AUGMENTATION_CONSTANT = 1.0;
     private static final int MIN_COUNT = 0;
+
+    StrandOddsRatio(final Set<VCFHeaderLine> headerLines){
+        super(headerLines);
+    }
 
     @Override
     protected Map<String, Object> calculateAnnotationFromGTfield(final GenotypesContext genotypes){

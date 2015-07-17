@@ -25,6 +25,7 @@ public final class MathUtils {
      * Log10 of the e constant.
      */
     public static final double LOG10_OF_E = Math.log10(Math.E);
+    public static final double LOG_ONE_HALF = -Math.log10(2.0);
 
     /**
      * Private constructor.  No instantiating this class!
