@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
+import com.google.common.annotations.VisibleForTesting;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
@@ -26,7 +27,6 @@ import java.util.*;
  * Abstract root for all RankSum based annotations
  */
 public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveRegionBasedAnnotation {
-    static final boolean DEBUG = false;
     private boolean useDithering = true;
 
     public RankSumTest(final boolean useDithering){
@@ -82,6 +82,16 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
             return null;
         }
 
+        final double p = oneSidedTest(refQuals, altQuals, useDithering);
+        final Map<String, Object> map = new HashMap<>();
+        if (!Double.isNaN(p)) {
+            map.put(getKeyNames().get(0), String.format("%.3f", p));
+        }
+        return map;
+    }
+
+    @VisibleForTesting
+    double oneSidedTest(List<Double> refQuals, List<Double> altQuals, final boolean useDithering){
         final MannWhitneyU mannWhitneyU = new MannWhitneyU(useDithering);
         for (final Double qual : altQuals) {
             mannWhitneyU.add(qual, MannWhitneyU.USet.SET1);
@@ -90,27 +100,9 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
             mannWhitneyU.add(qual, MannWhitneyU.USet.SET2);
         }
 
-        if (DEBUG) {
-            System.out.format("%s, REF QUALS:", this.getClass().getName());
-            for (final Double qual : refQuals) {
-                System.out.format("%4.1f ", qual);
-            }
-            System.out.println();
-            System.out.format("%s, ALT QUALS:", this.getClass().getName());
-            for (final Double qual : altQuals) {
-                System.out.format("%4.1f ", qual);
-            }
-            System.out.println();
-
-        }
         // we are testing that set1 (the alt bases) have lower quality scores than set2 (the ref bases)
         final Pair<Double, Double> testResults = mannWhitneyU.runOneSidedTest(MannWhitneyU.USet.SET1);
-
-        final Map<String, Object> map = new HashMap<>();
-        if (!Double.isNaN(testResults.getLeft())) {
-            map.put(getKeyNames().get(0), String.format("%.3f", testResults.getLeft()));
-        }
-        return map;
+        return testResults.getLeft();
     }
 
     private void fillQualsFromPileup(final List<Allele> alleles,

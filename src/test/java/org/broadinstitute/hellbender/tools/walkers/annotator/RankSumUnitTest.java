@@ -108,4 +108,9 @@ public final class RankSumUnitTest {
             Assert.assertTrue(result < 0.01, String.format("%f %d %d", result, numToReduceIn2, dist2.get(0)));
         }
     }
+
+    @Test
+    void testRankSumAnnot(){
+
+    }
 }
