@@ -32,7 +32,7 @@ import java.util.Map;
  * <p>These summaries can all be recomputed from the genotypes on the fly but it is a lot faster to add them here as INFO field annotations.</p>
  */
 
-public class GenotypeSummaries extends InfoFieldAnnotation implements ActiveRegionBasedAnnotation {
+public final class GenotypeSummaries extends InfoFieldAnnotation implements ActiveRegionBasedAnnotation {
 
     @Override
     public Map<String, Object> annotate(final AnnotatorCompatible walker,
