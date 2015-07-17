@@ -1,6 +1,5 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
-import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
@@ -16,12 +15,8 @@ import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
-import org.broadinstitute.hellbender.utils.variant.GATKVariantContextUtils;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Variant confidence normalized by unfiltered depth of variant samples
@@ -48,8 +43,11 @@ import java.util.Map;
  *     <li><b><a href="https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_annotator_DepthPerAlleleBySample.php">DepthPerAlleleBySample</a></b> calculates depth of coverage for each allele per sample (AD).</li>
  * </ul>
  */
-public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
-//    private final static Logger logger = Logger.getLogger(QualByDepth.class);
+public final class QualByDepth extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
+
+    private static final double MAX_QD_BEFORE_FIXING = 35;
+    private static final double IDEAL_HIGH_QD = 30;
+    private static final double JITTER_SIGMA = 3;
 
     public Map<String, Object> annotate(final AnnotatorCompatible walker,
                                         final ReferenceContext ref,
@@ -61,7 +59,7 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
         }
 
         final GenotypesContext genotypes = vc.getGenotypes();
-        if ( genotypes == null || genotypes.size() == 0 ) {
+        if ( genotypes == null || genotypes.isEmpty() ) {
             return null;
         }
 
@@ -118,10 +116,7 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
             return null;
         }
 
-        final double altAlleleLength = getMeanAltAlleleLength(vc);
-        // Hack: UnifiedGenotyper (but not HaplotypeCaller or GenotypeGVCFs) over-estimates the quality of long indels
-        //       Penalize the QD calculation for UG indels to compensate for this
-        double QD = -10.0 * vc.getLog10PError() / ((double)standardDepth * indelNormalizationFactor(altAlleleLength, false));
+        double QD = -10.0 * vc.getLog10PError() / ((double)standardDepth);
 
         // Hack: see note in the fixTooHighQD method below
         QD = fixTooHighQD(QD);
@@ -129,57 +124,6 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
         final Map<String, Object> map = new HashMap<>();
         map.put(getKeyNames().get(0), String.format("%.2f", QD));
         return map;
-    }
-
-    /**
-     * Refactored out of the AverageAltAlleleLength annotation class
-     * @param vc the variant context
-     * @return the average length of the alt allele (a double)
-     */
-    private static double getMeanAltAlleleLength(VariantContext vc) {
-        double averageLength = 1.0;
-        if ( ! vc.isSNP() && ! vc.isSymbolic() ) {
-            // adjust for the event length
-            int averageLengthNum = 0;
-            int averageLengthDenom = 0;
-            int refLength = vc.getReference().length();
-            for ( final Allele a : vc.getAlternateAlleles() ) {
-                int numAllele = vc.getCalledChrCount(a);
-                int alleleSize;
-                if ( a.length() == refLength ) {
-                    // SNP or MNP
-                    byte[] a_bases = a.getBases();
-                    byte[] ref_bases = vc.getReference().getBases();
-                    int n_mismatch = 0;
-                    for ( int idx = 0; idx < a_bases.length; idx++ ) {
-                        if ( a_bases[idx] != ref_bases[idx] )
-                            n_mismatch++;
-                    }
-                    alleleSize = n_mismatch;
-                }
-                else if ( a.isSymbolic() ) {
-                    alleleSize = 1;
-                } else {
-                    alleleSize = Math.abs(refLength-a.length());
-                }
-                averageLengthNum += alleleSize*numAllele;
-                averageLengthDenom += numAllele;
-            }
-            averageLength = ( (double) averageLengthNum )/averageLengthDenom;
-        }
-
-        return averageLength;
-    }
-
-    /**
-     * Generate the indel normalization factor.
-     *
-     * @param altAlleleLength  the average alternate allele length for the call
-     * @param increaseNormalizationAsLengthIncreases should we apply a normalization factor based on the allele length?
-     * @return a possitive double
-     */
-    private double indelNormalizationFactor(final double altAlleleLength, final boolean increaseNormalizationAsLengthIncreases) {
-        return ( increaseNormalizationAsLengthIncreases ? Math.max(altAlleleLength / 3.0, 1.0) : 1.0);
     }
 
     /**
@@ -193,7 +137,7 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
      * @param QD the raw QD score
      * @return a QD value
      */
-    private double fixTooHighQD(final double QD) {
+    private static double fixTooHighQD(final double QD) {
         if ( QD < MAX_QD_BEFORE_FIXING ) {
             return QD;
         } else {
@@ -201,14 +145,10 @@ public class QualByDepth extends InfoFieldAnnotation implements StandardAnnotati
         }
     }
 
-    private final static double MAX_QD_BEFORE_FIXING = 35;
-    private final static double IDEAL_HIGH_QD = 30;
-    private final static double JITTER_SIGMA = 3;
-
-    public List<String> getKeyNames() { return Arrays.asList(GATKVCFConstants.QUAL_BY_DEPTH_KEY); }
+    public List<String> getKeyNames() { return Collections.singletonList(GATKVCFConstants.QUAL_BY_DEPTH_KEY); }
 
     public List<VCFInfoHeaderLine> getDescriptions() {
-        return Arrays.asList(GATKVCFHeaderLines.getInfoLine(getKeyNames().get(0)));
+        return Collections.singletonList(GATKVCFHeaderLines.getInfoLine(getKeyNames().get(0)));
     }
 
 

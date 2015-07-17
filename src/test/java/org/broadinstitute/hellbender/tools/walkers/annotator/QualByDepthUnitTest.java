@@ -2,14 +2,13 @@ package org.broadinstitute.hellbender.tools.walkers.annotator;
 
 import htsjdk.variant.variantcontext.*;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
+import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
+import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class QualByDepthUnitTest extends BaseTest {
 
@@ -46,6 +45,10 @@ public class QualByDepthUnitTest extends BaseTest {
         Assert.assertNotNull(annotatedMap, vc.toString());
         final String QD = (String)annotatedMap.get("QD");
         Assert.assertEquals(Double.valueOf(QD), expectedQD, 0.0001);
+
+        Assert.assertEquals(new QualByDepth().getKeyNames(), Collections.singletonList(GATKVCFConstants.QUAL_BY_DEPTH_KEY));
+        Assert.assertEquals(new QualByDepth().getDescriptions(), Collections.singletonList(GATKVCFHeaderLines.getInfoLine(GATKVCFConstants.QUAL_BY_DEPTH_KEY)));
+
     }
 
 }
