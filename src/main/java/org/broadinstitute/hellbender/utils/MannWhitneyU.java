@@ -74,22 +74,22 @@ public final class MannWhitneyU {
         return calculateP(n, m, u, false, exactMode);
     }
 
-    /**
-     * Runs the standard two-sided test,
-     * returns the u-based z-approximate and p values.
-     * @return a pair holding the u and p-value.
-     */
-    public Pair<Double,Double> runTwoSidedTest() {
-        Pair<Long,USet> uPair = calculateTwoSidedU(observations);
-        long u = uPair.getLeft();
-        int n = uPair.getRight() == USet.SET1 ? sizeSet1 : sizeSet2;
-        int m = uPair.getRight() == USet.SET1 ? sizeSet2 : sizeSet1;
-        if ( n == 0 || m == 0 ) {
-            // test is uninformative as one or both sets have no observations
-            return new MutablePair<>(Double.NaN, Double.NaN);
-        }
-        return calculateP(n, m, u, true, exactMode);
-    }
+//    /**
+//     * Runs the standard two-sided test,
+//     * returns the u-based z-approximate and p values.
+//     * @return a pair holding the u and p-value.
+//     */
+//    public Pair<Double,Double> runTwoSidedTest() {
+//        Pair<Long,USet> uPair = calculateTwoSidedU(observations);
+//        long u = uPair.getLeft();
+//        int n = uPair.getRight() == USet.SET1 ? sizeSet1 : sizeSet2;
+//        int m = uPair.getRight() == USet.SET1 ? sizeSet2 : sizeSet1;
+//        if ( n == 0 || m == 0 ) {
+//            // test is uninformative as one or both sets have no observations
+//            return new MutablePair<>(Double.NaN, Double.NaN);
+//        }
+//        return calculateP(n, m, u, true, exactMode);
+//    }
 
     /**
      * Given a u statistic, calculate the p-value associated with it, dispatching to approximations where appropriate
@@ -157,82 +157,82 @@ public final class MannWhitneyU {
         return z;
     }
 
-    /**
-     * Uses a sum-of-uniform-0-1 random variable approximation to the U statistic in order to return an approximate
-     * p-value. See Buckle, Kraft, van Eeden [1969] (approx) and Billingsly [1995] or Stephens, MA [1966, biometrika] (sum of uniform CDF)
-     * @param n - The number of entries in the stochastically smaller (dominant) set
-     * @param m - The number of entries in the stochastically larger (dominated) set
-     * @param u - mann-whitney u value
-     * @return p-value according to sum of uniform approx
-     * todo -- this is currently not called due to not having a good characterization of where it is significantly more accurate than the
-     * todo -- normal approxmation (e.g. enough to merit the runtime hit)
-     */
-    public static double calculatePUniformApproximation(int n, int m, long u) {
-        long R = u + (n*(n+1))/2;
-        double a = Math.sqrt(m * (n + m + 1));
-        double b = (n/2.0)*(1- Math.sqrt((n + m + 1) / m));
-        double z = b + ((double)R)/a;
-        if ( z < 0 ) { return 1.0; }
-        else if ( z > n ) { return 0.0; }
-        else {
-            if ( z > ((double) n) /2 ) {
-                return 1.0-1/(CombinatoricsUtils.factorialDouble(n))*uniformSumHelper(z, (int) Math.floor(z), n, 0);
-            } else {
-                return 1/(CombinatoricsUtils.factorialDouble(n))*uniformSumHelper(z, (int) Math.floor(z), n, 0);
-            }
-        }
-    }
-
-    /**
-     * Helper function for the sum of n uniform random variables
-     * @param z - value at which to compute the (un-normalized) cdf
-     * @param m - a cutoff integer (defined by m <= z < m + 1)
-     * @param n - the number of uniform random variables
-     * @param k - holder variable for the recursion (alternatively, the index of the term in the sequence)
-     * @return the (un-normalized) cdf for the sum of n random variables
-     */
-    private static double uniformSumHelper(double z, int m, int n, int k) {
-        if ( k > m ) { return 0; }
-        int coef = (k % 2 == 0) ? 1 : -1;
-        return coef*CombinatoricsUtils.binomialCoefficient(n, k)* Math.pow(z - k, n) + uniformSumHelper(z,m,n,k+1);
-    }
-
-    /**
-     * Calculates the U-statistic associated with a two-sided test (e.g. the RV from which one set is drawn
-     * stochastically dominates the RV from which the other set is drawn); two-sidedness is accounted for
-     * later on simply by multiplying the p-value by 2.
-     *
-     * Recall: If X stochastically dominates Y, the test is for occurrences of Y before X, so the lower value of u is chosen
-     * @param observed - the observed data
-     * @return the minimum of the U counts (set1 dominates 2, set 2 dominates 1)
-     */
-    public static Pair<Long,USet> calculateTwoSidedU(TreeSet<Pair<Number,USet>> observed) {
-        int set1SeenSoFar = 0;
-        int set2SeenSoFar = 0;
-        long uSet1DomSet2 = 0;
-        long uSet2DomSet1 = 0;
-        USet previous = null;
-        for ( Pair<Number,USet> dataPoint : observed ) {
-
-            if ( dataPoint.getRight() == USet.SET1 ) {
-                ++set1SeenSoFar;
-            } else {
-                ++set2SeenSoFar;
-            }
-
-            if ( previous != null ) {
-                if ( dataPoint.getRight() == USet.SET1 ) {
-                    uSet2DomSet1 += set2SeenSoFar;
-                } else {
-                    uSet1DomSet2 += set1SeenSoFar;
-                }
-            }
-
-            previous = dataPoint.getRight();
-        }
-
-        return uSet1DomSet2 < uSet2DomSet1 ? new MutablePair<>(uSet1DomSet2, USet.SET1) : new MutablePair<>(uSet2DomSet1, USet.SET2);
-    }
+//    /**
+//     * Uses a sum-of-uniform-0-1 random variable approximation to the U statistic in order to return an approximate
+//     * p-value. See Buckle, Kraft, van Eeden [1969] (approx) and Billingsly [1995] or Stephens, MA [1966, biometrika] (sum of uniform CDF)
+//     * @param n - The number of entries in the stochastically smaller (dominant) set
+//     * @param m - The number of entries in the stochastically larger (dominated) set
+//     * @param u - mann-whitney u value
+//     * @return p-value according to sum of uniform approx
+//     * todo -- this is currently not called due to not having a good characterization of where it is significantly more accurate than the
+//     * todo -- normal approxmation (e.g. enough to merit the runtime hit)
+//     */
+//    public static double calculatePUniformApproximation(int n, int m, long u) {
+//        long R = u + (n*(n+1))/2;
+//        double a = Math.sqrt(m * (n + m + 1));
+//        double b = (n/2.0)*(1- Math.sqrt((n + m + 1) / m));
+//        double z = b + ((double)R)/a;
+//        if ( z < 0 ) { return 1.0; }
+//        else if ( z > n ) { return 0.0; }
+//        else {
+//            if ( z > ((double) n) /2 ) {
+//                return 1.0-1/(CombinatoricsUtils.factorialDouble(n))*uniformSumHelper(z, (int) Math.floor(z), n, 0);
+//            } else {
+//                return 1/(CombinatoricsUtils.factorialDouble(n))*uniformSumHelper(z, (int) Math.floor(z), n, 0);
+//            }
+//        }
+//    }
+//
+//    /**
+//     * Helper function for the sum of n uniform random variables
+//     * @param z - value at which to compute the (un-normalized) cdf
+//     * @param m - a cutoff integer (defined by m <= z < m + 1)
+//     * @param n - the number of uniform random variables
+//     * @param k - holder variable for the recursion (alternatively, the index of the term in the sequence)
+//     * @return the (un-normalized) cdf for the sum of n random variables
+//     */
+//    private static double uniformSumHelper(double z, int m, int n, int k) {
+//        if ( k > m ) { return 0; }
+//        int coef = (k % 2 == 0) ? 1 : -1;
+//        return coef*CombinatoricsUtils.binomialCoefficient(n, k)* Math.pow(z - k, n) + uniformSumHelper(z,m,n,k+1);
+//    }
+//
+//    /**
+//     * Calculates the U-statistic associated with a two-sided test (e.g. the RV from which one set is drawn
+//     * stochastically dominates the RV from which the other set is drawn); two-sidedness is accounted for
+//     * later on simply by multiplying the p-value by 2.
+//     *
+//     * Recall: If X stochastically dominates Y, the test is for occurrences of Y before X, so the lower value of u is chosen
+//     * @param observed - the observed data
+//     * @return the minimum of the U counts (set1 dominates 2, set 2 dominates 1)
+//     */
+//    public static Pair<Long,USet> calculateTwoSidedU(TreeSet<Pair<Number,USet>> observed) {
+//        int set1SeenSoFar = 0;
+//        int set2SeenSoFar = 0;
+//        long uSet1DomSet2 = 0;
+//        long uSet2DomSet1 = 0;
+//        USet previous = null;
+//        for ( Pair<Number,USet> dataPoint : observed ) {
+//
+//            if ( dataPoint.getRight() == USet.SET1 ) {
+//                ++set1SeenSoFar;
+//            } else {
+//                ++set2SeenSoFar;
+//            }
+//
+//            if ( previous != null ) {
+//                if ( dataPoint.getRight() == USet.SET1 ) {
+//                    uSet2DomSet1 += set2SeenSoFar;
+//                } else {
+//                    uSet1DomSet2 += set1SeenSoFar;
+//                }
+//            }
+//
+//            previous = dataPoint.getRight();
+//        }
+//
+//        return uSet1DomSet2 < uSet2DomSet1 ? new MutablePair<>(uSet1DomSet2, USet.SET1) : new MutablePair<>(uSet2DomSet1, USet.SET2);
+//    }
 
     /**
      * Calculates the U-statistic associated with the one-sided hypothesis that "dominator" stochastically dominates
@@ -290,17 +290,17 @@ public final class MannWhitneyU {
         return new MutablePair<>(z,(twoSided ? 2.0*p : p));
     }
 
-    /**
-     * Hook into CPR with sufficient warning (for testing purposes)
-     * calls into that recursive calculation.
-     * @param n: number of set-one entries (hypothesis: set one is stochastically less than set two)
-     * @param m: number of set-two entries
-     * @param u: number of set-two entries that precede set-one entries (e.g. 0,1,0,1,0 -> 3 )
-     * @return same as cpr
-     */
-    protected static double calculatePRecursivelyDoNotCheckValuesEvenThoughItIsSlow(int n, int m, long u) {
-        return cpr(n,m,u);
-    }
+//    /**
+//     * Hook into CPR with sufficient warning (for testing purposes)
+//     * calls into that recursive calculation.
+//     * @param n: number of set-one entries (hypothesis: set one is stochastically less than set two)
+//     * @param m: number of set-two entries
+//     * @param u: number of set-two entries that precede set-one entries (e.g. 0,1,0,1,0 -> 3 )
+//     * @return same as cpr
+//     */
+//    protected static double calculatePRecursivelyDoNotCheckValuesEvenThoughItIsSlow(int n, int m, long u) {
+//        return cpr(n,m,u);
+//    }
 
     /**
      * : just a shorter name for calculatePRecursively. See Mann, Whitney, [1947]

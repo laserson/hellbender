@@ -1,118 +1,73 @@
 package org.broadinstitute.hellbender.utils;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.hellbender.utils.test.BaseTest;
+import org.apache.commons.math3.distribution.NormalDistribution;
+import org.apache.commons.math3.stat.inference.MannWhitneyUTest;
+import org.apache.commons.math3.stat.ranking.NaNStrategy;
+import org.apache.commons.math3.stat.ranking.TiesStrategy;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public final class MWUnitTest extends BaseTest {
-    @BeforeClass
-    public void init() { }
+public final class MWUnitTest {
 
     @Test
-    private void testMWU() {
-        logger.warn("Testing MWU");
-        MannWhitneyU mwu = new MannWhitneyU();
-        mwu.add(0, MannWhitneyU.USet.SET1);
-        mwu.add(1,MannWhitneyU.USet.SET2);
-        mwu.add(2,MannWhitneyU.USet.SET2);
-        mwu.add(3,MannWhitneyU.USet.SET2);
-        mwu.add(4,MannWhitneyU.USet.SET2);
-        mwu.add(5,MannWhitneyU.USet.SET2);
-        mwu.add(6,MannWhitneyU.USet.SET1);
-        mwu.add(7,MannWhitneyU.USet.SET1);
-        mwu.add(8,MannWhitneyU.USet.SET1);
-        mwu.add(9,MannWhitneyU.USet.SET1);
-        mwu.add(10,MannWhitneyU.USet.SET1);
-        mwu.add(11,MannWhitneyU.USet.SET2);
-        final double z1 = mwu.runOneSidedTest(MannWhitneyU.USet.SET1).getLeft();
-        final double z2 = mwu.runOneSidedTest(MannWhitneyU.USet.SET2).getLeft();
-
-//        Assert.assertEquals(MannWhitneyU.calculateOneSidedU(mwu.getObservations(), MannWhitneyU.USet.SET1), 25L);
-//        Assert.assertEquals(MannWhitneyU.calculateOneSidedU(mwu.getObservations(), MannWhitneyU.USet.SET2), 11L);
-
-        Assert.assertEquals(Math.abs(z1), Math.abs(z2));
-        Assert.assertEquals(z1, 1.072, 0.001);
-        Assert.assertEquals(z2, -1.072, 0.001);
-
-        MannWhitneyU mwu2 = new MannWhitneyU();
-        MannWhitneyU mwuNoDither = new MannWhitneyU(false);
-        for ( int dp : new int[]{2,4,5,6,8} ) {
-            mwu2.add(dp,MannWhitneyU.USet.SET1);
-            mwuNoDither.add(dp,MannWhitneyU.USet.SET1);
-        }
-
-        for ( int dp : new int[]{1,3,7,9,10,11,12,13} ) {
-            mwu2.add(dp,MannWhitneyU.USet.SET2);
-            mwuNoDither.add(dp,MannWhitneyU.USet.SET2);
-        }
-
-//        MannWhitneyU.ExactMode pm = MannWhitneyU.ExactMode.POINT;
-//        MannWhitneyU.ExactMode cm = MannWhitneyU.ExactMode.CUMULATIVE;
-
-        // tests using the hypothesis that set 2 dominates set 1 (U value = 10)
-//        Assert.assertEquals(MannWhitneyU.calculateOneSidedU(mwu2.getObservations(), MannWhitneyU.USet.SET1), 10L);
-//        Assert.assertEquals(MannWhitneyU.calculateOneSidedU(mwu2.getObservations(), MannWhitneyU.USet.SET2), 30L);
-//        Assert.assertEquals(MannWhitneyU.calculateOneSidedU(mwuNoDither.getObservations(), MannWhitneyU.USet.SET1), 10L);
-//        Assert.assertEquals(MannWhitneyU.calculateOneSidedU(mwuNoDither.getObservations(), MannWhitneyU.USet.SET2), 30L);
-
-        final double z3 =  mwu2.runOneSidedTest(MannWhitneyU.USet.SET1).getLeft();
-        final double z3_rev =  mwu2.runOneSidedTest(MannWhitneyU.USet.SET2).getLeft();
-        final double z4 =  mwuNoDither.runOneSidedTest(MannWhitneyU.USet.SET1).getLeft();
-        final double z4_rev =  mwuNoDither.runOneSidedTest(MannWhitneyU.USet.SET2).getLeft();
-
-        Assert.assertEquals(z3, -1.3805, 0.001);
-        Assert.assertEquals(z4, -1.3805, 0.001);
-        Assert.assertEquals(z3_rev, 1.3805, 0.001);
-        Assert.assertEquals(z3_rev, 1.3805, 0.001);
-
-        Pair<Integer,Integer> sizes = mwu2.getSetSizes();
-
-//        Assert.assertEquals(MannWhitneyU.calculatePUniformApproximation(sizes.getLeft(), sizes.getRight(), 10L), 0.4180519701814064, 1e-14);
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(sizes.getLeft(), sizes.getRight(), 10L, false, pm).getRight(), 0.021756021756021756, 1e-14);
-//        Assert.assertEquals(MannWhitneyU.calculatePNormalApproximation(sizes.getLeft(), sizes.getRight(), 10L, false).getRight(), 0.06214143703127617, 1e-14);
-//        logger.warn("Testing two-sided");
-//        Assert.assertEquals((double) mwu2.runTwoSidedTest().getRight(), 2 * 0.021756021756021756, 1e-8);
+    public void testMWU() {
+//        final int[] i0  = new int[]{0,6,7,8,9,10};
+//        final int[] i00 = new int[]{1,2,3,4,5,11};
 //
-//        // tests using the hypothesis that set 1 dominates set 2 (U value = 30) -- empirical should be identical, normall approx close, uniform way off
-//        Assert.assertEquals(MannWhitneyU.calculatePNormalApproximation(sizes.getRight(), sizes.getLeft(), 30L, true).getRight(), 2.0 * 0.08216463976903321, 1e-14);
-//        Assert.assertEquals(MannWhitneyU.calculatePUniformApproximation(sizes.getRight(), sizes.getLeft(), 30L), 0.0023473625009559074, 1e-14);
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(sizes.getRight(), sizes.getLeft(), 30L, false, pm).getRight(), 0.021756021756021756, 1e-14); // note -- exactly same value as above
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(sizes.getRight(), sizes.getLeft(), 29L, false, cm).getRight(), 1.0 - 0.08547008547008, 1e-14); // r does a correction, subtracting 1 from U
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(sizes.getRight(), sizes.getLeft(), 11L, false, cm).getRight(), 0.08547008547008, 1e-14); // r does a correction, subtracting 1 from U
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(sizes.getRight(), sizes.getLeft(), 11L, false, cm).getLeft(), -1.36918910442, 1e-2); // apache inversion set to be good only to 1e-2
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(sizes.getRight(), sizes.getLeft(), 29L, false, cm).getLeft(), 1.36918910442, 1e-2); // apache inversion set to be good only to 1e-2
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(sizes.getRight(), sizes.getLeft(), 29L, false, pm).getLeft(), 1.2558754796642067, 1e-8); // PDF should be similar
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(sizes.getRight(), sizes.getLeft(), 11L, false, pm).getLeft(), -1.2558754796642067, 1e-8); // PDF should be similar
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(4, 5, 10L, false, pm).getRight(), 0.0952381, 1e-5);
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursively(4, 5, 10L, false, pm).getLeft(), 0.0, 1e-14);
+//        Assert.assertEquals(z(todouble(i0), todouble(i00), false), 1.072, 0.001);
+//        Assert.assertEquals(z(todouble(i0), todouble(i00), true), 1.072, 0.001);
+//        Assert.assertEquals(z(todouble(i00), todouble(i0), false), -1.072, 0.001);
+//        Assert.assertEquals(z(todouble(i00), todouble(i0), true),  -1.072, 0.001);
 
-//        logger.warn("Set 1");
-//        Assert.assertEquals((double) mwu2.runOneSidedTest(MannWhitneyU.USet.SET1).getRight(), 0.021756021756021756, 1e-8);
-//        logger.warn("Set 2");
-//        Assert.assertEquals((double) mwu2.runOneSidedTest(MannWhitneyU.USet.SET2).getRight(), 0.021756021756021756, 1e-8);
 
-        MannWhitneyU mwu3 = new MannWhitneyU();
-        for ( int dp : new int[]{0,2,4} ) {
-            mwu3.add(dp,MannWhitneyU.USet.SET1);
+        final int[] i1 = new int[]{2,4,5,6,8};
+        final int[] i2 = new int[]{1,3,7,9,10,11,12,13};
+
+//        Assert.assertEquals(z(todouble(i1), todouble(i2), false),  -1.3805, 0.001);
+        Assert.assertEquals(z1(todouble(i1), todouble(i2), false), -1.3805, 0.001);
+
+        Assert.assertEquals(z(todouble(i1), todouble(i2), true), -1.3805, 0.001);
+        Assert.assertEquals(z(todouble(i2), todouble(i1), false),  1.3805, 0.001);
+        Assert.assertEquals(z(todouble(i2), todouble(i1), true),  1.3805, 0.001);
+
+        final int[] i3 = new int[]{0,2,4};
+        final int[] i4 = new int[]{1,5,6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34};
+
+        Assert.assertEquals(z(todouble(i3), todouble(i4), false), -2.7240756662204, 0.001);
+        Assert.assertEquals(z(todouble(i3), todouble(i4), true), -2.7240756662204, 0.001);
+    }
+
+    private static double[] todouble(final int[] is){
+        final double[] d1 = new double[is.length];
+        for (int i = 0; i < is.length; i++){
+            d1[i] = is[i];
         }
-        for ( int dp : new int[]{1,5,6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34} ) {
-            mwu3.add(dp,MannWhitneyU.USet.SET2);
+        return d1;
+    }
+    private static double z(final double[] d1, final double[] d2, final boolean dither){
+        MannWhitneyU mwu = new MannWhitneyU(dither);
+        for ( double dp : d1 ) {
+            mwu.add(dp,MannWhitneyU.USet.SET1);
         }
-//        long u = MannWhitneyU.calculateOneSidedU(mwu3.getObservations(),MannWhitneyU.USet.SET1);
-        final double z5 = mwu3.runOneSidedTest(MannWhitneyU.USet.SET1).getLeft();
-        Assert.assertEquals(z5, -2.7240756662204, 0.001);
+        for ( double dp : d2 ) {
+            mwu.add(dp,MannWhitneyU.USet.SET2);
+        }
+        final Pair<Double, Double> pair = mwu.runOneSidedTest(MannWhitneyU.USet.SET1);
+        return pair.getLeft();
+    }
 
-//        //logger.warn(String.format("U is: %d",u));
-//        Pair<Integer,Integer> nums = mwu3.getSetSizes();
-//        //logger.warn(String.format("Corrected p is: %.4e",MannWhitneyU.calculatePRecursivelyDoNotCheckValuesEvenThoughItIsSlow(nums.getLeft(),nums.getRight(),u)));
-//        //logger.warn(String.format("Counted sequences: %d",MannWhitneyU.countSequences(nums.getLeft(), nums.getRight(), u)));
-//        //logger.warn(String.format("Possible sequences: %d", (long) Arithmetic.binomial(nums.getLeft()+nums.getRight(),nums.getLeft())));
-//        //logger.warn(String.format("Ratio: %.4e",MannWhitneyU.countSequences(nums.getLeft(),nums.getRight(),u)/Arithmetic.binomial(nums.getLeft()+nums.getRight(),nums.getLeft())));
-//        Assert.assertEquals(MannWhitneyU.calculatePRecursivelyDoNotCheckValuesEvenThoughItIsSlow(nums.getLeft(), nums.getRight(), u), 3.665689149560116E-4, 1e-14);
-//        Assert.assertEquals(MannWhitneyU.calculatePNormalApproximation(nums.getLeft(), nums.getRight(), u, false).getRight(), 0.0032240865760884696, 1e-14);
-//        Assert.assertEquals(MannWhitneyU.calculatePUniformApproximation(nums.getLeft(), nums.getRight(), u), 0.0026195003025784036, 1e-14);
-
+    private static double z1(final double[] d1, final double[] d2, final boolean dither){
+        final MannWhitneyUTest mwu;
+        if (dither) {
+            mwu = new MannWhitneyUTest(NaNStrategy.FIXED, TiesStrategy.RANDOM);
+        } else {
+            mwu = new MannWhitneyUTest(NaNStrategy.FIXED, TiesStrategy.AVERAGE);
+        }
+        final double u = mwu.mannWhitneyU(d1, d2);
+        final double p = mwu.mannWhitneyUTest(d1, d2);
+        final NormalDistribution standardNormal = new NormalDistribution(null, 0, 1);
+        //return 2 * standardNormal.cumulativeProbability(z);
+        return  standardNormal.inverseCumulativeProbability(0.5 * p);
     }
 }
