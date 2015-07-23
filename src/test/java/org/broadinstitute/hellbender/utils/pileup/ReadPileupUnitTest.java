@@ -7,14 +7,16 @@ import htsjdk.samtools.util.Locatable;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
-import org.broadinstitute.hellbender.utils.read.ArtificialSAMUtils;
+import org.broadinstitute.hellbender.utils.read.ArtificialReadUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static htsjdk.samtools.SAMRecord.NO_MAPPING_QUALITY;
@@ -28,7 +30,7 @@ public final class ReadPileupUnitTest {
 
     @BeforeClass
     public void beforeClass() {
-        header = ArtificialSAMUtils.createArtificialSamHeader(1, 1, 1000);
+        header = ArtificialReadUtils.createArtificialSamHeader(1, 1, 1000);
         loc = new SimpleInterval("chr1", 1, 1);
     }
 
@@ -40,23 +42,23 @@ public final class ReadPileupUnitTest {
         final SAMReadGroupRecord readGroupOne = new SAMReadGroupRecord("rg1");
         final SAMReadGroupRecord readGroupTwo = new SAMReadGroupRecord("rg2");
 
-        final SAMFileHeader header = ArtificialSAMUtils.createArtificialSamHeader(1,1,1000);
+        final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeader(1,1,1000);
         header.addReadGroup(readGroupOne);
         header.addReadGroup(readGroupTwo);
 
-        final GATKRead read1 = ArtificialSAMUtils.createArtificialRead(header,"read1",0,1,10);
+        final GATKRead read1 = ArtificialReadUtils.createArtificialRead(header,"read1",0,1,10);
         read1.setAttribute("RG",readGroupOne.getId());
-        final GATKRead read2 = ArtificialSAMUtils.createArtificialRead(header,"read2",0,1,10);
+        final GATKRead read2 = ArtificialReadUtils.createArtificialRead(header,"read2",0,1,10);
         read2.setAttribute("RG",readGroupTwo.getId());
-        final GATKRead read3 = ArtificialSAMUtils.createArtificialRead(header,"read3",0,1,10);
+        final GATKRead read3 = ArtificialReadUtils.createArtificialRead(header,"read3",0,1,10);
         read3.setAttribute("RG",readGroupOne.getId());
-        final GATKRead read4 = ArtificialSAMUtils.createArtificialRead(header,"read4",0,1,10);
+        final GATKRead read4 = ArtificialReadUtils.createArtificialRead(header,"read4",0,1,10);
         read4.setAttribute("RG",readGroupTwo.getId());
-        final GATKRead read5 = ArtificialSAMUtils.createArtificialRead(header,"read5",0,1,10);
+        final GATKRead read5 = ArtificialReadUtils.createArtificialRead(header,"read5",0,1,10);
         read5.setAttribute("RG",readGroupTwo.getId());
-        final GATKRead read6 = ArtificialSAMUtils.createArtificialRead(header,"read6",0,1,10);
+        final GATKRead read6 = ArtificialReadUtils.createArtificialRead(header,"read6",0,1,10);
         read6.setAttribute("RG",readGroupOne.getId());
-        final GATKRead read7 = ArtificialSAMUtils.createArtificialRead(header,"read7",0,1,10);
+        final GATKRead read7 = ArtificialReadUtils.createArtificialRead(header,"read7",0,1,10);
         read7.setAttribute("RG",readGroupOne.getId());
 
         final ReadPileup pileup = new ReadPileup(null, Arrays.asList(read1, read2, read3, read4, read5, read6, read7), 1);
@@ -79,9 +81,9 @@ public final class ReadPileupUnitTest {
 
     @Test(expectedExceptions = GATKException.class)
     public void testException1() {
-        final SAMFileHeader header = ArtificialSAMUtils.createArtificialSamHeader(1,1,1000);
+        final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeader(1,1,1000);
 
-        final GATKRead read1 = ArtificialSAMUtils.createArtificialRead(header,"read1",0,1,10);
+        final GATKRead read1 = ArtificialReadUtils.createArtificialRead(header,"read1",0,1,10);
 
         final ReadPileup pileup = new ReadPileup(null,
                 null,
@@ -90,9 +92,9 @@ public final class ReadPileupUnitTest {
 
     @Test(expectedExceptions = GATKException.class)
     public void testException2() {
-        final SAMFileHeader header = ArtificialSAMUtils.createArtificialSamHeader(1, 1, 1000);
+        final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeader(1, 1, 1000);
 
-        final GATKRead read1 = ArtificialSAMUtils.createArtificialRead(header,"read1",0,1,10);
+        final GATKRead read1 = ArtificialReadUtils.createArtificialRead(header,"read1",0,1,10);
 
         final ReadPileup pileup = new ReadPileup(null,
                 Arrays.asList(read1),
@@ -101,9 +103,9 @@ public final class ReadPileupUnitTest {
 
     @Test(expectedExceptions = GATKException.class)
     public void testException3() {
-        final SAMFileHeader header = ArtificialSAMUtils.createArtificialSamHeader(1, 1, 1000);
+        final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeader(1, 1, 1000);
 
-        final GATKRead read1 = ArtificialSAMUtils.createArtificialRead(header,"read1",0,1,10);
+        final GATKRead read1 = ArtificialReadUtils.createArtificialRead(header,"read1",0,1,10);
 
         final ReadPileup pileup = new ReadPileup(null,
                 Arrays.asList(read1),
@@ -116,11 +118,11 @@ public final class ReadPileupUnitTest {
      */
     @Test
     public void testSplitByNullReadGroups() {
-        final SAMFileHeader header = ArtificialSAMUtils.createArtificialSamHeader(1,1,1000);
+        final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeader(1,1,1000);
 
-        final GATKRead read1 = ArtificialSAMUtils.createArtificialRead(header,"read1",0,1,10);
-        final GATKRead read2 = ArtificialSAMUtils.createArtificialRead(header,"read2",0,1,10);
-        final GATKRead read3 = ArtificialSAMUtils.createArtificialRead(header,"read3",0,1,10);
+        final GATKRead read1 = ArtificialReadUtils.createArtificialRead(header,"read1",0,1,10);
+        final GATKRead read2 = ArtificialReadUtils.createArtificialRead(header,"read2",0,1,10);
+        final GATKRead read3 = ArtificialReadUtils.createArtificialRead(header,"read3",0,1,10);
 
         final ReadPileup pileup = new ReadPileup(null,
                                                            Arrays.asList(read1, read2, read3),
@@ -154,7 +156,7 @@ public final class ReadPileupUnitTest {
 
             final List<PileupElement> elts = new LinkedList<>();
             for ( int i = 0; i < n; i++ ) {
-                final GATKRead read = ArtificialSAMUtils.createArtificialRead(header, "read", 0, 1, readLength);
+                final GATKRead read = ArtificialReadUtils.createArtificialRead(header, "read", 0, 1, readLength);
                 read.setBases(Utils.dupBytes((byte) 'A', readLength));
                 read.setBaseQualities(Utils.dupBytes((byte) 30, readLength));
                 read.setCigar("1M1" + op + "1M");
@@ -261,10 +263,10 @@ public final class ReadPileupUnitTest {
         final byte[] quals2 = Utils.arrayFromArrayWithLength(new byte[]{20}, readlength);
         final String cigar2 = "5M3I2M";
 
-        final SAMFileHeader header = ArtificialSAMUtils.createArtificialSamHeader();
-        final GATKRead read1 = ArtificialSAMUtils.createArtificialRead(header, bases1, quals1, cigar1);
+        final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeader();
+        final GATKRead read1 = ArtificialReadUtils.createArtificialRead(header, bases1, quals1, cigar1);
         read1.setName("read1");
-        final GATKRead read2 = ArtificialSAMUtils.createArtificialRead(header, bases2, quals2, cigar2);
+        final GATKRead read2 = ArtificialReadUtils.createArtificialRead(header, bases2, quals2, cigar2);
         read1.setName("read2");
         final List<GATKRead> reads = Arrays.asList(read1, read2);
         final ReadPileup pu = new ReadPileup(loc, reads, 1);
@@ -306,10 +308,10 @@ public final class ReadPileupUnitTest {
         final byte[] quals2 = Utils.arrayFromArrayWithLength(new byte[]{20}, readlength);
         final String cigar2 = "10M";
 
-        final SAMFileHeader header = ArtificialSAMUtils.createArtificialSamHeader();
-        final GATKRead read1 = ArtificialSAMUtils.createArtificialRead(header, bases1, quals1, cigar1);
+        final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeader();
+        final GATKRead read1 = ArtificialReadUtils.createArtificialRead(header, bases1, quals1, cigar1);
         read1.setName("read1");
-        final GATKRead read2 = ArtificialSAMUtils.createArtificialRead(header, bases2, quals2, cigar2);
+        final GATKRead read2 = ArtificialReadUtils.createArtificialRead(header, bases2, quals2, cigar2);
         read1.setName("read2");
         final List<GATKRead> reads = Arrays.asList(read1, read2);
         final int off = 6;
