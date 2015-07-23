@@ -5,7 +5,7 @@ import org.broadinstitute.hellbender.utils.Utils;
 import java.util.*;
 
 /**
-* Set set where each element can be reference by a unique integer index that runs from
+* Set where each element can be reference by a unique integer index that runs from
 *     0 to the size of the set - 1.
 *
 * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
@@ -134,7 +134,6 @@ public final class IndexedSet<E> extends AbstractSet<E> implements Set<E> {
 
     /**
      * Returns number of elements in the set.
-     * @return never {@code null}.
      */
     @Override
     public int size() {
@@ -147,7 +146,6 @@ public final class IndexedSet<E> extends AbstractSet<E> implements Set<E> {
      * @return {@code true} iff {@code o} is in
      */
     @Override
-    @SuppressWarnings("all")
     public boolean contains(final Object o) {
         return o != null && indexByElement.containsKey(o);
     }

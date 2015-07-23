@@ -3,18 +3,17 @@ package org.broadinstitute.hellbender.utils.haplotype;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
+import htsjdk.samtools.util.Locatable;
 import htsjdk.variant.variantcontext.Allele;
 import org.apache.commons.lang3.ArrayUtils;
-import org.broadinstitute.hellbender.utils.GenomeLoc;
-import org.broadinstitute.hellbender.utils.HasGenomeLocation;
+import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.read.AlignmentUtils;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public final class Haplotype extends Allele implements HasGenomeLocation {
+public final class Haplotype extends Allele {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -24,7 +23,7 @@ public final class Haplotype extends Allele implements HasGenomeLocation {
             Comparator.comparingInt((Haplotype hap) -> hap.getBases().length)
                       .thenComparing(hap -> hap.getBaseString());
 
-    private GenomeLoc genomeLocation = null;
+    private Locatable genomeLocation = null;
     private EventMap eventMap = null;
     private Cigar cigar;
     private int alignmentStartHapwrtRef;
@@ -65,7 +64,7 @@ public final class Haplotype extends Allele implements HasGenomeLocation {
         setCigar(cigar);
     }
 
-    public Haplotype( final byte[] bases, final GenomeLoc loc ) {
+    public Haplotype( final byte[] bases, final Locatable loc ) {
         this(bases, false);
         this.genomeLocation = loc;
     }
@@ -82,14 +81,14 @@ public final class Haplotype extends Allele implements HasGenomeLocation {
      * @param loc a location completely contained within this Haplotype's location
      * @return a new Haplotype within only the bases spanning the provided location, or null for some reason the haplotype would be malformed if
      */
-    public Haplotype trim(final GenomeLoc loc) {
+    public Haplotype trim(final Locatable loc) {
         if ( loc == null ) throw new IllegalArgumentException("Loc cannot be null");
         if ( genomeLocation == null ) throw new IllegalStateException("Cannot trim a Haplotype without containing GenomeLoc");
-        if ( ! genomeLocation.containsP(loc) ) throw new IllegalArgumentException("Can only trim a Haplotype to a containing span.  My loc is " + genomeLocation + " but wanted trim to " + loc);
+        if ( ! new SimpleInterval(genomeLocation).contains(loc) ) throw new IllegalArgumentException("Can only trim a Haplotype to a containing span.  My loc is " + genomeLocation + " but wanted trim to " + loc);
         if ( getCigar() == null ) throw new IllegalArgumentException("Cannot trim haplotype without a cigar " + this);
 
         final int newStart = loc.getStart() - this.genomeLocation.getStart();
-        final int newStop = newStart + loc.size() - 1;
+        final int newStop = newStart + loc.getEnd() - loc.getStart();
         final byte[] newBases = AlignmentUtils.getBasesCoveringRefInterval(newStart, newStop, getBases(), 0, getCigar());
         final Cigar newCigar = AlignmentUtils.trimCigarByReference(getCigar(), newStart, newStop);
 
@@ -131,11 +130,11 @@ public final class Haplotype extends Allele implements HasGenomeLocation {
      * Get the span of this haplotype (may be null)
      * @return a potentially null genome loc
      */
-    public GenomeLoc getLocation() {
+    public Locatable getLocation() {
         return this.genomeLocation;
     }
 
-    public void setGenomeLocation(GenomeLoc genomeLocation) {
+    public void setGenomeLocation(Locatable genomeLocation) {
         this.genomeLocation = genomeLocation;
     }
 
@@ -144,7 +143,7 @@ public final class Haplotype extends Allele implements HasGenomeLocation {
     }
 
     public long getStopPosition() {
-        return genomeLocation.getStop();
+        return genomeLocation.getEnd();
     }
 
     public int getAlignmentStartHapwrtRef() {
@@ -228,7 +227,7 @@ public final class Haplotype extends Allele implements HasGenomeLocation {
      * Get the span of this haplotype (may be null)
      * @return a potentially null genome loc
      */
-    public GenomeLoc getGenomeLocation() {
+    public Locatable getGenomeLocation() {
         return genomeLocation;
     }
 }

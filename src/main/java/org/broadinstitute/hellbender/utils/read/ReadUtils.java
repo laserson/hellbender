@@ -225,6 +225,7 @@ public final class ReadUtils {
         }
     }
 
+
     /**
      * A marker to tell which end of the read has been clipped
      */

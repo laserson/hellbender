@@ -14,6 +14,7 @@ import java.io.Closeable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Class for performing the pair HMM for local alignment. Figure 4.3 in Durbin 1998 book.
@@ -21,18 +22,30 @@ import java.util.Map;
 public abstract class PairHMM implements Closeable{
     protected final static Logger logger = LogManager.getLogger(PairHMM.class);
 
+    public static final byte BASE_QUALITY_SCORE_THRESHOLD = 18; // Base quals less than this value are squashed down to min possible qual
+
     protected boolean constantsAreInitialized = false;
 
     protected byte[] previousHaplotypeBases;
     protected int hapStartIndex;
 
-    public enum HMM_IMPLEMENTATION {
+    public enum Implementation {
         /* Very slow implementation which uses very accurate log10 sum functions. Only meant to be used as a reference test implementation */
-        EXACT,
+        EXACT(() -> new Log10PairHMM(true)),
         /* PairHMM as implemented for the UnifiedGenotyper. Uses log10 sum functions accurate to only 1E-4 */
-        ORIGINAL,
+        ORIGINAL(() -> new Log10PairHMM(false)),
         /* Optimized version of the PairHMM which caches per-read computations and operations in real space to avoid costly sums of log10'ed likelihoods */
-        LOGLESS_CACHING,
+        LOGLESS_CACHING(() -> new LoglessPairHMM());
+
+        private final Supplier<PairHMM> makeHmm;
+
+        private Implementation(final Supplier<PairHMM> makeHmm){
+            this.makeHmm = makeHmm;
+        }
+
+        public PairHMM makeNewHMM() {
+            return makeHmm.get();
+        }
     }
 
     protected int maxHaplotypeLength, maxReadLength;
@@ -63,8 +76,8 @@ public abstract class PairHMM implements Closeable{
      * @throws IllegalArgumentException if readMaxLength or haplotypeMaxLength is less than or equal to zero
      */
     public void initialize( final int readMaxLength, final int haplotypeMaxLength ) throws IllegalArgumentException {
-        if ( readMaxLength <= 0 ) throw new IllegalArgumentException("READ_MAX_LENGTH must be > 0 but got " + readMaxLength);
-        if ( haplotypeMaxLength <= 0 ) throw new IllegalArgumentException("HAPLOTYPE_MAX_LENGTH must be > 0 but got " + haplotypeMaxLength);
+        if ( readMaxLength <= 0 ) throw new IllegalArgumentException("readMaxLength must be > 0 but got " + readMaxLength);
+        if ( haplotypeMaxLength <= 0 ) throw new IllegalArgumentException("haplotypeMaxLength must be > 0 but got " + haplotypeMaxLength);
 
         maxHaplotypeLength = haplotypeMaxLength;
         maxReadLength = readMaxLength;
@@ -206,7 +219,7 @@ public abstract class PairHMM implements Closeable{
                                                                   final byte[] deletionGOP,
                                                                   final byte[] overallGCP,
                                                                   final boolean recacheReadValues,
-                                                                  final byte[] nextHaploytpeBases) throws IllegalStateException, IllegalArgumentException {
+                                                                  final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException {
 
         if ( ! initialized ) throw new IllegalStateException("Must call initialize before calling computeReadLikelihoodGivenHaplotypeLog10");
         if ( haplotypeBases == null ) throw new IllegalArgumentException("haplotypeBases cannot be null");
@@ -225,7 +238,7 @@ public abstract class PairHMM implements Closeable{
 
         // Pre-compute the difference between the current haplotype and the next one to be run
         // Looking ahead is necessary for the ArrayLoglessPairHMM implementation
-        final int nextHapStartIndex =  (nextHaploytpeBases == null || haplotypeBases.length != nextHaploytpeBases.length) ? 0 : findFirstPositionWhereHaplotypesDiffer(haplotypeBases, nextHaploytpeBases);
+        final int nextHapStartIndex =  (nextHaplotypeBases == null || haplotypeBases.length != nextHaplotypeBases.length) ? 0 : findFirstPositionWhereHaplotypesDiffer(haplotypeBases, nextHaplotypeBases);
 
         final double result = subComputeReadLikelihoodGivenHaplotypeLog10(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
 

@@ -1,13 +1,15 @@
 package org.broadinstitute.hellbender.utils;
 
+import org.apache.commons.math3.exception.NotStrictlyPositiveException;
+import org.apache.commons.math3.exception.NumberIsTooLargeException;
 import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.special.Gamma;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * MathUtils is a static class (no instantiation allowed!) with some useful math methods.
@@ -25,12 +27,23 @@ public final class MathUtils {
      */
     public static final double LOG10_OF_E = Math.log10(Math.E);
 
+    public static final double LOG_ONE_HALF = -Math.log10(2.0);
+
     /**
      * Private constructor.  No instantiating this class!
      */
     private MathUtils() {
     }
 
+    /**
+     * Creates a new sample of k ints from [0..n-1], without duplicates.
+     * @throws NumberIsTooLargeException if {@code k > n}.
+     * @throws NotStrictlyPositiveException if {@code k <= 0}.
+     */
+    public static int[] sampleIndicesWithoutReplacement(final int n, final int k) {
+        //No error checking : RandomDataGenetator.nextPermutation does it
+        return Utils.getRandomDataGenerator().nextPermutation(n, k);
+    }
 
     /**
      * A helper class to maintain a cache of log10 values

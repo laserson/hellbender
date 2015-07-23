@@ -3,10 +3,14 @@ package org.broadinstitute.hellbender.utils.pileup;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
 import org.broadinstitute.hellbender.utils.BaseUtils;
+import org.broadinstitute.hellbender.utils.locusiterator.AlignmentStateMachine;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
-import java.util.*;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.List;
 
 public final class PileupElement implements Comparable<PileupElement> {
     private final static LinkedList<CigarElement> EMPTY_LINKED_LIST = new LinkedList<>();
@@ -56,6 +60,35 @@ public final class PileupElement implements Comparable<PileupElement> {
         assert this.currentCigarOffset < read.getCigar().numCigarElements();
         assert this.offsetInCurrentCigar >= 0;
         assert this.offsetInCurrentCigar < currentElement.getLength();
+    }
+
+    /**
+     * Create a pileup element for read at offset.
+     *
+     * offset must correspond to a valid read offset given the read's cigar, or an IllegalStateException will be throw
+     *
+     * @param read a read
+     * @param offset the offset into the bases we'd like to use in the pileup
+     * @return a valid PileupElement with read and at offset
+     */
+    public static PileupElement createPileupForReadAndOffset(final GATKRead read, final int offset) {
+        if ( read == null ) {
+            throw new IllegalArgumentException("read cannot be null");
+        }
+        if ( offset < 0 || offset >= read.getLength() ) {
+            throw new IllegalArgumentException("Invalid offset " + offset + " outside of bounds 0 and " + read.getLength());
+        }
+
+        final AlignmentStateMachine stateMachine = new AlignmentStateMachine(read);
+
+        while ( stateMachine.stepForwardOnGenome() != null ) {
+            if ( stateMachine.getReadOffset() == offset ) {
+                return stateMachine.makePileupElement();
+            }
+        }
+
+        throw new IllegalStateException("Tried to create a pileup for read " + read + " with offset " + offset +
+                " but we never saw such an offset in the alignment state machine");
     }
 
     /**
