@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.engine.ReadsDataSource;
 import org.broadinstitute.hellbender.engine.dataflow.coders.GATKReadCoder;
+import org.broadinstitute.hellbender.engine.dataflow.coders.ReadContextDataCoder;
 import org.broadinstitute.hellbender.engine.dataflow.coders.UUIDCoder;
 import org.broadinstitute.hellbender.engine.dataflow.coders.VariantCoder;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadContextData;
@@ -232,7 +233,7 @@ public final class DataflowUtils {
      */
     public static class LoadReadsFromFileFn extends DoFn<File, GATKRead> {
         private static final long serialVersionUID = 1L;
-        private static final Logger logger = LogManager.getLogger(LoadReadsFromFileFn.class);
+
 
         private final List<SimpleInterval> intervals;
         private final ValidationStringency stringency;

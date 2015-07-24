@@ -18,7 +18,7 @@ import htsjdk.samtools.metrics.StringHeader;
 import htsjdk.samtools.util.Histogram;
 import htsjdk.samtools.util.TestUtil;
 import org.broadinstitute.hellbender.engine.dataflow.GATKTestPipeline;
-import org.broadinstitute.hellbender.engine.dataflow.ReadsSource;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.dataflow.DataflowUtils;
 import org.broadinstitute.hellbender.utils.read.ArtificialReadUtils;
@@ -110,7 +110,7 @@ public final class InsertSizeMetricsTransformUnitTest{
         final Pipeline p = GATKTestPipeline.create();
         DataflowUtils.registerGATKCoders(p);
 
-        ReadsSource source = new ReadsSource(bam.getAbsolutePath(), p);
+        ReadsDataflowSource source = new ReadsDataflowSource(bam.getAbsolutePath(), p);
         PCollection<GATKRead> preads = source.getReadPCollection();
 
         InsertSizeMetricsDataflowTransform transform = new InsertSizeMetricsDataflowTransform(new InsertSizeMetricsDataflowTransform.Arguments());

@@ -84,11 +84,6 @@ installApp.dependsOn downloadGsaLibFile
 build.dependsOn installApp
 check.dependsOn installApp
 
-configurations.all {
-  resolutionStrategy {
-    force 'htsjdk:commons-io:1.134-lb_make_metrics_base_classes_serializable-SNAPSHOT'
- }
-}
 
 dependencies {
     compile files("${System.properties['java.home']}/../lib/tools.jar")
