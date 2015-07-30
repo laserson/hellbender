@@ -20,7 +20,7 @@ import static java.util.Arrays.asList;
 public final class UtilsUnitTest extends BaseTest {
 
     @Test
-    public void testMakePermutations(){
+    public void testMakePermutations() {
 //        * if objects = [A, B, C]
 //        * if N = 1 => [[A], [B], [C]]
 //        * if N = 2 => [[A, A], [B, A], [C, A], [A, B], [B, B], [C, B], [A, C], [B, C], [C, C]]
@@ -54,7 +54,7 @@ public final class UtilsUnitTest extends BaseTest {
 
     @Test
     public void testDupBytes() {
-        Assert.assertEquals(new byte[]{(byte)'a',(byte)'a',(byte)'a'}, Utils.dupBytes((byte)'a', 3));
+        Assert.assertEquals(new byte[]{(byte) 'a', (byte) 'a', (byte) 'a'}, Utils.dupBytes((byte) 'a', 3));
     }
 
     @Test
@@ -65,18 +65,18 @@ public final class UtilsUnitTest extends BaseTest {
 
     @Test
     public void testAppend() {
-        for ( int leftSize : asList(0, 1, 2, 3) ) {
-            for ( final int rightSize : asList(0, 1, 2) ) {
+        for (int leftSize : asList(0, 1, 2, 3)) {
+            for (final int rightSize : asList(0, 1, 2)) {
                 final List<Integer> left = new LinkedList<>();
-                for ( int i = 0; i < leftSize; i++ ) left.add(i);
+                for (int i = 0; i < leftSize; i++) left.add(i);
                 final List<Integer> total = new LinkedList<>();
-                for ( int i = 0; i < leftSize + rightSize; i++ ) total.add(i);
+                for (int i = 0; i < leftSize + rightSize; i++) total.add(i);
 
-                if ( rightSize == 0 )
+                if (rightSize == 0)
                     Assert.assertEquals(Utils.append(left), total);
-                if ( rightSize == 1 )
+                if (rightSize == 1)
                     Assert.assertEquals(Utils.append(left, leftSize), total);
-                if ( rightSize == 2 )
+                if (rightSize == 2)
                     Assert.assertEquals(Utils.append(left, leftSize, leftSize + 1), total);
             }
         }
@@ -84,7 +84,7 @@ public final class UtilsUnitTest extends BaseTest {
     }
 
     @Test
-    public void testWarnUserLines(){
+    public void testWarnUserLines() {
         String message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut" +
                 " labore et dolore magna aliqua.";
         Assert.assertEquals(Utils.warnUserLines(message), new ArrayList<>(asList(
@@ -110,25 +110,25 @@ public final class UtilsUnitTest extends BaseTest {
     }
 
     @Test
-    public void testJoin(){
-        int[] ints = {1,2,3,4};
-        Assert.assertEquals(Utils.join(",", ints),"1,2,3,4");
+    public void testJoin() {
+        int[] ints = {1, 2, 3, 4};
+        Assert.assertEquals(Utils.join(",", ints), "1,2,3,4");
 
-        double[] dbls = {1.0,2.0,3.0,4.0};
-        Assert.assertEquals(Utils.join(",",dbls), "1.0,2.0,3.0,4.0");
+        double[] dbls = {1.0, 2.0, 3.0, 4.0};
+        Assert.assertEquals(Utils.join(",", dbls), "1.0,2.0,3.0,4.0");
 
-        Assert.assertEquals(Utils.join(",", new Object[] {}),"");
-        Assert.assertEquals(Utils.join(",", new Object[] { true , -12, "Blah", this.getClass() }),
+        Assert.assertEquals(Utils.join(",", new Object[]{}), "");
+        Assert.assertEquals(Utils.join(",", new Object[]{true, -12, "Blah", this.getClass()}),
                 "true,-12,Blah," + this.getClass().toString());
-        Assert.assertEquals(Utils.join(",", true, -13, "Blah", this.getClass()),"true,-13,Blah," + this.getClass().toString());
-        Assert.assertEquals(Utils.join(",", Boolean.TRUE),"true");
+        Assert.assertEquals(Utils.join(",", true, -13, "Blah", this.getClass()), "true,-13,Blah," + this.getClass().toString());
+        Assert.assertEquals(Utils.join(",", Boolean.TRUE), "true");
     }
 
     @Test
     public void testEscapeExpressions() {
         String[] expected, actual;
 
-        expected = new String[] {"one", "two", "three"};
+        expected = new String[]{"one", "two", "three"};
         actual = Utils.escapeExpressions("one two three");
         Assert.assertEquals(actual, expected);
         actual = Utils.escapeExpressions(" one two three");
@@ -140,7 +140,7 @@ public final class UtilsUnitTest extends BaseTest {
         actual = Utils.escapeExpressions("  one  two  three  ");
         Assert.assertEquals(actual, expected);
 
-        expected = new String[] {"one", "two", "three four", "five", "six"};
+        expected = new String[]{"one", "two", "three four", "five", "six"};
         actual = Utils.escapeExpressions("one two 'three four' five six");
         Assert.assertEquals(actual, expected);
         actual = Utils.escapeExpressions(" one two 'three four' five six");
@@ -152,7 +152,7 @@ public final class UtilsUnitTest extends BaseTest {
         actual = Utils.escapeExpressions("  one  two  'three four'  five  six  ");
         Assert.assertEquals(actual, expected);
 
-        expected = new String[] {"one two", "three", "four"};
+        expected = new String[]{"one two", "three", "four"};
         actual = Utils.escapeExpressions("'one two' three four");
         Assert.assertEquals(actual, expected);
         actual = Utils.escapeExpressions(" 'one two' three four");
@@ -164,7 +164,7 @@ public final class UtilsUnitTest extends BaseTest {
         actual = Utils.escapeExpressions("  'one two'  three  four  ");
         Assert.assertEquals(actual, expected);
 
-        expected = new String[] {"one", "two", "three four"};
+        expected = new String[]{"one", "two", "three four"};
         actual = Utils.escapeExpressions("one two 'three four'");
         Assert.assertEquals(actual, expected);
         actual = Utils.escapeExpressions(" one two 'three four'");
@@ -191,24 +191,24 @@ public final class UtilsUnitTest extends BaseTest {
             final int[] valuesClone = Arrays.copyOf(values, values.length);
             final List<Integer> list = Utils.asList(valuesClone);
             Assert.assertNotNull(list);
-            Assert.assertEquals(list.size(),values.length);
+            Assert.assertEquals(list.size(), values.length);
             for (int i = 0; i < values.length; i++)
-                Assert.assertEquals((int) list.get(i),values[i]);
+                Assert.assertEquals((int) list.get(i), values[i]);
             for (int i = 0; i < values.length; i++)
                 valuesClone[rdn.nextInt(values.length)] = rdn.nextInt(1000);
             for (int i = 0; i < values.length; i++)
-                Assert.assertEquals((int) list.get(i),valuesClone[i]);
+                Assert.assertEquals((int) list.get(i), valuesClone[i]);
         }
     }
 
     @DataProvider(name = "asIntegerListData")
     public Object[][] asIntegerListData() {
-        return new Object[][] {
-                { null },
+        return new Object[][]{
+                {null},
                 {new int[0]},
                 {new int[]{1, 2, 3, 4, 5}},
                 {new int[]{2}},
-                {new int[]{3,4}}
+                {new int[]{3, 4}}
         };
     }
 
@@ -226,25 +226,25 @@ public final class UtilsUnitTest extends BaseTest {
             final double[] valuesClone = Arrays.copyOf(values, values.length);
             final List<Double> list = Utils.asList(valuesClone);
             Assert.assertNotNull(list);
-            Assert.assertEquals(list.size(),values.length);
+            Assert.assertEquals(list.size(), values.length);
             for (int i = 0; i < values.length; i++)
-                Assert.assertEquals(list.get(i),values[i]);
+                Assert.assertEquals(list.get(i), values[i]);
             for (int i = 0; i < values.length; i++)
                 valuesClone[rdn.nextInt(values.length)] = rdn.nextDouble() * 1000;
             for (int i = 0; i < values.length; i++)
-                Assert.assertEquals(list.get(i),valuesClone[i]);
+                Assert.assertEquals(list.get(i), valuesClone[i]);
         }
     }
 
 
     @DataProvider(name = "asDoubleListData")
     public Object[][] asDoubleListData() {
-        return new Object[][] {
-                { null },
+        return new Object[][]{
+                {null},
                 {new double[0]},
                 {new double[]{1, 2, 3, 4, 5}},
                 {new double[]{2}},
-                {new double[]{3,4}},
+                {new double[]{3, 4}},
                 {new double[]{Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY}}
         };
     }
@@ -262,13 +262,13 @@ public final class UtilsUnitTest extends BaseTest {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNonNullThrows(){
+    public void testNonNullThrows() {
         final Object o = null;
         Utils.nonNull(o);
     }
 
     @Test
-    public void testNonNullDoesNotThrow(){
+    public void testNonNullDoesNotThrow() {
         final Object o = new Object();
         Assert.assertSame(Utils.nonNull(o), o);
     }
@@ -286,7 +286,7 @@ public final class UtilsUnitTest extends BaseTest {
 
     @Test
     public void testSuccessfulRegularReadableFileCheck() {
-        final File expectedFile = createTempFile("Utils-RRFC-test",".txt");
+        final File expectedFile = createTempFile("Utils-RRFC-test", ".txt");
         final File actualFile = Utils.regularReadableUserFile(expectedFile);
         Assert.assertSame(actualFile, expectedFile);
     }
@@ -339,21 +339,65 @@ public final class UtilsUnitTest extends BaseTest {
 
     @Test(dataProvider = "equalRangeData", enabled = true)
     public void testEqualRange(final byte[] array1, final byte[] array2, final int offset1, final int offset2, final int length, final boolean expected) {
-        Assert.assertEquals(Utils.equalRange(array1,offset1,array2,offset2,length),expected);
-        Assert.assertTrue(Utils.equalRange(array1,offset1,array1,offset1,length));
-        Assert.assertTrue(Utils.equalRange(array2,offset2,array2,offset2,length));
+        Assert.assertEquals(Utils.equalRange(array1, offset1, array2, offset2, length), expected);
+        Assert.assertTrue(Utils.equalRange(array1, offset1, array1, offset1, length));
+        Assert.assertTrue(Utils.equalRange(array2, offset2, array2, offset2, length));
 
     }
 
     @DataProvider(name = "equalRangeData")
     public Object[][] equalRangeData() {
-        return new Object[][] {
-                new Object[] { new byte[0] , new byte[0], 0, 0, 0, true},
-                new Object[]  {      "ABCF".getBytes(), "BC".getBytes(), 1,0,2, true },
-                new Object[]  { "ABCF".getBytes(), "".getBytes(), 1,0,0, true },
-                new Object[]  { "ABCF".getBytes(), "ACBF".getBytes(), 0,0, 4, false}
+        return new Object[][]{
+                new Object[]{new byte[0], new byte[0], 0, 0, 0, true},
+                new Object[]{"ABCF".getBytes(), "BC".getBytes(), 1, 0, 2, true},
+                new Object[]{"ABCF".getBytes(), "".getBytes(), 1, 0, 0, true},
+                new Object[]{"ABCF".getBytes(), "ACBF".getBytes(), 0, 0, 4, false}
         };
-
     }
 
+    @DataProvider(name = "booleanOccurrencesData")
+    public Object[][] booleanOccurrencesTestData() {
+        return new Object[][]{
+                new Object[]{ true, new boolean[] { }, 0 },
+                new Object[]{ false, new boolean[] { }, 0 },
+                new Object[]{ true, new boolean[] { true }, 1 },
+                new Object[]{ false, new boolean[] { true }, 0 },
+                new Object[]{ true, new boolean[] { false }, 0 },
+                new Object[]{ true, new boolean[] { true, true, true}, 3},
+                new Object[]{ false, new boolean[] { true, true, true}, 0},
+                new Object[]{ true, new boolean[] { true, true, false}, 2},
+        };
+    }
+
+    @Test(dataProvider = "booleanOccurrencesData")
+    public void testCountBooleanOccurrences(boolean element, boolean[] array, int expected) {
+        Assert.assertEquals(Utils.countBooleanOccurrences(element, array), expected);
+    }
+
+    @Test(expectedExceptions=IllegalArgumentException.class)
+    public void testNullCountBooleanOccurrences() {
+        Assert.assertEquals(Utils.countBooleanOccurrences(true, null), false);
+    }
+
+    @DataProvider(name = "arrayMaxIntData")
+    public Object[][] arrayMaxIntDataTestData() {
+        return new Object[][]{
+                new Object[]{ Arrays.asList(0), 0 },
+                new Object[]{ Arrays.asList(0, 1), 1 },
+                new Object[]{ Arrays.asList(0, -1), 0 },
+                new Object[]{ Arrays.asList(Integer.MAX_VALUE), Integer.MAX_VALUE },
+                new Object[]{ Arrays.asList(0, Integer.MAX_VALUE), Integer.MAX_VALUE },
+                new Object[]{ Arrays.asList(-Integer.MAX_VALUE, Integer.MAX_VALUE), Integer.MAX_VALUE },
+        };
+    }
+
+    @Test(dataProvider="arrayMaxIntData")
+    public void testArrayMaxInt(List<Integer> arr, int expected) {
+        Assert.assertEquals(Utils.arrayMaxInt(arr),  expected);
+    }
+
+    @Test(expectedExceptions=IllegalArgumentException.class)
+    public void testNullArrayMaxInt() {
+        Assert.assertEquals(Utils.arrayMaxInt(null), false);
+    }
 }

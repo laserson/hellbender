@@ -1187,6 +1187,19 @@ public final class GATKVariantContextUtilsUnitTest extends BaseTest {
         return tests.toArray(new Object[][]{});
     }
 
+    @Test(dataProvider = "UpdateGenotypeAfterSubsettingData")
+    public void testUpdateGenotypeAfterSubsetting(final GATKVariantContextUtils.GenotypeAssignmentMethod mode,
+                                                  final double[] likelihoods,
+                                                  final List<Allele> originalGT,
+                                                  final List<Allele> allelesToUse,
+                                                  final List<Allele> expectedAlleles) {
+        final GenotypeBuilder gb = new GenotypeBuilder("test");
+        final double[] log10Likelhoods = MathUtils.normalizeFromLog10(likelihoods, true, false);
+        GATKVariantContextUtils.updateGenotypeAfterSubsetting(originalGT, gb, mode, log10Likelhoods, allelesToUse);
+        final Genotype g = gb.make();
+        Assert.assertEquals(new HashSet<>(g.getAlleles()), new HashSet<>(expectedAlleles));
+    }
+
     @Test()
     public void testSubsetToRef() {
         final Map<Genotype, Genotype> tests = new LinkedHashMap<>();
@@ -1306,6 +1319,21 @@ public final class GATKVariantContextUtilsUnitTest extends BaseTest {
                 Arrays.asList(new GenotypeBuilder(base).alleles(AA).PL(new double[]{-20, -40, 0}).AD(new int[]{0, 21}).GQ(100).make())});
 
         return tests.toArray(new Object[][]{});
+    }
+
+    @Test(dataProvider = "updatePLsAndADData")
+    public void testUpdatePLsAndADData(final VariantContext originalVC,
+                                       final VariantContext selectedVC,
+                                       final List<Genotype> expectedGenotypes) {
+        final VariantContext selectedVCwithGTs = new VariantContextBuilder(selectedVC).genotypes(originalVC.getGenotypes()).make();
+        final GenotypesContext actual = GATKVariantContextUtils.updatePLsAndAD(selectedVCwithGTs, originalVC);
+
+        Assert.assertEquals(actual.size(), expectedGenotypes.size());
+        for ( final Genotype expected : expectedGenotypes ) {
+            final Genotype actualGT = actual.get(expected.getSampleName());
+            Assert.assertNotNull(actualGT);
+            assertGenotypesAreEqual(actualGT, expected);
+        }
     }
 
     // --------------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.stream.StreamSupport;
 
 public final class Utils {
     private Utils(){}
@@ -305,6 +306,25 @@ public final class Utils {
         return bytes;
     }
 
+
+    /**
+     * ` the number of occurrences of a boolean element in a boolean array.
+     * @param element
+     * @param array cannot be null
+     * @return
+     */
+    public static int countBooleanOccurrences(final boolean element, final boolean[] array) {
+        Utils.nonNull(array);
+        int count = 0;
+        for (final boolean b : array) {
+            if (element == b) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     /**
      * Splits expressions in command args by spaces and returns the array of expressions.
      * Expressions may use single or double quotes to group any individual expression, but not both.
@@ -440,7 +460,6 @@ public final class Utils {
      * Checks that the collection does not contain a {@code null} value (throws an {@link IllegalArgumentException} if it does).
      * The implementation calls {@code c.contains(null)} to determine the presence of null.
      * @param c collection
-     * @param message the text message that would be pass to the exception thrown when c contains a null.
      * @throws IllegalArgumentException if a {@code o == null}
      */
     public static <T> void containsNoNull(final Collection<?> c, final String s) {
@@ -463,6 +482,24 @@ public final class Utils {
             throw new IllegalArgumentException("the index points past the last element of the collection or array: " + index + " > " + (length -1));
         }
         return index;
+    }
+
+    /**
+     * Returns the largest integer in an in array
+     * @param array integer array, cannot be null or empty
+     *
+     */
+    public static int arrayMaxInt(final List<Integer> array) {
+        nonNull(array);
+        if (array.size() == 0) {
+            throw new IllegalArgumentException("Array size cannot be 0!");
+        }
+
+        int m = array.get(0);
+        for (int e : array) {
+            m = Math.max(m, e);
+        }
+        return m;
     }
 
     /**

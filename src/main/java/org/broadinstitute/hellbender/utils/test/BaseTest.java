@@ -244,6 +244,27 @@ public abstract class BaseTest {
     }
 
     /**
+     * Creates a temp list file that will be deleted on exit after tests are complete.
+     * @param tempFilePrefix Prefix of the file.
+     * @param lines lines to write to the file.
+     * @return A list file in the temporary directory starting with tempFilePrefix, which will be deleted after the program exits.
+     */
+    public static File createTempListFile(final String tempFilePrefix, final String... lines) {
+        try {
+            final File tempListFile = createTempFile(tempFilePrefix, ".list");
+
+            try (final PrintWriter out = new PrintWriter(tempListFile)) {
+                for (final String line : lines) {
+                    out.println(line);
+                }
+            }
+            return tempListFile;
+        } catch (IOException ex) {
+            throw new UserException("Cannot create temp file: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
      * Log this message so that it shows up inline during output as well as in html reports
      */
     public static void log(final String message) {
