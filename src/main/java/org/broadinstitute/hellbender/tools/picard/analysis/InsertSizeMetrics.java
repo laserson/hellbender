@@ -1,10 +1,7 @@
 package org.broadinstitute.hellbender.tools.picard.analysis;
 
-import htsjdk.samtools.SAMException;
 import htsjdk.samtools.SamPairUtil.PairOrientation;
 import org.broadinstitute.hellbender.metrics.MultiLevelMetrics;
-
-import java.lang.reflect.Field;
 
 /**
  * Metrics about the insert size distribution of a paired-end library, created by the
@@ -16,7 +13,6 @@ import java.lang.reflect.Field;
  */
 @SuppressWarnings("serial")
 public final class InsertSizeMetrics extends MultiLevelMetrics {
-    double TOLERANCE = 0.0001;
     private final static long serialVersionUID = 1l;
 
     /** The MEDIAN insert size of all paired end reads where both ends mapped to the same chromosome. */
@@ -74,67 +70,4 @@ public final class InsertSizeMetrics extends MultiLevelMetrics {
     /** The "width" of the bins, centered around the median, that encompass 100% of all read pairs. */
     public int WIDTH_OF_99_PERCENT;
 
-    @Override
-    /**
-     * An equals method that checks equality by asserting that the classes are of the exact
-     * same type and that all public fields are equal.
-     *
-     * @param o an instance to compare to
-     * @return true if they are equal, false otherwise
-     */
-    public boolean equals(final Object o) {
-        if (o == null) return false;
-        if (o.getClass() != getClass()) return false;
-
-        // Loop through all the fields and check that they are either
-        // null in both objects or equal in both objects
-        for (final Field f : getClass().getFields()) {
-            try {
-                final Object lhs = f.get(this);
-                final Object rhs = f.get(o);
-
-                if (lhs == null) {
-                    if (rhs == null) {
-                        // keep going
-                    }
-                    else if (rhs != null) {
-                        return false;
-                    }
-                }
-                else {
-                    if (lhs.equals(rhs)) {
-                        // keep going
-                    }
-                    else {
-                        return false;
-                    }
-                }
-            }
-            catch (IllegalAccessException iae) {
-                throw new SAMException("Could not read field " + f.getName() + " from a " + getClass().getSimpleName());
-            }
-        }
-
-        // If we got this far all the fields are equal
-        return true;
-    }
-
-    private boolean isFloatingPoint(Object lhs) {
-        return lhs instanceof Double || lhs instanceof Float;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = 0;
-        for (final Field f : getClass().getFields()) {
-            try {
-                final Object fieldValue = f.get(this);
-                final int fieldHash = fieldValue == null ? 0 : fieldValue.hashCode();
-                result = 31 * result + fieldHash;
-            } catch (IllegalAccessException e) {
-                throw new SAMException("Could not read field " + f.getName() + " from a " + getClass().getSimpleName());
-            }
-        }
-        return result;
-    }
 }

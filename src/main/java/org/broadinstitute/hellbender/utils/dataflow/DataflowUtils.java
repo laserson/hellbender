@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.utils.dataflow;
 import com.cloudera.dataflow.hadoop.HadoopIO;
 import com.google.api.services.genomics.model.Read;
 import com.google.cloud.dataflow.sdk.Pipeline;
+import com.google.cloud.dataflow.sdk.coders.CoderFactories;
 import com.google.cloud.dataflow.sdk.coders.SerializableCoder;
 import com.google.cloud.dataflow.sdk.transforms.Create;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
@@ -91,8 +92,8 @@ public final class DataflowUtils {
         p.getCoderRegistry().registerCoder(VariantShard.class, VariantShard.CODER);
 
         //metrics coders
-        p.getCoderRegistry().registerCoder(InsertSizeMetricsDataflowTransform.MetricsFileDataflow.class, SerializableCoder.of(InsertSizeMetricsDataflowTransform.MetricsFileDataflow.class));
-        p.getCoderRegistry().registerCoder(DataflowHistogram.class, SerializableCoder.of(DataflowHistogram.class));
+        p.getCoderRegistry().registerCoder(InsertSizeMetricsDataflowTransform.MetricsFileDataflow.class, CoderFactories.forCoder(SerializableCoder.of(InsertSizeMetricsDataflowTransform.MetricsFileDataflow.class)));
+        p.getCoderRegistry().registerCoder(DataflowHistogram.class, CoderFactories.forCoder(SerializableCoder.of(DataflowHistogram.class)));
     }
 
     /**

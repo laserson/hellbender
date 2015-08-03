@@ -7,11 +7,14 @@ import com.google.cloud.dataflow.sdk.transforms.Combine;
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.Filter;
+import com.google.cloud.dataflow.sdk.transforms.PTransform;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
+import com.google.cloud.dataflow.sdk.values.PCollectionView;
 import com.google.cloud.genomics.dataflow.coders.GenericJsonCoder;
 import com.google.common.collect.Sets;
+import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.metrics.Header;
 import htsjdk.samtools.metrics.MetricBase;
 import htsjdk.samtools.metrics.MetricsFile;
@@ -19,8 +22,6 @@ import htsjdk.samtools.util.Histogram;
 import htsjdk.samtools.util.Log;
 import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollectionDefinition;
-import org.broadinstitute.hellbender.engine.dataflow.DataFlowReadFn;
-import org.broadinstitute.hellbender.engine.dataflow.PTransformSAM;
 import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
@@ -36,10 +37,12 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-public class InsertSizeMetricsDataflowTransform extends PTransformSAM<InsertSizeMetricsDataflowTransform.MetricsFileDataflow<InsertSizeMetrics,Integer>> {
+public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<GATKRead>, PCollection<InsertSizeMetricsDataflowTransform.MetricsFileDataflow<InsertSizeMetrics,Integer>>> {
     public static final long serialVersionUID = 1l;
 
     private final Arguments args;
+    private final PCollectionView<List<Header>> metricHeaders;
+    private final PCollectionView<SAMFileHeader> samHeader;
 
     public static class Arguments implements ArgumentCollectionDefinition, Serializable {
         public final static long serialVersionUID = 1l;
@@ -70,8 +73,11 @@ public class InsertSizeMetricsDataflowTransform extends PTransformSAM<InsertSize
 
     private static final Log log = Log.getInstance(InsertSizeMetricsDataflowTransform.class);
 
-    public InsertSizeMetricsDataflowTransform(Arguments args) {
+    public InsertSizeMetricsDataflowTransform(Arguments args,PCollectionView<SAMFileHeader> samHeader, PCollectionView<List<Header>> metricHeaders) {
+        args.validate();
         this.args = args;
+        this.samHeader = samHeader;
+        this.metricHeaders = metricHeaders;
     }
 
     @Override
@@ -81,23 +87,25 @@ public class InsertSizeMetricsDataflowTransform extends PTransformSAM<InsertSize
 
         PCollection<GATKRead> filtered = input.apply(Filter.by(isSecondInMappedPair)).setName("Filter singletons and first of pair");
 
-        PCollection<KV<InsertSizeAggregationLevel, Integer>> kvPairs = filtered.apply(ParDo.of(new DataFlowReadFn<KV<InsertSizeAggregationLevel, Integer>>(getHeader()) {
-            public final static long serialVersionUID = 1l;
+        PCollection<KV<InsertSizeAggregationLevel, Integer>> kvPairs = filtered.apply(ParDo.withSideInputs(samHeader).of(new DoFn<GATKRead, KV<InsertSizeAggregationLevel, Integer>>() {
+            private final static long serialVersionUID = 1l;
 
             @Override
-            protected void apply(GATKRead read) {
+            public void processElement(ProcessContext c) throws Exception {
+                final GATKRead read = c.element();
+                final SAMFileHeader samFileHeader = c.sideInput(samHeader);
                 Integer metric = computeMetric(read);
-                List<InsertSizeAggregationLevel> aggregationLevels = InsertSizeAggregationLevel.getKeysForAllAggregationLevels(read, getHeader(), true, true, true, true);
+                List<InsertSizeAggregationLevel> aggregationLevels = InsertSizeAggregationLevel.getKeysForAllAggregationLevels(read, samFileHeader, true, true, true, true);
 
-                aggregationLevels.stream().forEach(k -> output(KV.of(k,metric)));
+                aggregationLevels.stream().forEach(k -> c.output(KV.of(k, metric)));
             }
         })).setName("Calculate metric and key")
-                .setCoder(KvCoder.of(GenericJsonCoder.of(InsertSizeAggregationLevel.class),BigEndianIntegerCoder.of()));
+                .setCoder(KvCoder.of(GenericJsonCoder.of(InsertSizeAggregationLevel.class), BigEndianIntegerCoder.of()));
 
         CombineFn<Integer, DataflowHistogram<Integer>, DataflowHistogram<Integer>> combiner = new DataflowHistogramCombiner<>();
         PCollection<KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>> histograms = kvPairs.apply(Combine.<InsertSizeAggregationLevel, Integer,DataflowHistogram<Integer>>perKey(combiner)).setName("Add reads to histograms");
 
-        PCollection<KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>>> reKeyedHistograms = histograms.apply(ParDo.of(new DoFn<KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>,KV<InsertSizeAggregationLevel,KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>>>() {
+        PCollection<KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>>> reKeyedHistograms = histograms.apply(ParDo.of(new DoFn<KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>>, KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>>>>() {
             public final static long serialVersionUID = 1l;
 
             @Override
@@ -123,9 +131,21 @@ public class InsertSizeMetricsDataflowTransform extends PTransformSAM<InsertSize
         })).setName("Drop keys");
 
         PCollection<MetricsFileDataflow<InsertSizeMetrics,Integer>> singleMetricsFile = metricsFilesNoKeys.<PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>>>apply(Combine.<MetricsFileDataflow<InsertSizeMetrics, Integer>, MetricsFileDataflow<InsertSizeMetrics, Integer>>globally(new CombineMetricsFiles()));
-        return singleMetricsFile;
-    }
+        PCollection<MetricsFileDataflow<InsertSizeMetrics,Integer>> singleMetricsFileWithHeaders = singleMetricsFile.apply(
+                ParDo.named("add headers to MetricsFile")
+                        .withSideInputs(this.metricHeaders)
+                        .of(new DoFn<MetricsFileDataflow<InsertSizeMetrics, Integer>, MetricsFileDataflow<InsertSizeMetrics, Integer>>() {
+                            @Override
+                            public void processElement(ProcessContext c) throws Exception {
+                                final List<Header> headers = c.sideInput(metricHeaders);
+                                final MetricsFileDataflow<InsertSizeMetrics, Integer> metricFile = c.element();
+                                headers.stream().forEach(metricFile::addHeader);
+                                c.output(metricFile);
+                            }
+                        }));
 
+        return singleMetricsFileWithHeaders;
+    }
 
     public static class DataflowHistogramCombiner<K extends Comparable<K>> extends Combine.AccumulatingCombineFn<K, DataflowHistogram<K>, DataflowHistogram<K>>{
         public static final long serialVersionUID = 1l;
@@ -135,8 +155,28 @@ public class InsertSizeMetricsDataflowTransform extends PTransformSAM<InsertSize
         }
     }
 
-
-
+//    public static class MetricsFileDataflowCoder<T extends MetricsFileDataflow> extends CustomCoder<T>{
+//
+//        public MetricsFileDataflowCoder(Coder<MetricBase> metricCoder, Coder<Comparable<?>> comparableCoder) {
+//            this.metricCoder = new metricCoder;
+//            this.comparableCoder = new comparableCoder;
+//        }
+//
+//        @Override
+//        public void encode(T value, OutputStream outStream, Context context) throws CoderException, IOException {
+//
+//        }
+//
+//        @Override
+//        public T decode(InputStream inStream, Context context) throws CoderException, IOException {
+//            return null;
+//        }
+//
+//
+//        public MetricsFileDataflowCoder<T> of(Coder<MetricBase> metricCoder, Coder<Comparable<?>> comparableCoder){
+//            return new MetricsFileDataflowCoder(metricCoder, comparableCoder);
+//        }
+//    }
 
     public static class MetricsFileDataflow<BEAN extends MetricBase & Serializable , HKEY extends Comparable<HKEY>> extends MetricsFile<BEAN, HKEY> implements Serializable {
         public static final long serialVersionUID = 1l;
