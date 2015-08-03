@@ -6,12 +6,15 @@ import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner;
 import com.google.cloud.dataflow.sdk.transforms.Combine;
 import com.google.cloud.dataflow.sdk.transforms.Create;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
+import com.google.cloud.dataflow.sdk.transforms.View;
 import com.google.cloud.dataflow.sdk.util.SerializableUtils;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
+import com.google.cloud.dataflow.sdk.values.PCollectionView;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import htsjdk.samtools.SAMFileHeader;
+import htsjdk.samtools.metrics.Header;
 import htsjdk.samtools.metrics.MetricBase;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.metrics.StringHeader;
@@ -113,8 +116,13 @@ public final class InsertSizeMetricsTransformUnitTest{
         ReadsDataflowSource source = new ReadsDataflowSource(bam.getAbsolutePath(), p);
         PCollection<GATKRead> preads = source.getReadPCollection();
 
-        InsertSizeMetricsDataflowTransform transform = new InsertSizeMetricsDataflowTransform(new InsertSizeMetricsDataflowTransform.Arguments());
-        transform.setHeader(source.getHeader());
+        final PCollectionView<SAMFileHeader> headerSingleton = ReadsDataflowSource.getHeaderView(p, source.getHeader());
+
+        final List<Header> defaultHeaders = Arrays.asList(new StringHeader("Time stamp"), new StringHeader("--someString"));
+        final PCollectionView<List<Header>> metricHeaders = p.apply(Create.of(defaultHeaders).withCoder(SerializableCoder.of(Header.class))).apply(View.asList());
+
+
+        InsertSizeMetricsDataflowTransform transform = new InsertSizeMetricsDataflowTransform(new InsertSizeMetricsDataflowTransform.Arguments(), headerSingleton, metricHeaders);
 
         PCollection<InsertSizeMetricsDataflowTransform.MetricsFileDataflow<InsertSizeMetrics,Integer>> presult = preads.apply(transform);
         DirectPipelineRunner.EvaluationResults result = (DirectPipelineRunner.EvaluationResults)p.run();
