@@ -1,54 +1,55 @@
 package org.broadinstitute.hellbender.engine.dataflow.transforms.safe;
 
-import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.coders.CannotProvideCoderException;
-import com.google.cloud.dataflow.sdk.coders.Coder;
-import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
+import com.esotericsoftware.kryo.Kryo;
+import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
-import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
+import com.google.cloud.dataflow.sdk.values.PCollectionView;
+import com.google.cloud.dataflow.sdk.values.TupleTag;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 
 /**
  * Created by davidada on 7/31/15.
  */
 public abstract class SafeDoFn<I, O> extends DoFn<I, O> {
-    Coder<I> coder;
-    public SafeDoFn(Pipeline p) {
-        Class<I> clazz = null;
-        I i = null;
-        try {
-            i = clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        try {
-            this.coder = p.getCoderRegistry().getDefaultCoder(i);
-        } catch (CannotProvideCoderException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public void processElement(ProcessContext c) throws Exception {
-        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-        coder.encode(c.element(), byteOutputStream, Coder.Context.OUTER);
-
-        byte[] bytes = byteOutputStream.toByteArray();
-        ByteArrayInputStream byteInputStream = new ByteArrayInputStream(bytes);
-
-        I copy = coder.decode(byteInputStream, Coder.Context.OUTER);
-
+        Kryo kryo = new Kryo();
+        I copy = kryo.copy(c.element());
         GATKProcessContext gatkProcessContext = new GATKProcessContext(copy, c);
         safeProcessElement(gatkProcessContext);
     }
 
     public abstract void safeProcessElement(GATKProcessContext c) throws Exception;
 
-    public class GATKProcessContext extends AbstractGATKProcessContext<I, O> {
-        GATKProcessContext(I copy, ProcessContext c) {
-            super(copy, c);
+    public class GATKProcessContext {
+        DoFn<I, O>.ProcessContext c;
+        I copy;
+
+        GATKProcessContext(I copy, DoFn<I, O>.ProcessContext c) {
+            this.copy = copy;
+            this.c = c;
+        }
+
+        public I element() {
+            return c.element();
+        }
+
+        public <T> T sideInput(PCollectionView<T> view) {
+            return c.sideInput(view);
+        }
+
+        public PipelineOptions getPipelineOptions() {
+            return c.getPipelineOptions();
+        }
+
+        public void output(O output) {
+            c.output(output);
+        }
+
+        public <T> void sideOutput(TupleTag<T> tag, T output) {
+            c.sideOutput(tag, output);
         }
     }
+
 }

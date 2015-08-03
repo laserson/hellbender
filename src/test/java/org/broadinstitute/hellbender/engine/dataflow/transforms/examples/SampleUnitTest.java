@@ -123,7 +123,7 @@ public final class SampleUnitTest extends BaseTest{
         // Note that we needed to make the Transform a full class (not anonymous).
         // So, you can't test a PTransform by writing it within a test.
         PCollection<KV<ReferenceShard, Integer>> keyedInts =
-                pInts.apply(new TransformExample(p));
+                pInts.apply(new TransformExample());
         List<KV<ReferenceShard, Integer>> e = Lists.newArrayList(s);
         DataflowAssert.that(keyedInts).containsInAnyOrder(e);
 

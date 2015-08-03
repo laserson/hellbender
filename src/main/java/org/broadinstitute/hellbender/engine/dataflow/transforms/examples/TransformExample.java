@@ -15,28 +15,16 @@ import org.broadinstitute.hellbender.engine.dataflow.transforms.safe.SafeDoFn;
  */
 public final class TransformExample extends PTransform<PCollection<Integer>, PCollection<KV<ReferenceShard, Integer>>> {
     private static final long serialVersionUID = 1L;
-    Pipeline p;
-    TransformExample(Pipeline p) {
-        this.p = p;
-    }
+
     @Override
     public PCollection<KV<ReferenceShard, Integer>> apply(PCollection<Integer> input) {
-        return input.apply(ParDo.of(new SafeDoFn<Integer, KV<ReferenceShard, Integer>>(p.getCoderRegistry()) {
+        return input.apply(ParDo.of(new SafeDoFn<Integer, KV<ReferenceShard, Integer>>() {
             @Override
             public void safeProcessElement(GATKProcessContext c) throws Exception {
-
+                Integer i = c.element();
+                c.output(KV.of(new ReferenceShard(i.intValue(), i.toString()), i));
             }
-        }));
-        /*
-            return input.apply(ParDo.of(new DoFn<Integer, KV<ReferenceShard, Integer>>() {
-                private static final long serialVersionUID = 1L;
-                @Override
-                public void processElement(ProcessContext c) throws Exception {
-                    Integer i = c.element();
-                    c.output(KV.of(new ReferenceShard(i.intValue(), i.toString()), i));
-                }
-            }).named("transformExample"));
-            */
+        }).named("transformExample"));
     }
 }
 
