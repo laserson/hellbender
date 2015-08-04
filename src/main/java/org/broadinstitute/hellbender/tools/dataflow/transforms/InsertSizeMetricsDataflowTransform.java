@@ -158,7 +158,6 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
             !r.isDuplicate() &&
             r.getFragmentLength() != 0;
 
-
     private Integer computeMetric(GATKRead read) {
         return Math.abs(read.getFragmentLength());
     }
@@ -205,10 +204,7 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
             accumulator.getHeaders().stream().forEach(sorted::addHeader);
             return sorted;
         }
-
-
     }
-
 
     private static class AddHeadersToMetricsFile extends DoFn<MetricsFileDataflow<InsertSizeMetrics, Integer>, MetricsFileDataflow<InsertSizeMetrics, Integer>> {
         private final static long serialVersionUID = 1l;
