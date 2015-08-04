@@ -13,9 +13,7 @@ import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PCollectionView;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.metrics.Header;
-import htsjdk.samtools.metrics.MetricBase;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.metrics.StringHeader;
 import htsjdk.samtools.util.Histogram;
@@ -28,7 +26,6 @@ import org.broadinstitute.hellbender.tools.dataflow.MetricsFileDataflow;
 import org.broadinstitute.hellbender.tools.picard.analysis.CollectInsertSizeMetrics;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.dataflow.DataflowUtils;
-import org.broadinstitute.hellbender.utils.read.ArtificialReadUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
@@ -41,8 +38,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -201,24 +196,6 @@ public final class InsertSizeMetricsTransformUnitTest{
         return kvs;
     }
 
-    @Test(groups = "dataflow")
-    public void combineHistogramsIntoFileTest(){
-        Combine.CombineFn<KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>>,?, MetricsFileDataflow<InsertSizeMetrics,Integer>> combiner = new CombineHistogramsIntoMetricsFile(10.0, null, 0.05f);
-        final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeader();
-        GATKRead read1 = ArtificialReadUtils.createPair(header, "Read1", 100, 4, 200, true, false).get(0);
-
-        List<DataflowHistogram<Integer>> histograms = Collections.nCopies(4, createDummyHistogram());
-        List<InsertSizeAggregationLevel> keys = Arrays.asList(
-                new InsertSizeAggregationLevel("FR", "ofAlexandria", null, "John"),
-                new InsertSizeAggregationLevel("FR", "ofCongress", null, "John"),
-                new InsertSizeAggregationLevel("FR", null, null, "John"),
-                new InsertSizeAggregationLevel("FR", null, null, null));
-                List<KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>>> keyedHistograms = kvZip(keys, histograms);
-        MetricsFileDataflow<InsertSizeMetrics, Integer> result = combiner.apply(keyedHistograms);
-        Assert.assertEquals(result.getAllHistograms().size(), 1);
-        Assert.assertEquals(result.getAllHistograms().get(0).getCount(), 30);
-    }
-
     private DataflowHistogram<Integer> createDummyHistogram() {
         DataflowHistogram<Integer> h1= new DataflowHistogram<>();
         h1.addInput(10);
@@ -329,8 +306,7 @@ public final class InsertSizeMetricsTransformUnitTest{
                     getSortedHistograms(expected));
             histograms.stream().forEach(kv -> assertHistogramEqualIgnoreZeroes(kv.getKey(), kv.getValue()));
 
-
-        assertMetricsEqual(result.getMetrics(), expected.getMetrics());
+        Assert.assertEquals(result.getMetrics(), expected.getMetrics());
 
         //time stamps and command lines will differ just check the number.
 //        Assert.assertEquals(result.getHeaders().size(), expected.getHeaders().size(), "Incorrect number of headers: " +
@@ -343,13 +319,6 @@ public final class InsertSizeMetricsTransformUnitTest{
         return result.getAllHistograms().stream().sorted(Comparator.comparing(Histogram::getValueLabel)).collect(Collectors.toList());
     }
 
-    private void assertEqualsWithoutOrder(Collection<?> actual, Collection<?> expected){
-        Assert.assertEquals(actual, expected);
-    }
-
-    private void assertMetricsEqual(List<? extends MetricBase> a, List<? extends MetricBase> b){
-        Assert.assertEquals(a.toString(), b.toString());
-    }
 
     @SuppressWarnings("rawtypes")
     private  <A extends Comparable,B extends Comparable> void assertHistogramEqualIgnoreZeroes(Histogram<A> a, Histogram<B> b) {
