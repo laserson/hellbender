@@ -54,21 +54,18 @@ import java.util.stream.IntStream;
 
 public final class InsertSizeMetricsTransformUnitTest{
 
+    private static final String SMALL_BAM = "org/broadinstitute/hellbender/tools/picard/analysis/CollectInsertSizeMetrics/insert_size_metrics_test.bam";
+    private static final String METRICS_PATH = "org/broadinstitute/hellbender/metrics/";
+
     @DataProvider(name = "testFiles")
     public Object[][] testFiles(){
         return new Object[][] {
-                {"org/broadinstitute/hellbender/tools/picard/analysis/CollectInsertSizeMetrics/insert_size_metrics_test.bam",
-                        "org/broadinstitute/hellbender/metrics/insertSizeMetricsResultsAllWays.metric", EnumSet.allOf(MetricAccumulationLevel.class)},
-                {"org/broadinstitute/hellbender/tools/picard/analysis/CollectInsertSizeMetrics/insert_size_metrics_test.bam",
-                "org/broadinstitute/hellbender/metrics/insertSizeMetric_All", EnumSet.of(MetricAccumulationLevel.ALL_READS)},
-                {"org/broadinstitute/hellbender/tools/picard/analysis/CollectInsertSizeMetrics/insert_size_metrics_test.bam",
-                        "org/broadinstitute/hellbender/metrics/insertSizeMetric_Sample", EnumSet.of(MetricAccumulationLevel.SAMPLE)},
-                {"org/broadinstitute/hellbender/tools/picard/analysis/CollectInsertSizeMetrics/insert_size_metrics_test.bam",
-                        "org/broadinstitute/hellbender/metrics/insertSizeMetric_Read_Group", EnumSet.of(MetricAccumulationLevel.READ_GROUP)},
-                {"org/broadinstitute/hellbender/tools/picard/analysis/CollectInsertSizeMetrics/insert_size_metrics_test.bam",
-                        "org/broadinstitute/hellbender/metrics/insertSizeMetric_Library", EnumSet.of(MetricAccumulationLevel.LIBRARY)},
-                {"org/broadinstitute/hellbender/metrics/HiSeq.1mb.1RG.2k_lines.bam",
-                        "org/broadinstitute/hellbender/metrics/largeMetricsRun.metrics", EnumSet.allOf(MetricAccumulationLevel.class)}
+                {SMALL_BAM, METRICS_PATH + "insertSizeMetricsResultsAllWays.metric", EnumSet.allOf(MetricAccumulationLevel.class)},
+                {SMALL_BAM, METRICS_PATH + "insertSizeMetric_All", EnumSet.of(MetricAccumulationLevel.ALL_READS)},
+                {SMALL_BAM, METRICS_PATH + "insertSizeMetric_Sample", EnumSet.of(MetricAccumulationLevel.SAMPLE)},
+                {SMALL_BAM, METRICS_PATH + "insertSizeMetric_Read_Group", EnumSet.of(MetricAccumulationLevel.READ_GROUP)},
+                {SMALL_BAM, METRICS_PATH + "insertSizeMetric_Library", EnumSet.of(MetricAccumulationLevel.LIBRARY)},
+                {METRICS_PATH + "HiSeq.1mb.1RG.2k_lines.bam", METRICS_PATH + "largeMetricsRun.metrics", EnumSet.allOf(MetricAccumulationLevel.class)}
         };
     }
 
