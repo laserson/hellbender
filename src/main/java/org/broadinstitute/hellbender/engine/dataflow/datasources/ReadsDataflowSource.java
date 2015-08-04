@@ -104,6 +104,13 @@ public final class ReadsDataflowSource {
     }
 
     /**
+     * a singleton view of the header to use as a sideInput
+     */
+    public PCollectionView<SAMFileHeader> getHeaderView(){
+        return getHeaderView(this.pipeline, getHeader());
+    }
+
+    /**
      * Create a {@link PCollection<GATKRead>} containing all the reads overlapping the given intervals.
      * Reads that are malformed or unmapped are ignored.
      * @param intervals a list of SimpleIntervals.  These must be non-overlapping intervals or the results are undefined.

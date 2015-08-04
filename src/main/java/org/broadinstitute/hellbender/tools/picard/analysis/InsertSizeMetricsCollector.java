@@ -112,7 +112,9 @@ public final class InsertSizeMetricsCollector extends MultiLevelCollector<Insert
 
         @SuppressWarnings("unchecked")
         public void addMetricsToFile(final MetricsFile<InsertSizeMetrics,Integer> file) {
-            for (final Histogram<Integer> h : this.Histograms.values()) totalInserts += h.getCount();
+            for (final Histogram<Integer> h : this.Histograms.values()) {
+                totalInserts += h.getCount();
+            }
 
             for(final Map.Entry<SamPairUtil.PairOrientation, Histogram<Integer>> entry : Histograms.entrySet()) {
                 final SamPairUtil.PairOrientation pairOrientation = entry.getKey();

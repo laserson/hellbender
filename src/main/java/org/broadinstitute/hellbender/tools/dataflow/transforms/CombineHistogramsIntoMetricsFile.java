@@ -4,6 +4,7 @@ import com.google.cloud.dataflow.sdk.transforms.Combine;
 import com.google.cloud.dataflow.sdk.values.KV;
 import htsjdk.samtools.util.Histogram;
 import org.broadinstitute.hellbender.exceptions.GATKException;
+import org.broadinstitute.hellbender.tools.dataflow.MetricsFileDataflow;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 
 import java.util.Comparator;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class CombineHistogramsIntoMetricsFile
-        extends Combine.CombineFn<KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>>, CombineHistogramsIntoMetricsFile, InsertSizeMetricsDataflowTransform.MetricsFileDataflow<InsertSizeMetrics, Integer>> {
+        extends Combine.CombineFn<KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>>, CombineHistogramsIntoMetricsFile, MetricsFileDataflow<InsertSizeMetrics, Integer>> {
     public final static long serialVersionUID = 1l;
 
     private final double DEVIATIONS;
@@ -29,7 +30,7 @@ public class CombineHistogramsIntoMetricsFile
         this.MINIMUM_PERCENT = minimumPercent;
     }
 
-    public void addHistogramToMetricsFile(InsertSizeAggregationLevel aggregationLevel, DataflowHistogram<Integer> histogram, InsertSizeMetricsDataflowTransform.MetricsFileDataflow<InsertSizeMetrics, Integer> metricsFile, double totalInserts) {
+    public void addHistogramToMetricsFile(InsertSizeAggregationLevel aggregationLevel, DataflowHistogram<Integer> histogram, MetricsFileDataflow<InsertSizeMetrics, Integer> metricsFile, double totalInserts) {
         final double total = histogram.getCount();
 
         // Only include a category if it has a sufficient percentage of the data in it
@@ -144,8 +145,8 @@ public class CombineHistogramsIntoMetricsFile
     }
 
     @Override
-    public InsertSizeMetricsDataflowTransform.MetricsFileDataflow<InsertSizeMetrics, Integer> extractOutput(CombineHistogramsIntoMetricsFile accumulator) {
-        final InsertSizeMetricsDataflowTransform.MetricsFileDataflow<InsertSizeMetrics, Integer> metricsFile = new InsertSizeMetricsDataflowTransform.MetricsFileDataflow<>();
+    public MetricsFileDataflow<InsertSizeMetrics, Integer> extractOutput(CombineHistogramsIntoMetricsFile accumulator) {
+        final MetricsFileDataflow<InsertSizeMetrics, Integer> metricsFile = new MetricsFileDataflow<>();
 
 
         double totalInserts = accumulator.histograms.values()

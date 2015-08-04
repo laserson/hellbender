@@ -18,6 +18,7 @@ import org.broadinstitute.hellbender.cmdline.argumentcollections.OptionalInterva
 import org.broadinstitute.hellbender.cmdline.programgroups.DataFlowProgramGroup;
 import org.broadinstitute.hellbender.engine.dataflow.DataflowCommandLineProgram;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
+import org.broadinstitute.hellbender.tools.dataflow.MetricsFileDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.InsertSizeMetricsDataflowTransform;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
@@ -65,7 +66,7 @@ public class InsertSizeMetricsDataflow extends DataflowCommandLineProgram {
 
         final InsertSizeMetricsDataflowTransform insertSizeMetricsDataflowTransform = new InsertSizeMetricsDataflowTransform(arguments, headerSingleton, metricHeaders);
 
-        final PCollection<InsertSizeMetricsDataflowTransform.MetricsFileDataflow<InsertSizeMetrics, Integer>> metricFile = initialReads.apply(insertSizeMetricsDataflowTransform);
+        final PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> metricFile = initialReads.apply(insertSizeMetricsDataflowTransform);
         final PCollection<String> strings = metricFile.apply(DataflowUtils.convertToString());
         strings.apply(TextIO.Write.to(outputFile));
     }
