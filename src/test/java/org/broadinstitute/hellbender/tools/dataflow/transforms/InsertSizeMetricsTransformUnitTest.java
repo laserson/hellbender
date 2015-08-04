@@ -24,6 +24,7 @@ import org.broadinstitute.hellbender.engine.dataflow.GATKTestPipeline;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
 import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
 import org.broadinstitute.hellbender.tools.dataflow.MetricsFileDataflow;
+import org.broadinstitute.hellbender.tools.picard.analysis.CollectInsertSizeMetrics;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.dataflow.DataflowUtils;
 import org.broadinstitute.hellbender.utils.read.ArtificialReadUtils;
@@ -96,7 +97,43 @@ public final class InsertSizeMetricsTransformUnitTest{
         }
 
         assertMetricsFilesEqualUpToOrder(resultMetrics, expected);
+    }
 
+    @Test(groups = "dataflow", dataProvider = "testFiles")
+    public void testInsertSizeMetricsTransformAgainstCollectInsertSizeMetrics(String bamName, String ignoreMe, Set<MetricAccumulationLevel> accumulationLevels) throws IOException {
+        final CollectInsertSizeMetrics collectInsertSizeMetrics = new CollectInsertSizeMetrics();
+        final File bam = new File(BaseTest.publicTestDir, bamName);
+        collectInsertSizeMetrics.METRIC_ACCUMULATION_LEVEL = accumulationLevels;
+        collectInsertSizeMetrics.HISTOGRAM_FILE = BaseTest.createTempFile("histogram","pdf");
+        collectInsertSizeMetrics.PRODUCE_PLOT = false;
+        collectInsertSizeMetrics.INPUT = bam;
+        final File expectedMetricsFile = BaseTest.createTempFile("expectedMetric", "insertSizeMetric");
+        collectInsertSizeMetrics.OUTPUT = expectedMetricsFile;
+        collectInsertSizeMetrics.runTool();
+
+        final Pipeline p = GATKTestPipeline.create();
+        DataflowUtils.registerGATKCoders(p);
+
+        ReadsDataflowSource source = new ReadsDataflowSource(bam.getAbsolutePath(), p);
+        PCollection<GATKRead> preads = source.getReadPCollection();
+
+        final List<Header> defaultHeaders = Arrays.asList(new StringHeader("Time stamp"), new StringHeader("--someString"));
+        final PCollectionView<List<Header>> metricHeaders = p.apply(Create.of(defaultHeaders).withCoder(SerializableCoder.of(Header.class))).apply(View.asList());
+
+
+        final InsertSizeMetricsDataflowTransform.Arguments args = new InsertSizeMetricsDataflowTransform.Arguments();
+        args.METRIC_ACCUMULATION_LEVEL = accumulationLevels;
+        InsertSizeMetricsDataflowTransform transform = new InsertSizeMetricsDataflowTransform(args, source.getHeaderView(), metricHeaders);
+
+        PCollection<MetricsFileDataflow<InsertSizeMetrics,Integer>> presult = preads.apply(transform);
+        DirectPipelineRunner.EvaluationResults result = (DirectPipelineRunner.EvaluationResults)p.run();
+        final MetricsFileDataflow<InsertSizeMetrics, Integer> resultMetrics = result.getPCollection(presult).get(0);
+        final MetricsFile<InsertSizeMetrics, Integer> expected = new MetricsFileDataflow<>();
+        try( BufferedReader in = new BufferedReader(new FileReader(expectedMetricsFile))){
+            expected.read(in);
+        }
+
+        assertMetricsFilesEqualUpToOrder(resultMetrics, expected);
 
     }
 
@@ -255,7 +292,8 @@ public final class InsertSizeMetricsTransformUnitTest{
         assertMetricsEqual(result.getMetrics(), expected.getMetrics());
 
         //time stamps and command lines will differ just check the number.
-        Assert.assertEquals(result.getHeaders().size(), expected.getHeaders().size());
+        Assert.assertEquals(result.getHeaders().size(), expected.getHeaders().size(), "Incorrect number of headers: " +
+                "expected " + expected.getHeaders().size() + " found " + result.getHeaders().size());
 
     }
 
