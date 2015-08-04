@@ -29,12 +29,12 @@ public final class InsertSizeMetricsCollector extends MultiLevelCollector<Insert
 
     //Explicitly sets the Histogram width, overriding automatic truncation of Histogram tail.
     //Also, when calculating mean and stdev, only bins <= HISTOGRAM_WIDTH will be included.
-    private Integer HistogramWidth;
+    private final Integer histogramWidth;
 
     public InsertSizeMetricsCollector(final Set<MetricAccumulationLevel> accumulationLevels, final List<SAMReadGroupRecord> samRgRecords,
                                       final double minimumPct, final Integer HistogramWidth, final double deviations) {
         this.minimumPct = minimumPct;
-        this.HistogramWidth = HistogramWidth;
+        this.histogramWidth = HistogramWidth;
         this.deviations = deviations;
         setup(accumulationLevels, samRgRecords);
     }
@@ -180,11 +180,14 @@ public final class InsertSizeMetricsCollector extends MultiLevelCollector<Insert
         }
     }
 
+    /**
+     * @return histogramWidth if it was specified, or a calculated width based on the stdev of the input metric
+     */
     private int getWidthToTrimTo(InsertSizeMetrics metrics) {
-        if (HistogramWidth == null) {
+        if (histogramWidth == null) {
             return (int) (metrics.MEDIAN_INSERT_SIZE + (deviations * metrics.MEDIAN_ABSOLUTE_DEVIATION));
         } else {
-            return HistogramWidth;
+            return histogramWidth;
         }
     }
 }
