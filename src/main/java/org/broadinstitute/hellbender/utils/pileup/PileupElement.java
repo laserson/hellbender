@@ -3,14 +3,18 @@ package org.broadinstitute.hellbender.utils.pileup;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
 import org.broadinstitute.hellbender.utils.BaseUtils;
-import org.broadinstitute.hellbender.utils.read.GATKRead;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.locusiterator.AlignmentStateMachine;
+import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
-import java.util.*;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
- * Represents a position in the read pileup.
+ * Represents an individual base in a reads pileup.
  */
 public final class PileupElement {
     //FIXME: this static linked list is modifiable
@@ -26,26 +30,12 @@ public final class PileupElement {
     public static final byte T_FOLLOWED_BY_INSERTION_BASE = (byte) 89;
     public static final byte G_FOLLOWED_BY_INSERTION_BASE = (byte) 90;
 
-    final GATKRead read;         // the read this base belongs to
-    final int offset;            // the offset in the bases array for this base
+    private final GATKRead read;         // the read this base belongs to
+    private final int offset;            // the offset in the bases array for this base
 
     private final CigarElement currentCigarElement;
     private final int currentCigarOffset;
     private final int offsetInCurrentCigar;
-
-    public static final Comparator<PileupElement> COMPARATOR = (p1, p2) -> {
-        if (p1.offset < p2.offset) {
-            return -1;
-        } else if (p1.offset > p2.offset) {
-            return 1;
-        } else if (p1.read.getStart() < p2.read.getStart()) {
-            return -1;
-        } else if (p1.read.getStart() > p2.read.getStart()) {
-            return 1;
-        } else {
-            return 0;
-        }
-    };
 
     /**
      * Create a new pileup element
@@ -57,33 +47,21 @@ public final class PileupElement {
      * @param currentCigarOffset the offset of currentElement in read.getCigar().getElement(currentCigarOffset) == currentElement)
      * @param offsetInCurrentCigar how far into the currentElement are we in our alignment to the genome?
      */
-    public PileupElement(final GATKRead read, final int baseOffset,
-                         final CigarElement currentElement, final int currentCigarOffset,
+    public PileupElement(final GATKRead read,
+                         final int baseOffset,
+                         final CigarElement currentElement,
+                         final int currentCigarOffset,
                          final int offsetInCurrentCigar) {
-        if (currentElement == null ||
-                read == null ||
-                baseOffset < 0 ||
-                baseOffset >= read.getLength() ||
-                currentCigarOffset < 0 ||
-                currentCigarOffset >= read.getCigar().numCigarElements() ||
-                offsetInCurrentCigar < 0 ||
-                offsetInCurrentCigar >= currentElement.getLength()
-                ){
-            throw new IllegalArgumentException();
-        }
+        Utils.nonNull(read, "read is null");
+        Utils.nonNull(currentElement, "currentElement is null");
+        Utils.validIndex(baseOffset, read.getLength());
+        Utils.validIndex(currentCigarOffset, read.getCigar().numCigarElements());
+        Utils.validIndex(offsetInCurrentCigar, currentElement.getLength());
         this.read = read;
         this.offset = baseOffset;
         this.currentCigarElement = currentElement;
         this.currentCigarOffset = currentCigarOffset;
         this.offsetInCurrentCigar = offsetInCurrentCigar;
-    }
-
-    /**
-     * Create a new PileupElement that's a copy of toCopy
-     * @param toCopy the element we want to copy
-     */
-    public PileupElement(final PileupElement toCopy) {
-        this(toCopy.read, toCopy.offset, toCopy.currentCigarElement, toCopy.currentCigarOffset, toCopy.offsetInCurrentCigar);
     }
 
     /**
@@ -96,12 +74,8 @@ public final class PileupElement {
      * @return a valid PileupElement with read and at offset
      */
     public static PileupElement createPileupForReadAndOffset(final GATKRead read, final int offset) {
-        if ( read == null ) {
-            throw new IllegalArgumentException("read cannot be null");
-        }
-        if ( offset < 0 || offset >= read.getLength() ) {
-            throw new IllegalArgumentException("Invalid offset " + offset + " outside of bounds 0 and " + read.getLength());
-        }
+        Utils.nonNull(read, "read is null");
+        Utils.validIndex(offset, read.getLength());
 
         final AlignmentStateMachine stateMachine = new AlignmentStateMachine(read);
 
@@ -285,7 +259,7 @@ public final class PileupElement {
      *
      * @return a non-null list of CigarElements
      */
-    public List<CigarElement> getBetweenNextPosition() {
+    public LinkedList<CigarElement> getBetweenNextPosition() {
         return atEndOfCurrentCigar() ? getBetween(Direction.NEXT) : EMPTY_LINKED_LIST;
     }
 

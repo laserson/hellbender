@@ -1,17 +1,16 @@
 package org.broadinstitute.hellbender.utils.pileup;
 
-import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMReadGroupRecord;
 import htsjdk.samtools.util.Locatable;
-import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.BaseUtils;
-import org.broadinstitute.hellbender.utils.fragments.FragmentCollection;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -22,12 +21,14 @@ public final class ReadPileup implements Iterable<PileupElement>{
     private final List<PileupElement> pileupElements;
 
     /**
-     * Create a new version of a read backed pileup at loc, using the reads and their corresponding
+     * Create a new pileup at loc, using the reads and their corresponding
      * offsets.
-     * Note: This internal-use constructor keeps an alias pointer to the given list.
+     * Note: This constructor keeps an alias to the given list.
      */
     @VisibleForTesting
     ReadPileup(final Locatable loc, final List<PileupElement> pileup) {
+        Utils.nonNull(loc, "loc is null");
+        Utils.nonNull(pileup, "element list is null");
         this.loc = loc;
         this.pileupElements = pileup;
     }
@@ -43,7 +44,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
      * Create a new pileup with the given reads.
      */
     public ReadPileup(final Locatable loc, final List<GATKRead> reads, final int offset) {
-        this(loc, readsOffsets2Pileup(reads, offset));
+        this(loc, readsOffsetsToPileup(reads, offset));
     }
 
 
@@ -51,24 +52,20 @@ public final class ReadPileup implements Iterable<PileupElement>{
      * Create a new pileup with the given reads.
      */
     public ReadPileup(final Locatable loc, final List<GATKRead> reads, final List<Integer> offsets) {
-        this(loc, readsOffsets2Pileup(reads, offsets));
+        this(loc, readsOffsetsToPileup(reads, offsets));
     }
 
     /**
      * Helper routine for converting reads and offset lists to a PileupElement list.
      */
-    private static List<PileupElement> readsOffsets2Pileup(final List<GATKRead> reads, final List<Integer> offsets) {
-        if (reads == null) {
-            throw new GATKException("Illegal null read list in UnifiedReadBackedPileup");
-        }
-        if (offsets == null) {
-            throw new GATKException("Illegal null offsets list in UnifiedReadBackedPileup");
-        }
+    private static List<PileupElement> readsOffsetsToPileup(final List<GATKRead> reads, final List<Integer> offsets) {
+        Utils.nonNull(reads, "Illegal null read list in UnifiedReadBackedPileup");
+        Utils.nonNull(offsets, "Illegal null offsets list in UnifiedReadBackedPileup");
         if (reads.size() != offsets.size()) {
-            throw new GATKException("Reads and offset lists have different sizes!");
+            throw new IllegalArgumentException("Reads and offset lists have different sizes!");
         }
 
-        final List<PileupElement> pileup = new LinkedList<>();
+        final List<PileupElement> pileup = new ArrayList<>(reads.size());
         for (int i = 0; i < reads.size(); i++) {
             pileup.add(PileupElement.createPileupForReadAndOffset(reads.get(i), offsets.get(i)));
         }
@@ -79,112 +76,42 @@ public final class ReadPileup implements Iterable<PileupElement>{
     /**
      * Helper routine for converting reads and a single offset to a PileupElement list.
      */
-    private static List<PileupElement> readsOffsets2Pileup(final List<GATKRead> reads, final int offset) {
-        if (reads == null) {
-            throw new GATKException("Illegal null read list in UnifiedReadBackedPileup");
-        }
-        if (offset < 0) {
-            throw new GATKException("Illegal offset < 0 UnifiedReadBackedPileup");
-        }
-
-        final List<PileupElement> pileup = new LinkedList<>();
-        for (final GATKRead read : reads) {
-            pileup.add(PileupElement.createPileupForReadAndOffset(read, offset));
-        }
-
-        return pileup;
+    private static List<PileupElement> readsOffsetsToPileup(final List<GATKRead> reads, final int offset) {
+        Utils.nonNull(reads, "Illegal null read list");
+        return reads.stream().map(r -> PileupElement.createPileupForReadAndOffset(r, offset)).collect(Collectors.toList());
     }
 
     /**
      * Make a new pileup consisting of elements of this pileup that satisfy the predicate.
+     * NOTE: the new pileup will not be independent of the old one (no deep copy of the underlying data is performed).
      */
     public ReadPileup makeFilteredPileup(final Predicate<PileupElement> filter){
         return new ReadPileup(loc, pileupElements.stream().filter(filter).collect(Collectors.toList()));
     }
 
     /**
-     * Make a new pileup consisting of only reads on the negative strand.
+     * Make a new pileup from elements whose reads have read groups that agree with the given lane ID.
+     * (if they have a name equal to the ID or starting with ID followed by a period ".").
+     * Also, if both laneID and read group ID are {@code null}, the read will be included.
+     * Returns empty pileup if no suitable elements are found.
+     * NOTE: the new pileup will not be independent of the old one (no deep copy of the underlying data is performed).
      */
-    public ReadPileup getPositiveStrandPileup() {
-        return makeFilteredPileup(p -> !p.getRead().isReverseStrand());
-    }
-
-    /**
-     * Make a new pileup consisting of only reads on the negative strand.
-     */
-    public ReadPileup getNegativeStrandPileup() {
-        return makeFilteredPileup(p -> p.getRead().isReverseStrand());
-    }
-
-    /**
-     * Make a new pileup that contains of only bases with quality >= minBaseQ, coming from
-     * reads with mapping qualities >= minMapQ.
-     */
-    public ReadPileup getBaseAndMappingFilteredPileup(final int minBaseQ, final int minMapQ) {
-        return makeFilteredPileup(p -> p.getRead().getMappingQuality() >= minMapQ && (p.isDeletion() || p.getQual() >= minBaseQ));
-    }
-
-    /**
-     * Make a new pileup that contains of only bases with quality >= minBaseQ.
-     */
-    public ReadPileup getBaseFilteredPileup(final int minBaseQ) {
-        return makeFilteredPileup(p -> (p.isDeletion() || p.getQual() >= minBaseQ));
-    }
-
-    /**
-     * Make a new pileup that contains of only bases coming from reads with mapping quality >= minMapQ.
-     */
-    public ReadPileup getMappingFilteredPileup(final int minMapQ) {
-        return makeFilteredPileup(p -> p.getRead().getMappingQuality() >= minMapQ);
-    }
-
-    /**
-     * Makes a new pileup by subsetting reads from a given read group.
-     * Returns null if no reads are from the given read group.
-     * @param targetReadGroupId Identifier for the read group.
-     * @return A read-backed pileup containing only the reads in the given read group.
-     */
-    public ReadPileup getPileupForReadGroup(final String targetReadGroupId) {
-        final ReadPileup pu = makeFilteredPileup(p -> {
+    public ReadPileup getPileupForLane(final String laneID) {
+        return makeFilteredPileup(p -> {
             final GATKRead read = p.getRead();
-            if (targetReadGroupId != null) {
-                if (read.getReadGroup() != null && targetReadGroupId.equals(read.getReadGroup())) {
-                    return true;
-                }
-            } else {
-                if (read.getReadGroup() == null || read.getReadGroup() == null) {
+            final String readGroupID = read.getReadGroup();
+            if (laneID == null && readGroupID == null){
+                return true;
+            }
+            if (laneID != null && readGroupID != null){
+                final boolean laneSame = readGroupID.startsWith(laneID + "."); // lane is the same, but sample identifier is different
+                final boolean exactlySame = readGroupID.equals(laneID);        // in case there is no sample identifier, they have to be exactly the same
+                if (laneSame || exactlySame){
                     return true;
                 }
             }
             return false;
         });
-        return pu.isEmpty() ? null: pu;
-    }
-
-    /**
-     * Make a new pileup from elements whose reads have read groups that agree with the given ID.
-     * (it they have a name equal to the ID or starting with ID followed by a period ".").
-     * Retrurns null if no suitable elements are found.
-     */
-    public ReadPileup getPileupForLane(final String laneID) {
-        final List<PileupElement> filteredTracker = new LinkedList<>();
-        for (final PileupElement p : pileupElements) {
-            final GATKRead read = p.getRead();
-            final String readGroupID = read.getReadGroup();
-            if (laneID != null) {
-                if (readGroupID != null &&
-                        (readGroupID.startsWith(laneID + ".") ||   // lane is the same, but sample identifier is different
-                                readGroupID.equals(laneID)))               // in case there is no sample identifier, they have to be exactly the same
-                {
-                    filteredTracker.add(p);
-                }
-            } else {
-                if (readGroupID == null) {
-                    filteredTracker.add(p);
-                }
-            }
-        }
-        return filteredTracker.size() > 0 ? new ReadPileup(loc, filteredTracker) : null;
     }
 
     /**
@@ -230,7 +157,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
     }
 
     /**
-     * @return the location of this pileup
+     * @return the location of this pileup.
      */
     public Locatable getLocation() {
         return loc;
@@ -239,6 +166,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
     /**
      * Get counts of A, C, G, T in order, which returns a int[4] vector with counts according
      * to BaseUtils.simpleBaseToBaseIndex for each base.
+     * Deletions are not counted.
      */
     public int[] getBaseCounts() {
         final int[] counts = new int[4];
@@ -256,15 +184,11 @@ public final class ReadPileup implements Iterable<PileupElement>{
         return counts;
     }
 
-    /**
-     * Creates a pileup formar string.
-     * In the pileup format, each line represents a genomic position, consisting of chromosome name,
-     * coordinate, reference base, read bases, read qualities and alignment mapping qualities.
-     */
-    public String getPileupString(final Character ref) {
-        return String.format("%s %s %c %s %s",
-                getLocation().getContig(), getLocation().getStart(),    // chromosome name and coordinate
-                ref,                                                     // reference base
+    @Override
+    public String toString() {
+        return String.format("%s %s %s %s",
+                loc.getContig(),
+                loc.getStart(),
                 new String(getBases()),
                 getQualsString());
     }
@@ -277,35 +201,12 @@ public final class ReadPileup implements Iterable<PileupElement>{
     }
 
     /**
-     * The number of deletion bases in this pileup.
+     * Returns the number of elements that satisfy the predicate.
      */
-    public int getNumberOfDeletions() {
+    public int getNumberOfElements(final Predicate<PileupElement> peFilter){
+        Utils.nonNull(peFilter);
         //Note: pileups are small so int is fine.
-        return (int)pileupElements.stream().filter(p -> p.isDeletion()).count();
-    }
-
-    /**
-     * The number of reads with mapping quality 0 in this pileup.
-     */
-    public int getNumberOfMappingQualityZeroReads() {
-        //Note: pileups are small so int is fine.
-        return (int)pileupElements.stream().filter(p -> p.getRead().getMappingQuality() == 0).count();
-    }
-
-    /**
-     * The number of reads with deletions after this element.
-     */
-    public int getNumberOfDeletionsAfterThisElement() {
-        //Note: pileups are small so int is fine.
-        return (int)pileupElements.stream().filter(pe -> pe.isBeforeDeletionStart()).count();
-    }
-
-    /**
-     * The number of reads with insertions after this element.
-     */
-    public int getNumberOfInsertionsAfterThisElement() {
-        //Note: pileups are small so int is fine.
-        return (int)pileupElements.stream().filter(pe -> pe.isBeforeInsertion()).count();
+        return (int)pileupElements.stream().filter(peFilter).count();
     }
 
     /**
@@ -316,77 +217,58 @@ public final class ReadPileup implements Iterable<PileupElement>{
         return pileupElements.stream().map(pe -> pe.getOffset()).collect(Collectors.toList());
     }
 
+    //Extracts an int array by mapping each element in the pileup to int.
+    private int[] extractIntArray(final ToIntFunction<PileupElement> map){
+        return pileupElements.stream().mapToInt(map).toArray();
+    }
+
     /**
      * Returns an array of the bases in this pileup.
      * Note: this call costs O(n) and allocates fresh array each time
      */
     public byte[] getBases() {
-        final byte[] v = new byte[size()];
-        int pos = 0;
-        for (final PileupElement pile : pileupElements) {
-            v[pos++] = pile.getBase();
-        }
-        return v;
+        return toByteArray(extractIntArray(pe -> pe.getBase()));
     }
 
     /**
      * Returns an array of the quals in this pileup.
      * Note: this call costs O(n) and allocates fresh array each time
      */
-    public byte[] getQuals() {
-        final byte[] v = new byte[size()];
-        int pos = 0;
-        for (final PileupElement pile : pileupElements) {
-            v[pos++] = pile.getQual();
+    public byte[] getBaseQuals() {
+        return toByteArray(extractIntArray(pe -> pe.getQual()));
+    }
+
+    //Converts array of ints to array of bytes by hard casting (loses precision if ints are large).
+    private byte[] toByteArray(final int[] ints) {
+        final byte[] bytes = new byte[ints.length];
+        for (int i = 0; i < ints.length; i++) {
+            bytes[i] = (byte)ints[i];
         }
-        return v;
+        return bytes;
     }
 
     /**
      * Get an array of the mapping qualities.
      */
     public int[] getMappingQuals() {
-        final int[] v = new int[size()];
-        int pos = 0;
-        for (final PileupElement pile : pileupElements) {
-            v[pos++] = pile.getRead().getMappingQuality();
-        }
-        return v;
-    }
-
-    private static String quals2String(final byte[] quals) {
-        final StringBuilder qualStr = new StringBuilder();
-        for (int qual : quals) {
-            qual = Math.min(qual, 63);              // todo: fixme, this isn't a good idea
-            final char qualChar = (char) (33 + qual);     // todo: warning, this is illegal for qual > 63
-            qualStr.append(qualChar);
-        }
-
-        return qualStr.toString();
+        return extractIntArray(pe -> pe.getMappingQual());
     }
 
     private String getQualsString() {
-        return quals2String(getQuals());
+        final byte[] quals = getBaseQuals();
+        for (int i = 0; i < quals.length; i++) {
+            quals[i] = (byte) (33 + quals[i]);  //as per SAM spec
+        }
+        return new String(quals);
     }
 
     /**
-     * Returns a new ReadBackedPileup that is sorted by start coordinate of the reads.
+     * Returns a new ReadBackedPileup that is sorted by start coordinate of the reads and then by read name.
+     * NOTE: the new pileup will not be independent of the old one (no deep copy of the underlying data is performed).
      */
     public ReadPileup getStartSortedPileup() {
-
-        final TreeSet<PileupElement> sortedElements = new TreeSet<>(new Comparator<PileupElement>() {
-            @Override
-            public int compare(final PileupElement element1, final PileupElement element2) {
-                final int difference = element1.getRead().getStart() - element2.getRead().getStart();
-                return difference != 0 ? difference : element1.getRead().getName().compareTo(element2.getRead().getName());
-            }
-        });
-
-        sortedElements.addAll(pileupElements);
-        return new ReadPileup(loc, new LinkedList<>(sortedElements));
-    }
-
-    public FragmentCollection<PileupElement> toFragments() {
-        return FragmentCollection.create(this);
+        final List<PileupElement> sortedElements = new ArrayList<>(pileupElements);
+        sortedElements.sort(Comparator.comparingInt((PileupElement pe) -> pe.getRead().getStart()).thenComparing(pe -> pe.getRead().getName()));
+        return new ReadPileup(loc, sortedElements);
     }
 }

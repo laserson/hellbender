@@ -1,5 +1,7 @@
 package org.broadinstitute.hellbender.utils;
 
+import com.google.appengine.repackaged.com.google.common.primitives.Bytes;
+import joptsimple.internal.Strings;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -337,12 +339,32 @@ public final class Utils {
         return newL;
     }
 
-    public static byte [] arrayFromArrayWithLength(byte[] array, int length) {
-        byte [] output = new byte[length];
-        for (int j = 0; j < length; j++)
-            output[j] = array[(j % array.length)];
-        return output;
+    /**
+     * makes an array filled with n copies of the given char.
+     */
+    public static byte[] repeatChars(final char c, final int n) {
+        if (n < 0){
+            throw new IllegalArgumentException("negative length");
+        }
+        final byte[] bytes = new byte[n];
+        for (int i = 0; i < n; i++) {
+            bytes[i] = (byte)c;
+        }
+        return bytes;
     }
+
+    /**
+     * makes an array filled with n copies of the given byte.
+     */
+    public static byte[] repeatBytes(final byte b, final int n) {
+        if (n < 0){
+            throw new IllegalArgumentException("negative length");
+        }
+        final byte[] bytes = new byte[n];
+        Arrays.fill(bytes, b);
+        return bytes;
+    }
+
 
     /**
      * Make all combinations of N size of objects
@@ -453,7 +475,7 @@ public final class Utils {
      * @return the same as the input {@code file}.
      */
     public static File regularReadableUserFile(final File file) {
-        nonNull(file,"unexpected null file reference");
+        nonNull(file, "unexpected null file reference");
         if (!file.canRead()) {
             throw new UserException.CouldNotReadInputFile(file.getAbsolutePath(),"the input file does not exist or cannot be read");
         } else if (!file.isFile()) {
@@ -463,24 +485,4 @@ public final class Utils {
         }
     }
 
-    /**
-     * Concatenates byte arrays
-     * @return a concat of all bytes in allBytes in order
-     */
-    public static byte[] concat(final byte[] ... allBytes) {
-        Utils.nonNull(allBytes, "allBytes is null");
-        int size = 0;
-        for ( final byte[] bytes : allBytes ) {
-            size += bytes.length;
-        }
-
-        final byte[] c = new byte[size];
-        int offset = 0;
-        for ( final byte[] bytes : allBytes ) {
-            System.arraycopy(bytes, 0, c, offset, bytes.length);
-            offset += bytes.length;
-        }
-
-        return c;
-    }
 }

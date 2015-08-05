@@ -160,4 +160,27 @@ public final class PileupElementUnitTest extends LocusIteratorByStateBaseTest {
             Assert.assertEquals(elements.get(i).getOperator(), ops.get(i), "elements doesn't have expected operator at position " + i);
         }
     }
+
+    @Test
+    public void testCreatePileupForReadAndOffset1(){
+        final GATKRead read = ArtificialReadUtils.createArtificialRead("100M");
+        final PileupElement pe0 = PileupElement.createPileupForReadAndOffset(read, 0);
+        final LinkedList<CigarElement> betweenNextPosition = pe0.getBetweenNextPosition();
+        Assert.assertTrue(betweenNextPosition.isEmpty());
+        Assert.assertEquals(pe0.getOffset(), 0);
+
+        final PileupElement pe10 = PileupElement.createPileupForReadAndOffset(read, 10);
+        Assert.assertEquals(pe10.getOffset(), 10);
+    }
+
+    @Test
+    public void testCreatePileupForReadAndOffset2(){
+        final GATKRead read = ArtificialReadUtils.createArtificialRead("10M10D10M");
+        final PileupElement pe10 = PileupElement.createPileupForReadAndOffset(read, 10);
+        Assert.assertEquals(pe10.getOffset(), 10);
+
+        final PileupElement pe15 = PileupElement.createPileupForReadAndOffset(read, 15);
+        Assert.assertEquals(pe15.getOffset(), 15);
+
+    }
 }
