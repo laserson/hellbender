@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.engine.dataflow.transforms.safe;
 import com.esotericsoftware.kryo.Kryo;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
+import com.google.cloud.dataflow.sdk.transforms.join.CoGbkResult;
 import com.google.cloud.dataflow.sdk.values.PCollectionView;
 import com.google.cloud.dataflow.sdk.values.TupleTag;
 import org.objenesis.strategy.SerializingInstantiatorStrategy;
@@ -11,29 +12,28 @@ import org.objenesis.strategy.SerializingInstantiatorStrategy;
 /**
  * Created by davidada on 7/31/15.
  */
-public abstract class SafeDoFn<I, O> extends DoFn<I, O> {
+public abstract class SafeDoFnCoGroupBy<O> extends DoFn<CoGbkResult, O> {
 
     @Override
     public void processElement(ProcessContext c) throws Exception {
         Kryo kryo = new Kryo();
         kryo.setInstantiatorStrategy(new SerializingInstantiatorStrategy());
-        I copy = kryo.copy(c.element());
-        GATKProcessContext gatkProcessContext = new GATKProcessContext(copy, c);
+        GATKProcessContext gatkProcessContext = new GATKProcessContext(c.element(), c);
         safeProcessElement(gatkProcessContext);
     }
 
     public abstract void safeProcessElement(GATKProcessContext c) throws Exception;
 
     public class GATKProcessContext {
-        DoFn<I, O>.ProcessContext c;
-        I copy;
+        ProcessContext c;
+        CoGbkResult copy;
 
-        GATKProcessContext(I copy, DoFn<I, O>.ProcessContext c) {
+        GATKProcessContext(CoGbkResult copy, ProcessContext c) {
             this.copy = copy;
             this.c = c;
         }
 
-        public I element() {
+        public CoGbkResult element() {
             return c.element();
         }
 

@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.dev;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import org.apache.logging.log4j.LogManager;
 import org.broadinstitute.hellbender.dev.pipelines.bqsr.BaseRecalOutput;
+import org.broadinstitute.hellbender.engine.dataflow.transforms.safe.SafeDoFn;
 import org.broadinstitute.hellbender.tools.recalibration.RecalibrationTables;
 
 /**
@@ -10,7 +11,7 @@ import org.broadinstitute.hellbender.tools.recalibration.RecalibrationTables;
  * When subclassing, if you want to write your own start/finishBundle then
  * make sure to call super.startBundle() and super.finishBundle().
  */
-public abstract class DoFnWLog<T,U> extends DoFn<T,U> {
+public abstract class DoFnWLog<T,U> extends SafeDoFn<T,U> {
     private static final long serialVersionUID = 1L;
 
     protected String className;

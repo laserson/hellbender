@@ -114,7 +114,7 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
                         private static final long serialVersionUID = 1L;
 
                         @Override
-                        public void processElement( ProcessContext c ) throws Exception {
+                        public void safeProcessElement( GATKProcessContext c ) throws Exception {
                             c.output(new RecalibrationTables(new StandardCovariateList(new RecalibrationArgumentCollection(), Collections.emptyList())));
                         }
                     }).withSideInputs(header));
@@ -138,7 +138,7 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
                         private static final long serialVersionUID = 1L;
 
                         @Override
-                        public void processElement( ProcessContext c ) throws Exception {
+                        public void safeProcessElement( GATKProcessContext c ) throws Exception {
                             c.output(c.element());
                         }
                     }).withSideInputs(header, recalibrationReport));

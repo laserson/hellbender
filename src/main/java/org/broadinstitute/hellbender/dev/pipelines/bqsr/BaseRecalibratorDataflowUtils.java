@@ -124,7 +124,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
                 private static final long serialVersionUID = 1L;
 
                 @Override
-                public void processElement(ProcessContext c) {
+                public void safeProcessElement(GATKProcessContext c) {
                     RecalibrationTables rt = c.element();
                     BaseRecalibratorWorker baseRecalibratorWorker = BaseRecalibratorWorker.fromArgs(readsHeader, toolArgs);
                     baseRecalibratorWorker.onTraversalStart(null);
@@ -178,7 +178,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
                     private static final long serialVersionUID = 1L;
 
                     @Override
-                    public void processElement(ProcessContext c) {
+                    public void safeProcessElement(GATKProcessContext c) {
                         GATKRead r = c.element();
                         c.output(KV.of(posKey(r), r));
                     }
@@ -192,7 +192,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
                     private static final long serialVersionUID = 1L;
 
                     @Override
-                    public void processElement(ProcessContext c) {
+                    public void safeProcessElement(GATKProcessContext c) {
                         SimpleInterval i = c.element();
                         String firstPos = posKey(i);
                         c.output(KV.of(firstPos, i));
@@ -266,7 +266,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
                 }
 
                 @Override
-                public void processElement(ProcessContext c) throws Exception {
+                public void safeProcessElement(GATKProcessContext c) throws Exception {
                     nBlocks++;
                     // get the reads
                     KV<String, CoGbkResult> e = c.element();
@@ -320,7 +320,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
                     private static final long serialVersionUID = 1L;
 
                     @Override
-                    public void processElement(ProcessContext c) throws Exception {
+                    public void safeProcessElement(GATKProcessContext c) throws Exception {
                         RecalibrationTables tables = c.element();
                         RecalibrationEngine.finalizeRecalibrationTables(tables);
                         c.output(tables);

@@ -51,7 +51,7 @@ public class AddContextDataToRead {
         PCollection<KV<UUID, Iterable<Variant>>> UUIDVariants = kvReadVariants.apply(ParDo.named("KvUUIDVariants").of(new DoFnWLog<KV<GATKRead, Iterable<Variant>>, KV<UUID, Iterable<Variant>>>("KvUUIDVariants") {
             private static final long serialVersionUID = 1L;
             @Override
-            public void processElement(ProcessContext c) throws Exception {
+            public void safeProcessElement(GATKProcessContext c) throws Exception {
                 GATKRead r = c.element().getKey();
                 Iterable<Variant> variants = c.element().getValue();
                 c.output(KV.of(r.getUUID(), variants));
@@ -61,7 +61,7 @@ public class AddContextDataToRead {
         PCollection<KV<UUID, ReferenceBases>> UUIDRefBases = kvReadRefBases.apply(ParDo.named("KvUUIDRefBases").of(new DoFnWLog<KV<GATKRead, ReferenceBases>, KV<UUID, ReferenceBases>>("KvUUIDRefBases") {
             private static final long serialVersionUID = 1L;
             @Override
-            public void processElement(ProcessContext c) throws Exception {
+            public void safeProcessElement(GATKProcessContext c) throws Exception {
                 GATKRead r = c.element().getKey();
                 c.output(KV.of(r.getUUID(), c.element().getValue()));
             }
@@ -78,7 +78,7 @@ public class AddContextDataToRead {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public void processElement(ProcessContext c) throws Exception {
+            public void safeProcessElement(GATKProcessContext c) throws Exception {
                 Iterable<Iterable<Variant>> variants = c.element().getValue().getAll(variantTag);
                 Iterable<ReferenceBases> referenceBases = c.element().getValue().getAll(referenceTag);
 
@@ -110,7 +110,7 @@ public class AddContextDataToRead {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public void processElement(ProcessContext c) throws Exception {
+            public void safeProcessElement(GATKProcessContext c) throws Exception {
                 Iterable<GATKRead> reads = c.element().getValue().getAll(readTag);
                 Iterable<ReadContextData> contextDatas = c.element().getValue().getAll(contextDataTag);
 
@@ -157,7 +157,7 @@ public class AddContextDataToRead {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public void processElement(ProcessContext c) throws Exception {
+            public void safeProcessElement(GATKProcessContext c) throws Exception {
                 Long reads = c.sideInput(readCount);
                 Long readRefBases = c.sideInput(readRefBasesCount);
                 Long readVariants = c.sideInput(readVariantsCount);
@@ -177,7 +177,7 @@ public class AddContextDataToRead {
                 private static final long serialVersionUID = 1L;
 
                 @Override
-                public void processElement(ProcessContext c) throws Exception {
+                public void safeProcessElement(GATKProcessContext c) throws Exception {
                     c.output(c.element().getUUID());
                 }
             }));

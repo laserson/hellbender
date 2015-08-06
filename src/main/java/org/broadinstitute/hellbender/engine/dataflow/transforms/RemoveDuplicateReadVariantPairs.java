@@ -8,6 +8,7 @@ import com.google.cloud.dataflow.sdk.transforms.join.KeyedPCollectionTuple;
 import com.google.cloud.dataflow.sdk.values.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.broadinstitute.hellbender.engine.dataflow.transforms.safe.SafeDoFn;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.variant.Variant;
@@ -54,11 +55,18 @@ public class RemoveDuplicateReadVariantPairs extends PTransform<PCollection<KV<G
         return RemoveReadVariantDupesUtility.addBackReads(input, matchedVariants);
     }
 
-    static class StripToUUIDs extends DoFn<KV<GATKRead, Variant>, KV<UUID, UUID>> {
+    static class StripToUUIDs extends SafeDoFn<KV<GATKRead, Variant>, KV<UUID, UUID>> {
         private static final long serialVersionUID = 1L;
+        /*
         @Override
         public void processElement(ProcessContext c) throws Exception {
             c.output(KV.of(c.element().getKey().getUUID(), c.element().getValue().getUUID()));
+        }*/
+
+        @Override
+        public void safeProcessElement(GATKProcessContext c) throws Exception {
+            c.output(KV.of(c.element().getKey().getUUID(), c.element().getValue().getUUID()));
+
         }
     }
 

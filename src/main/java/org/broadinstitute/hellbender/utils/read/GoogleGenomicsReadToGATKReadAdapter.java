@@ -37,8 +37,8 @@ import java.util.UUID;
  */
 public final class GoogleGenomicsReadToGATKReadAdapter implements GATKRead {
 
-    private final Read genomicsRead;
-    private final UUID uuid;
+    private Read genomicsRead;
+    private UUID uuid;
 
     public GoogleGenomicsReadToGATKReadAdapter( final Read genomicsRead ) {
         this(genomicsRead, UUID.randomUUID());
@@ -53,7 +53,8 @@ public final class GoogleGenomicsReadToGATKReadAdapter implements GATKRead {
         this.uuid = uuid;
     }
 
-    /**
+    public GoogleGenomicsReadToGATKReadAdapter() {}
+     /**
      * Dataflow coder for this adapter class
      */
     public static final CustomCoder<GoogleGenomicsReadToGATKReadAdapter> CODER = new CustomCoder<GoogleGenomicsReadToGATKReadAdapter>() {
