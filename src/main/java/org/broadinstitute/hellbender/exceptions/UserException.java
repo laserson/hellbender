@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.exceptions;
 
 import htsjdk.samtools.CigarOperator;
+import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMSequenceDictionary;
 import org.broadinstitute.hellbender.tools.walkers.variantutils.ValidateVariants;
 import org.broadinstitute.hellbender.utils.help.HelpConstants;
@@ -344,6 +345,16 @@ public class UserException extends RuntimeException {
                             + "\nYou can use the ReorderSam utility to fix this problem: " + HelpConstants.forumPost("discussion/58/companion-utilities-reordersam")
                             + "\n  %s contigs = %s",
                     name, name, ReadUtils.prettyPrintSequenceRecords(dict)));
+        }
+    }
+
+    public static class MisencodedBAM extends UserException {
+        public MisencodedBAM(GATKRead read, String message) {
+            this("(unknown file)", message);
+        }
+
+        public MisencodedBAM(String source, String message) {
+            super(String.format("SAM/BAM/CRAM file %s appears to be using the wrong encoding for quality scores: %s; please see the GATK --help documentation for options related to this error", source, message));
         }
     }
 }
