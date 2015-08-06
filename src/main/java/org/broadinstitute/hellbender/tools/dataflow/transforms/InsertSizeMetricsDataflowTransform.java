@@ -23,7 +23,6 @@ import org.broadinstitute.hellbender.cmdline.ArgumentCollectionDefinition;
 import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
-import org.broadinstitute.hellbender.metrics.MultiLevelMetrics;
 import org.broadinstitute.hellbender.tools.dataflow.MetricsFileDataflow;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -197,7 +196,7 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
         @Override
         public MetricsFileDataflow<InsertSizeMetrics,Integer> extractOutput(MetricsFileDataflow<InsertSizeMetrics,Integer> accumulator) {
             List<InsertSizeMetrics> metrics = new ArrayList<>(accumulator.getMetrics());
-            metrics.sort(MultiLevelMetrics.getComparator());
+            metrics.sort(InsertSizeMetrics.getInsertSizeMetricsComparator());
             MetricsFileDataflow<InsertSizeMetrics, Integer> sorted = new MetricsFileDataflow<>();
             sorted.addAllMetrics(metrics);
             accumulator.getAllHistograms().stream().sorted(Comparator.comparing(Histogram::getValueLabel)).forEach(sorted::addHistogram);

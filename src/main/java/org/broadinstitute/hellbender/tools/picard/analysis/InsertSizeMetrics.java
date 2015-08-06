@@ -3,6 +3,8 @@ package org.broadinstitute.hellbender.tools.picard.analysis;
 import htsjdk.samtools.SamPairUtil.PairOrientation;
 import org.broadinstitute.hellbender.metrics.MultiLevelMetrics;
 
+import java.util.Comparator;
+
 /**
  * Metrics about the insert size distribution of a paired-end library, created by the
  * CollectInsertSizeMetrics program and usually written to a file with the extension
@@ -70,4 +72,11 @@ public final class InsertSizeMetrics extends MultiLevelMetrics {
     /** The "width" of the bins, centered around the median, that encompass 100% of all read pairs. */
     public int WIDTH_OF_99_PERCENT;
 
+    private static final Comparator<InsertSizeMetrics> insertSizeMetricsComparator = Comparator.comparing(i -> i.PAIR_ORIENTATION, Comparator.nullsFirst(Comparator.<PairOrientation>naturalOrder()));
+    private static final Comparator<InsertSizeMetrics> comparator = MultiLevelMetrics.<InsertSizeMetrics>getMultiLevelMetricsComparator()
+            .thenComparing(insertSizeMetricsComparator);
+
+    public static Comparator<InsertSizeMetrics> getInsertSizeMetricsComparator(){
+        return comparator;
+    }
 }

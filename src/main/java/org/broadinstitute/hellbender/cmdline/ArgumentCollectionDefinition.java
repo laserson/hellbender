@@ -14,9 +14,9 @@ public interface ArgumentCollectionDefinition extends Serializable{
     /**
      * Implementing classes can an override this in order to provide custom argument validation that is more complicated
      * than what can be enforced by the argument parser.
-     * @throws UserException.BadArgumentValue
+     * @throws UserException.BadArgumentValue if arguments are invalid
      */
-    default void validate() throws UserException.BadArgumentValue{
+    default void validate(){
         //defaults to valid
     }
 

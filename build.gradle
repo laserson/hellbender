@@ -45,15 +45,12 @@ repositories {
     maven {
         url "https://oss.sonatype.org/content/repositories/snapshots/"
     }
-    maven {
-        url "https://artifactory.broadinstitute.org/artifactory/libs-snapshot/" //broad snapshots
-    }
 }
 
 configurations.all {
     resolutionStrategy {
         force 'com.google.http-client:google-http-client:1.21.0-SNAPSHOT'
-
+    }
 }
 
 jacocoTestReport {
@@ -83,7 +80,6 @@ compileTestJava {
 installApp.dependsOn downloadGsaLibFile
 build.dependsOn installApp
 check.dependsOn installApp
-
 
 dependencies {
     compile files("${System.properties['java.home']}/../lib/tools.jar")
