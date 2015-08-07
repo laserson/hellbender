@@ -69,7 +69,7 @@ public class ErrorModel {
             if (refSampleVC.isIndel()) {
                 pairModel = new PairHMMIndelErrorModel(UAC.INDEL_GAP_OPEN_PENALTY, UAC.INDEL_GAP_CONTINUATION_PENALTY,
                         UAC.OUTPUT_DEBUG_INDEL_INFO, UAC.pairHMM);
-                IndelGenotypeLikelihoodsCalculationModel.getHaplotypeMapFromAlleles(refSampleVC.getAlleles(), refContext, refContext.getLocus(), haplotypeMap); // will update haplotypeMap adding elements
+                IndelGenotypeLikelihoodsCalculationModel.getHaplotypeMapFromAlleles(refSampleVC.getAlleles(), refContext, refContext.getInterval(), haplotypeMap); // will update haplotypeMap adding elements
             }
         }
 
@@ -161,7 +161,7 @@ public class ErrorModel {
         if (DEBUG)
             System.out.format("PE: base:%s isNextToDel:%b isNextToIns:%b eventBases:%s eventLength:%d Allele:%s RefAllele:%s\n",
                 pileupElement.getBase(), pileupElement.isBeforeDeletionStart(),
-                pileupElement.isBeforeInsertion(),pileupElement.getBasesOfImmediatelyFollowingInsertion(), pileupElement.getLengthOfImmediatelyFollowingIndel(), allele.toString(), refAllele.toString());
+                pileupElement.isBeforeInsertion(), pileupElement.getBasesOfImmediatelyFollowingInsertion(), pileupElement.getLengthOfImmediatelyFollowingIndel(), allele.toString(), refAllele.toString());
 
         //pileupElement.
         // if test allele is ref, any base mismatch, or any insertion/deletion at start of pileup count as mismatch
@@ -269,4 +269,5 @@ public class ErrorModel {
         }
         return n;
     }
+
 }

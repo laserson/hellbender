@@ -8,10 +8,7 @@ import org.broadinstitute.hellbender.utils.locusiterator.AlignmentStateMachine;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
-import java.util.Deque;
-import java.util.EnumSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents an individual base in a reads pileup.
@@ -436,5 +433,43 @@ public final class PileupElement {
      */
     private boolean isBefore(final List<CigarElement> elements, final CigarOperator op) {
         return ! elements.isEmpty() && elements.get(0).getOperator() == op;
+    }
+
+    /**
+     * Get the bases for an insertion that immediately follows this alignment state, or null if none exists
+     *
+     * @see #getLengthOfImmediatelyFollowingIndel() for details on the meaning of immediately.
+     *
+     * If the immediately following state isn't an insertion, returns null
+     *
+     * @return actual sequence of inserted bases, or a null if the event is a deletion or if there is no event in the associated read.
+     */
+    public String getBasesOfImmediatelyFollowingInsertion() {
+        final CigarElement element = getNextIndelCigarElement();
+        if ( element != null && element.getOperator() == CigarOperator.I ) {
+            final int getFrom = offset + 1;
+            final byte[] bases = Arrays.copyOfRange(read.getBases(), getFrom, getFrom + element.getLength());
+            return new String(bases);
+        } else
+            return null;
+    }
+
+
+    /**
+     * Get the length of an immediately following insertion or deletion event, or 0 if no such event exists
+     *
+     * Only returns a positive value when this pileup element is immediately before an indel.  Being
+     * immediately before a deletion means that this pileup element isn't an deletion, and that the
+     * next genomic alignment for this read is a deletion.  For the insertion case, this means
+     * that an insertion cigar occurs immediately after this element, between this one and the
+     * next genomic position.
+     *
+     * Note this function may be expensive, so multiple uses should be cached by the caller
+     *
+     * @return length of the event (number of inserted or deleted bases), or 0
+     */
+    public int getLengthOfImmediatelyFollowingIndel() {
+        final CigarElement element = getNextIndelCigarElement();
+        return element == null ? 0 : element.getLength();
     }
 }

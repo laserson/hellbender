@@ -103,7 +103,7 @@ abstract class ExactAFCalculator extends AFCalculator {
             return vc;
         else if (altAlleleReduction != 0) {
             logger.warn("this tool is currently set to genotype at most " + maximumAlternativeAlleles
-                    + " alternate alleles in a given context, but the context at " + vc.getChr() + ":" + vc.getStart()
+                    + " alternate alleles in a given context, but the context at " + vc.getContig() + ":" + vc.getStart()
                     + " has " + (vc.getAlternateAlleles().size())
                     + " alternate alleles so only the top alleles will be used; see the --max_alternate_alleles argument");
 

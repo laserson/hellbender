@@ -239,4 +239,12 @@ public final class ReferenceContext implements Iterable<Byte> {
         final int sequenceLength = dataSource.getSequenceDictionary().getSequence(locus.getContig()).getSequenceLength();
         return Math.min(locus.getEnd() + windowTrailingBases, sequenceLength);
     }
+
+    /**
+     * Get the base at the given locus.
+     * @return The base at the given locus from the reference.
+     */
+    public byte getBase() {
+        return getBases()[(interval.getStart() - window.getStart())];
+    }
 }

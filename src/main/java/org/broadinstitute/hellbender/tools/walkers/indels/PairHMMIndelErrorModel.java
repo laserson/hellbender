@@ -221,7 +221,7 @@ public class PairHMMIndelErrorModel {
      * @return true if the read needs to be clipped, false otherwise
      */
     protected static boolean mustClipDownstream(final GATKRead read, final int refWindowStop) {
-        return ( !read.isEmpty() && read.getSoftStart() < refWindowStop && read.getSoftStart() + read.getReadLength() - 1 > refWindowStop );
+        return ( !read.isEmpty() && ReadUtils.getSoftStart(read) < refWindowStop && ReadUtils.getSoftStart(read) + read.getLength() - 1 > refWindowStop );
     }
 
     /**
@@ -232,7 +232,7 @@ public class PairHMMIndelErrorModel {
      * @return true if the read needs to be clipped, false otherwise
      */
     protected static boolean mustClipUpstream(final GATKRead read, final int refWindowStart) {
-        return ( !read.isEmpty() && read.getSoftStart() < refWindowStart && read.getSoftEnd() > refWindowStart );
+        return ( !read.isEmpty() && ReadUtils.getSoftStart(read) < refWindowStart && ReadUtils.getSoftEnd(read) > refWindowStart );
     }
 
     public synchronized double[][] computeGeneralReadHaplotypeLikelihoods(final ReadPileup pileup,
@@ -262,14 +262,14 @@ public class PairHMMIndelErrorModel {
                 final int refWindowStop  = ref.getWindow().getEnd() - trailingBases;
 
                 if (DEBUG) {
-                    System.out.format("Read Name:%s, aln start:%d aln stop:%d orig cigar:%s\n",p.getRead().getName(), p.getRead().getStart(), p.getRead().getEnd(), p.getRead().getCigarString());
+                    System.out.format("Read Name:%s, aln start:%d aln stop:%d orig cigar:%s\n",p.getRead().getName(), p.getRead().getStart(), p.getRead().getEnd(), p.getRead().getCigar());
                 }
 
                 GATKRead read = ReadClipper.hardClipAdaptorSequence(p.getRead());
 
                 // if the read extends beyond the downstream (right) end of the reference window, clip it
                 if ( mustClipDownstream(read, refWindowStop) )
-                    read = ReadClipper.hardClipByReadCoordinates(read, refWindowStop - read.getSoftStart() + 1, read.getReadLength() - 1);
+                    read = ReadClipper.hardClipByReadCoordinates(read, refWindowStop - ReadUtils.getSoftStart(read) + 1, read.getLength() - 1);
 
                 // if the read extends beyond the upstream (left) end of the reference window, clip it
                 if ( mustClipUpstream(read, refWindowStart) )
@@ -285,19 +285,19 @@ public class PairHMMIndelErrorModel {
                     continue;
 
                 // get bases of candidate haplotypes that overlap with reads
-                final long readStart = read.getSoftStart();
-                final long readEnd = read.getSoftEnd();
+                final long readStart = ReadUtils.getSoftStart(read);
+                final long readEnd = ReadUtils.getSoftEnd(read);
 
                 // see if we want to use soft clipped bases. Aligners may soft clip all bases at insertions because they don't match,
                 // but they're actually consistent with the insertion!
                 // Rule: if a read starts in interval [eventStart-eventLength,eventStart+1] and we are at an insertion, we'll use all soft clipped bases at the beginning.
                 // Conversely, if a read ends at [eventStart,eventStart+eventLength] we'll use all soft clipped bases in the end of the read.
-                final long eventStartPos = ref.getLocus().getStart();
+                final long eventStartPos = ref.getInterval().getStart();
 
                 // compute total number of clipped bases (soft or hard clipped) and only use them if necessary
                 final boolean softClips = useSoftClippedBases(read, eventStartPos, eventLength);
-                final int numStartSoftClippedBases = softClips ? read.getStart()- read.getSoftStart() : 0;
-                final int numEndSoftClippedBases = softClips ? read.getSoftEnd()- read.getAlignmentEnd() : 0 ;
+                final int numStartSoftClippedBases = softClips ? read.getStart() - ReadUtils.getSoftStart(read) : 0;
+                final int numEndSoftClippedBases = softClips ? ReadUtils.getSoftEnd(read)- read.getEnd() : 0 ;
                 final byte [] unclippedReadBases = read.getBases();
                 final byte [] unclippedReadQuals = read.getBaseQualities();
 

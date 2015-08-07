@@ -127,6 +127,13 @@ public final class PerReadAlleleLikelihoodMap {
         likelihoodReadMap.clear();
     }
 
+    public Map<Allele,Double> getLikelihoodsAssociatedWithPileupElement(final PileupElement p) {
+        if (!likelihoodReadMap.containsKey(p.getRead()))
+            return null;
+
+        return likelihoodReadMap.get(p.getRead());
+    }
+
     /**
      * Returns the set of reads stores in the map.
      */
