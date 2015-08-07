@@ -1,4 +1,4 @@
-package org.broadinstitute.hellbender.tools.dataflow.transforms;
+package org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize;
 
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.util.Key;

@@ -1,4 +1,4 @@
-package org.broadinstitute.hellbender.tools.dataflow.transforms;
+package org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize;
 
 import com.google.cloud.dataflow.sdk.coders.BigEndianIntegerCoder;
 import com.google.cloud.dataflow.sdk.coders.KvCoder;
@@ -23,7 +23,8 @@ import org.broadinstitute.hellbender.cmdline.ArgumentCollectionDefinition;
 import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
-import org.broadinstitute.hellbender.tools.dataflow.MetricsFileDataflow;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.DataflowHistogram;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 

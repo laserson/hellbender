@@ -1,4 +1,4 @@
-package org.broadinstitute.hellbender.tools.dataflow.transforms;
+package org.broadinstitute.hellbender.tools.dataflow.transforms.metrics;
 
 import com.google.cloud.dataflow.sdk.coders.DefaultCoder;
 import com.google.cloud.dataflow.sdk.coders.SerializableCoder;

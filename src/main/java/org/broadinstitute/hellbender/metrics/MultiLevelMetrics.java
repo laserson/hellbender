@@ -1,11 +1,10 @@
 package org.broadinstitute.hellbender.metrics;
 
-import htsjdk.samtools.metrics.MetricBase;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.SerializableMetric;
 
-import java.io.Serializable;
 import java.util.Comparator;
 
-public abstract class MultiLevelMetrics extends MetricBase implements Serializable{
+public abstract class MultiLevelMetrics extends SerializableMetric{
     private static final long serialVersionUID = 1l;
 
     /** The sample to which these metrics apply.  If null, it means they apply
