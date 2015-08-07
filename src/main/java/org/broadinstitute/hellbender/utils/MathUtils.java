@@ -578,6 +578,23 @@ public final class MathUtils {
         return minI;
     }
 
+    public static int minElementIndex(final int[] array) {
+        if (array == null || array.length == 0)
+            throw new IllegalArgumentException("Array cannot be null!");
+
+        int minI = 0;
+        for (int i = 1; i < array.length; i++) {
+            if (array[i] < array[minI])
+                minI = i;
+        }
+
+        return minI;
+    }
+
+    public static int arrayMin(final int[] array) {
+        return array[minElementIndex(array)];
+    }
+
     public static int maxElementIndex(final double[] array) {
         return maxElementIndex(array, array.length);
     }
@@ -668,6 +685,20 @@ public final class MathUtils {
             return log10Gamma(x + 1);
         else
             return Log10FactorialCache.get(x);
+    }
+
+    /**
+     * Converts a real space array of numbers (typically probabilities) into a log10 array
+     *
+     * @param prRealSpace
+     * @return
+     */
+    public static double[] toLog10(final double[] prRealSpace) {
+        final double[] log10s = new double[prRealSpace.length];
+        for (int i = 0; i < prRealSpace.length; i++) {
+            log10s[i] = Math.log10(prRealSpace[i]);
+        }
+        return log10s;
     }
 
     /**
