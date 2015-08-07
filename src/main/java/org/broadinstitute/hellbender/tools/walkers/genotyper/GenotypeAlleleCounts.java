@@ -55,7 +55,7 @@ import java.util.List;
  *
  * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
  */
-public class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCounts> {
+public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCounts> {
 
     private double log10CombinationCount;
 
@@ -105,11 +105,15 @@ public class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCounts> {
      * @param index the genotype index.
      */
     private GenotypeAlleleCounts(final int ploidy, final int index, final int... sortedAlleleCounts) {
+        this(ploidy, index, sortedAlleleCounts, sortedAlleleCounts.length >> 1, -1);
+    }
+
+    private GenotypeAlleleCounts(final int ploidy, final int index, final int[] sortedAlleleCounts, final int distinctAlleleCount, final double log10CombinationCount){
         this.ploidy = ploidy;
-        this.sortedAlleleCounts = sortedAlleleCounts;
-        distinctAlleleCount = sortedAlleleCounts.length >> 1;
-        log10CombinationCount = -1;
         this.index = index;
+        this.sortedAlleleCounts = sortedAlleleCounts;
+        this.distinctAlleleCount = distinctAlleleCount;
+        this.log10CombinationCount = log10CombinationCount;
     }
 
     /**
@@ -654,19 +658,11 @@ public class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCounts> {
     }
 
     /**
-     * Creates an independent copy of this genotype.
+     * Creates an independent copy of this GenotypeAlleleCounts.
      * @return never {@code null}.
      */
-    @Override
-    protected GenotypeAlleleCounts clone() {
-        final GenotypeAlleleCounts result;
-        try {
-            result = (GenotypeAlleleCounts) super.clone();
-        } catch (final CloneNotSupportedException e) {
-            throw new IllegalStateException(e);
-        }
-        result.sortedAlleleCounts = Arrays.copyOf(sortedAlleleCounts, distinctAlleleCount << 1);
-        return result;
+    GenotypeAlleleCounts copy() {
+        return new GenotypeAlleleCounts(this.ploidy, this.index, this.sortedAlleleCounts.clone(), this.distinctAlleleCount, this.log10CombinationCount);
     }
 
     /**

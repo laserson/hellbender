@@ -247,13 +247,13 @@ public class GenotypeLikelihoodCalculator {
         if (index < GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY)
             return genotypeAlleleCounts[index];
         else if (lastOverheadCounts == null || lastOverheadCounts.index() > index) {
-            final GenotypeAlleleCounts result = genotypeAlleleCounts[GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY - 1].clone();
+            final GenotypeAlleleCounts result = genotypeAlleleCounts[GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY - 1].copy();
             result.increase(index - GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY + 1);
             lastOverheadCounts = result;
-            return result.clone();
+            return result.copy();
         } else {
             lastOverheadCounts.increase(index - lastOverheadCounts.index());
-            return lastOverheadCounts.clone();
+            return lastOverheadCounts.copy();
         }
     }
 
@@ -351,7 +351,7 @@ public class GenotypeLikelihoodCalculator {
         if (cmp < 0)
             result = genotypeAlleleCounts[index + 1];
         else if (cmp == 0) {
-            result = genotypeAlleleCounts[index].clone();
+            result = genotypeAlleleCounts[index].copy();
             result.increase();
         } else {
             alleleCounts.increase();
