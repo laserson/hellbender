@@ -3,10 +3,12 @@ package org.broadinstitute.hellbender.tools.walkers.genotyper;
 import htsjdk.samtools.util.Locatable;
 import htsjdk.variant.variantcontext.*;
 import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.engine.FeatureContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.indels.PairHMMIndelErrorModel;
 import org.broadinstitute.hellbender.utils.BaseUtils;
 import org.broadinstitute.hellbender.utils.GenomeLocParser;
+import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
@@ -49,7 +51,7 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
     private final static EnumSet<VariantContext.Type> allowableTypes = EnumSet.of(VariantContext.Type.INDEL, VariantContext.Type.MIXED);
 
 
-    public VariantContext getLikelihoods(final RefMetaDataTracker tracker,
+    public VariantContext getLikelihoods(final FeatureContext tracker,
                                          final ReferenceContext ref,
                                          final Map<String, AlignmentContext> contexts,
                                          final AlignmentContextUtils.ReadOrientation contextType,
@@ -118,7 +120,7 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
     public static void getHaplotypeMapFromAlleles(final List<Allele> alleleList,
                                                  final ReferenceContext ref,
                                                  final Locatable loc,
-                                                 final LinkedHashMap<Allele, Haplotype> haplotypeMap) {
+                                                 final Map<Allele, Haplotype> haplotypeMap) {
         // protect against having an indel too close to the edge of a contig
         if (loc.getStart() <= HAPLOTYPE_SIZE)
             haplotypeMap.clear();
@@ -159,7 +161,7 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
 
     }
     
-    public static List<Allele> getInitialAlleleList(final RefMetaDataTracker tracker,
+    public static List<Allele> getInitialAlleleList(final FeatureContext tracker,
                                                     final ReferenceContext ref,
                                                     final Map<String, AlignmentContext> contexts,
                                                     final AlignmentContextUtils.ReadOrientation contextType,
@@ -169,7 +171,7 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
         List<Allele> alleles = new ArrayList<>();
         if (UAC.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES) {
             VariantContext vc = null;
-            for (final VariantContext vc_input : tracker.getValues(UAC.alleles, ref.getLocus())) {
+            for (final VariantContext vc_input : tracker.getValues(UAC.alleles, new SimpleInterval(ref.getInterval()))) {
                 if (vc_input != null &&
                         allowableTypes.contains(vc_input.getType()) &&
                         ref.getWindow().getStart() == vc_input.getStart()) {

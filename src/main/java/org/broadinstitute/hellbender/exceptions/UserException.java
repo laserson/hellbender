@@ -357,4 +357,24 @@ public class UserException extends RuntimeException {
             super(String.format("SAM/BAM/CRAM file %s appears to be using the wrong encoding for quality scores: %s; please see the GATK --help documentation for options related to this error", source, message));
         }
     }
+
+    public static class MalformedBAM extends UserException {
+        public MalformedBAM(SAMRecord read, String message) {
+            this(read.getFileSource() != null ? read.getFileSource().getReader().toString() : "(none)", message);
+        }
+
+        public MalformedBAM(File file, String message) {
+            this(file.toString(), message);
+        }
+
+        public MalformedBAM(String source, String message) {
+            super(String.format("SAM/BAM/CRAM file %s is malformed: %s", source, message));
+        }
+    }
+
+    public static class ReadMissingReadGroup extends MalformedBAM {
+        public ReadMissingReadGroup(final SAMRecord read) {
+            super(read, String.format("Read %s is missing the read group (RG) tag, which is required by the GATK.  Please use " + HelpConstants.forumPost("discussion/59/companion-utilities-replacereadgroups to fix this problem"), read.getReadName()));
+        }
+    }
 }

@@ -341,7 +341,7 @@ public class PairHMMIndelErrorModel {
 
                 if (DEBUG)
                     System.out.format("numStartSoftClippedBases: %d numEndSoftClippedBases: %d WinStart:%d WinStop:%d start: %d stop: %d readLength: %d\n",
-                            numStartSoftClippedBases, numEndSoftClippedBases, ref.getWindow().getStart(), ref.getWindow().getEnd(), startLocationInRefForHaplotypes, stopLocationInRefForHaplotypes, read.getReadLength());
+                            numStartSoftClippedBases, numEndSoftClippedBases, ref.getWindow().getStart(), ref.getWindow().getEnd(), startLocationInRefForHaplotypes, stopLocationInRefForHaplotypes, read.getLength());
 
                // LinkedHashMap<Allele,Double> readEl = new LinkedHashMap<Allele,Double>();
 
@@ -381,7 +381,7 @@ public class PairHMMIndelErrorModel {
                     }
 
                     // Create a new read based on the current one, but with trimmed bases/quals, for use in the HMM
-                    final GATKRead processedRead = GATKRead.createQualityModifiedRead(read, readBases, readQuals, baseInsertionQualities, baseDeletionQualities);
+                    final GATKRead processedRead = ReadUtils.createQualityModifiedRead(read, readBases, readQuals, baseInsertionQualities, baseDeletionQualities);
 
                     // Pack the shortened read and its associated gap-continuation-penalty array into a map, as required by PairHMM
                     final Map<GATKRead,byte[]> readGCPArrayMap = Collections.singletonMap(processedRead, contextLogGapContinuationProbabilities);

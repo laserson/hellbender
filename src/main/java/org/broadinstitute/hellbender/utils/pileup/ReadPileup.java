@@ -27,8 +27,7 @@ public final class ReadPileup implements Iterable<PileupElement>{
      * offsets.
      * Note: This constructor keeps an alias to the given list.
      */
-    @VisibleForTesting
-    ReadPileup(final Locatable loc, final List<PileupElement> pileup) {
+    public ReadPileup(final Locatable loc, final List<PileupElement> pileup) {
         Utils.nonNull(loc, "loc is null");
         Utils.nonNull(pileup, "element list is null");
         this.loc = loc;
