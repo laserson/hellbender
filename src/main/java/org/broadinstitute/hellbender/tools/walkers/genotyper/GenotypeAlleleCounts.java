@@ -55,7 +55,7 @@ import java.util.List;
  *
  * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
  */
-public class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCounts>, Cloneable {
+public class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCounts> {
 
     private double log10CombinationCount;
 
@@ -679,6 +679,7 @@ public class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCounts>, C
      *
      * @return never null, but it might be restricted (unmodifiable or non-expandable).
      */
+    @SuppressWarnings("unchecked")
     public <T extends Allele> List<T> asAlleleList(final List<T> allelesToUse) {
         if (allelesToUse == null)
             throw new IllegalArgumentException("the input allele list cannot be null");

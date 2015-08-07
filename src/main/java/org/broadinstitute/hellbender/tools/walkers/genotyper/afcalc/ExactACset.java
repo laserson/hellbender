@@ -31,8 +31,14 @@ public final class ExactACset {
         return sum;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return (obj instanceof ExactACset) && getACcounts().equals(((ExactACset)obj).getACcounts());
+    }
+
+    @Override
+    public int hashCode() {
+        return getACcounts().hashCode();
     }
 
     public ExactACcounts getACcounts() {

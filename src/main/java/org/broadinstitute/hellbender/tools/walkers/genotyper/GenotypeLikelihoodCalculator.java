@@ -274,12 +274,10 @@ public class GenotypeLikelihoodCalculator {
         if (likelihoods == null)
             throw new IllegalArgumentException("the likelihood map cannot be null");
 
-        if (likelihoods.alleleCount() != alleleCount)
+        if (likelihoods.numberOfAlleles() != alleleCount)
             throw new IllegalArgumentException("mismatch between allele list and alleleCount");
 
-
-        final int readCount = likelihoods.readCount();
-
+        final int readCount = likelihoods.numberOfReads();
 
         ensureReadCapacity(readCount);
 
@@ -435,7 +433,7 @@ public class GenotypeLikelihoodCalculator {
      * @return never {@code null}.
      */
     private <A extends Allele> double[] readLikelihoodComponentsByAlleleCount(final LikelihoodMatrix<A> likelihoods) {
-        final int readCount = likelihoods.readCount();
+        final int readCount = likelihoods.numberOfReads();
         final int alleleDataSize = readCount * (ploidy + 1);
 
         // frequency1Offset = readCount to skip the useless frequency == 0. So now we are at the start frequency == 1

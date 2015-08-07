@@ -3,6 +3,8 @@ package org.broadinstitute.hellbender.tools.walkers.genotyper;
 import htsjdk.samtools.util.Locatable;
 import htsjdk.variant.variantcontext.*;
 import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
+import org.broadinstitute.hellbender.engine.AlignmentContextUtils;
 import org.broadinstitute.hellbender.engine.FeatureContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.indels.PairHMMIndelErrorModel;

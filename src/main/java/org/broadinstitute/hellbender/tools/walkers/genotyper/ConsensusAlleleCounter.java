@@ -7,6 +7,8 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Logger;
+import org.broadinstitute.hellbender.engine.AlignmentContext;
+import org.broadinstitute.hellbender.engine.AlignmentContextUtils;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.utils.clipping.ReadClipper;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
@@ -60,8 +62,8 @@ public class ConsensusAlleleCounter {
             final AlignmentContext context = AlignmentContextUtils.stratify(sample.getValue(), contextType);
 
             final ReadPileup indelPileup = context.getBasePileup();
-            insCount += indelPileup.getNumberOfInsertionsAfterThisElement();
-            delCount += indelPileup.getNumberOfDeletionsAfterThisElement();
+            insCount += indelPileup.getNumberOfElements(p->p.isBeforeInsertion());
+            delCount += indelPileup.getNumberOfElements(p -> p.isBeforeDeletionStart());
         }
 
         if ( insCount < minIndelCountForGenotyping && delCount < minIndelCountForGenotyping )
@@ -73,8 +75,8 @@ public class ConsensusAlleleCounter {
 
             final ReadPileup indelPileup = context.getBasePileup();
 
-            final int nIndelReads = indelPileup.getNumberOfInsertionsAfterThisElement() + indelPileup.getNumberOfDeletionsAfterThisElement();
-            final int nReadsOverall = indelPileup.getNumberOfElements();
+            final int nIndelReads = indelPileup.getNumberOfElements(p -> p.isBeforeInsertion()) + indelPileup.getNumberOfElements(p->p.isBeforeDeletionStart());
+            final int nReadsOverall = indelPileup.size();
 
             if ( nIndelReads == 0 || (nIndelReads / (1.0 * nReadsOverall)) < minFractionInOneSample ) {
                 continue;

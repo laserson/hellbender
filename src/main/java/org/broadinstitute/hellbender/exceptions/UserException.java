@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.exceptions;
 
 import htsjdk.samtools.CigarOperator;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMSequenceDictionary;
 import org.broadinstitute.hellbender.tools.walkers.variantutils.ValidateVariants;
 import org.broadinstitute.hellbender.utils.help.HelpConstants;
@@ -349,6 +348,8 @@ public class UserException extends RuntimeException {
     }
 
     public static class MisencodedBAM extends UserException {
+        private static final long serialVersionUID = 1l;
+
         public MisencodedBAM(GATKRead read, String message) {
             this("(unknown file)", message);
         }
@@ -359,8 +360,10 @@ public class UserException extends RuntimeException {
     }
 
     public static class MalformedBAM extends UserException {
-        public MalformedBAM(SAMRecord read, String message) {
-            this(read.getFileSource() != null ? read.getFileSource().getReader().toString() : "(none)", message);
+        private static final long serialVersionUID = 1l;
+
+        public MalformedBAM(GATKRead read, String message) {
+            this("(unknown file)", message);
         }
 
         public MalformedBAM(File file, String message) {
@@ -373,8 +376,10 @@ public class UserException extends RuntimeException {
     }
 
     public static class ReadMissingReadGroup extends MalformedBAM {
-        public ReadMissingReadGroup(final SAMRecord read) {
-            super(read, String.format("Read %s is missing the read group (RG) tag, which is required by the GATK.  Please use " + HelpConstants.forumPost("discussion/59/companion-utilities-replacereadgroups to fix this problem"), read.getReadName()));
+        private static final long serialVersionUID = 1l;
+
+        public ReadMissingReadGroup(final GATKRead read) {
+            super(read, String.format("Read %s is missing the read group (RG) tag, which is required by the GATK.  Please use " + HelpConstants.forumPost("discussion/59/companion-utilities-replacereadgroups to fix this problem"), read.getName()));
         }
     }
 }

@@ -51,7 +51,7 @@ public class ExactCallLogger {
         @Override
         public String toString() {
             return String.format("ExactCall %s:%d alleles=%s nSamples=%s orig.pNonRef=%.2f",
-                    vc.getChr(), vc.getStart(), vc.getAlleles(), vc.getNSamples(),
+                    vc.getContig(), vc.getStart(), vc.getAlleles(), vc.getNSamples(),
                     originalCall.getLog10PosteriorOfAFGT0());
         }
     }
@@ -88,7 +88,7 @@ public class ExactCallLogger {
                                   final Object variable,
                                   final Object key,
                                   final Object value) {
-        final String loc = String.format("%s:%d", vc.getChr(), vc.getStart());
+        final String loc = String.format("%s:%d", vc.getContig(), vc.getStart());
         callReport.println(Utils.join("\t", Arrays.asList(loc, variable, key, value)));
     }
 

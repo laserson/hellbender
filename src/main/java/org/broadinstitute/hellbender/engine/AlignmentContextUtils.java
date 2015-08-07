@@ -1,11 +1,13 @@
 package org.broadinstitute.hellbender.engine;
 
+import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMReadGroupRecord;
+import htsjdk.samtools.util.Locatable;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
-import org.broadinstitute.hellbender.utils.GenomeLoc;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
 import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
+import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
 import java.util.*;
 
@@ -46,8 +48,8 @@ public class AlignmentContextUtils {
         }
     }
 
-    public static Map<String, AlignmentContext> splitContextBySampleName(AlignmentContext context) {
-        return splitContextBySampleName(context, null);
+    public static Map<String, AlignmentContext> splitContextBySampleName(AlignmentContext context, SAMFileHeader header) {
+        return splitContextBySampleName(context, null, header);
     }
 
     /**
@@ -59,12 +61,12 @@ public class AlignmentContextUtils {
      * @return a Map of sample name to StratifiedAlignmentContext
      *
      **/
-    public static Map<String, AlignmentContext> splitContextBySampleName(AlignmentContext context, String assumedSingleSample) {
-        GenomeLoc loc = context.getLocation();
-        HashMap<String, AlignmentContext> contexts = new HashMap<String, AlignmentContext>();
+    public static Map<String, AlignmentContext> splitContextBySampleName(AlignmentContext context, String assumedSingleSample, SAMFileHeader header) {
+        Locatable loc = context.getLocation();
+        HashMap<String, AlignmentContext> contexts = new HashMap<>();
 
-        for(String sample: context.getBasePileup().getSamples()) {
-            ReadPileup pileupBySample = context.getBasePileup().getPileupForSample(sample);
+        for(String sample: context.getBasePileup().getSamples(header)) {
+            ReadPileup pileupBySample = context.getBasePileup().makeFilteredPileup(p -> Objects.equals(assumedSingleSample, ReadUtils.getSampleName(p.getRead(), header)));
 
             // Don't add empty pileups to the split context.
             if(pileupBySample.isEmpty())
@@ -91,7 +93,7 @@ public class AlignmentContextUtils {
      *
      **/
     public static Map<SAMReadGroupRecord, AlignmentContext> splitContextByReadGroup(AlignmentContext context, Collection<SAMReadGroupRecord> readGroups) {
-        HashMap<SAMReadGroupRecord, AlignmentContext> contexts = new HashMap<SAMReadGroupRecord, AlignmentContext>();
+        HashMap<SAMReadGroupRecord, AlignmentContext> contexts = new HashMap<>();
 
         for (SAMReadGroupRecord rg : readGroups) {
             ReadPileup rgPileup = context.getBasePileup().getPileupForReadGroup(rg.getReadGroupId());
@@ -102,14 +104,14 @@ public class AlignmentContextUtils {
         return contexts;
     }
 
-    public static Map<String, AlignmentContext> splitContextBySampleName(ReadPileup pileup) {
-        return splitContextBySampleName(new AlignmentContext(pileup.getLocation(), pileup));
+    public static Map<String, AlignmentContext> splitContextBySampleName(ReadPileup pileup, SAMFileHeader header) {
+        return splitContextBySampleName(new AlignmentContext(pileup.getLocation(), pileup), header);
     }
 
 
     public static AlignmentContext joinContexts(Collection<AlignmentContext> contexts) {
         // validation
-        GenomeLoc loc = contexts.iterator().next().getLocation();
+        Locatable loc = contexts.iterator().next().getLocation();
         for(AlignmentContext context: contexts) {
             if(!loc.equals(context.getLocation()))
                 throw new GATKException("Illegal attempt to join contexts from different genomic locations");
