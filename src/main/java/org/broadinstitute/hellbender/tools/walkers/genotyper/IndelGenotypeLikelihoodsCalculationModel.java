@@ -101,7 +101,7 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
             final ReadPileup pileup = context.getBasePileup();
             if (pileup != null) {
                 final GenotypeBuilder b = new GenotypeBuilder(sample.getKey());
-                final double[] genotypeLikelihoods = pairModel.computeDiploidReadHaplotypeLikelihoods(pileup, haplotypeMap, ref, eventLength, perReadAlleleLikelihoodMap.get(sample.getKey()), UAC.getSampleContamination().get(sample.getKey()));
+                final double[] genotypeLikelihoods = pairModel.computeDiploidReadHaplotypeLikelihoods(pileup, haplotypeMap, ref, eventLength, perReadAlleleLikelihoodMap.get(sample.getKey()), UAC.getSampleContamination(sample.getKey()));
                 b.PL(genotypeLikelihoods);
                 b.alleles(noCall);
                 b.DP(getFilteredDepth(pileup));

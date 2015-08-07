@@ -96,9 +96,10 @@ public class AlignmentContextUtils {
         HashMap<SAMReadGroupRecord, AlignmentContext> contexts = new HashMap<>();
 
         for (SAMReadGroupRecord rg : readGroups) {
-            ReadPileup rgPileup = context.getBasePileup().getPileupForReadGroup(rg.getReadGroupId());
-            if ( rgPileup != null ) // there we some reads for RG
+            ReadPileup rgPileup = context.getBasePileup().makeFilteredPileup(p -> Objects.equals(p.getRead().getReadGroup(), rg.getReadGroupId()));
+            if ( !rgPileup.isEmpty() ){ // there we some reads for RG
                 contexts.put(rg, new AlignmentContext(context.getLocation(), rgPileup));
+            }
         }
 
         return contexts;

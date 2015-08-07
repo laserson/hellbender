@@ -135,16 +135,4 @@ public class UnifiedArgumentCollection extends StandardCallerArgumentCollection 
     @Hidden
     @Argument(shortName = "min_call_power", fullName = "min_power_threshold_for_calling", doc="The minimum confidence in the error model to make a call. Number should be between 0 (no power requirement) and 1 (maximum power required).", optional = true)
     double minPower = 0.95;
-
-    /**
-     * Create a new UAC with defaults for all UAC arguments
-     */
-    public UnifiedArgumentCollection() {
-        super();
-    }
-
-    @Override
-    public UnifiedArgumentCollection clone() {
-        return (UnifiedArgumentCollection) super.clone();
-    }
 }

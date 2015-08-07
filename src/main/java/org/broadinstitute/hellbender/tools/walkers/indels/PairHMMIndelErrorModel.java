@@ -200,7 +200,7 @@ public class PairHMMIndelErrorModel {
 
 
     public synchronized double[] computeDiploidReadHaplotypeLikelihoods(final ReadPileup pileup,
-                                                                        final LinkedHashMap<Allele, Haplotype> haplotypeMap,
+                                                                        final Map<Allele, Haplotype> haplotypeMap,
                                                                         final ReferenceContext ref,
                                                                         final int eventLength,
                                                                         final PerReadAlleleLikelihoodMap perReadAlleleLikelihoodMap,
@@ -236,7 +236,7 @@ public class PairHMMIndelErrorModel {
     }
 
     public synchronized double[][] computeGeneralReadHaplotypeLikelihoods(final ReadPileup pileup,
-                                                                          final LinkedHashMap<Allele, Haplotype> haplotypeMap,
+                                                                          final Map<Allele, Haplotype> haplotypeMap,
                                                                           final ReferenceContext ref,
                                                                           final int eventLength, 
                                                                           final PerReadAlleleLikelihoodMap perReadAlleleLikelihoodMap) {
