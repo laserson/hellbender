@@ -372,9 +372,9 @@ public class PairHMMIndelErrorModel {
 
                     // get the base insertion and deletion qualities to use
                     final byte[] baseInsertionQualities, baseDeletionQualities;
-                    if ( read.hasBaseIndelQualities() ) {
-                        baseInsertionQualities = Arrays.copyOfRange(read.getBaseInsertionQualities(), numStartSoftClippedBases, endOfCopy);
-                        baseDeletionQualities = Arrays.copyOfRange(read.getBaseDeletionQualities(), numStartSoftClippedBases, endOfCopy);
+                    if ( ReadUtils.hasBaseIndelQualities(read) ) {
+                        baseInsertionQualities = Arrays.copyOfRange(ReadUtils.getBaseInsertionQualities(read), numStartSoftClippedBases, endOfCopy);
+                        baseDeletionQualities = Arrays.copyOfRange(ReadUtils.getBaseDeletionQualities(read), numStartSoftClippedBases, endOfCopy);
                     } else {
                         baseInsertionQualities = contextLogGapOpenProbabilities;
                         baseDeletionQualities = contextLogGapOpenProbabilities;
