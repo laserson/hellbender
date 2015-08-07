@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.genotyper;
 
 import org.broadinstitute.hellbender.utils.genotyper.IndexedSampleList;
+import org.broadinstitute.hellbender.utils.genotyper.SampleListUnitTester;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -33,7 +34,7 @@ public class HomogeneousPloidyModelUnitTest {
         for (int i = 0; i < sampleCount; i++)
             Assert.assertEquals(ploidyModel.samplePloidy(i), ploidy);
 
-        SampleListUnitTester.assertSampleList(ploidyModel,sampleNames);
+        SampleListUnitTester.assertSampleList(ploidyModel, sampleNames);
     }
 
     @DataProvider(name="ploidyAndSampleListData")

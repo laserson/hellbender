@@ -5,6 +5,7 @@ import htsjdk.variant.variantcontext.GenotypeLikelihoods;
 import org.broadinstitute.hellbender.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.genotyper.LikelihoodMatrix;
 
+import java.util.Comparator;
 import java.util.PriorityQueue;
 
 /**
@@ -164,7 +165,7 @@ public class GenotypeLikelihoodCalculator {
             throw new IllegalArgumentException(
                     String.format("the combination of ploidy (%s) and number of alleles (%s) results in a very large number of genotypes (> %s). You need to limit ploidy or the number of alternative alleles to analyze this locus",
                             ploidy, alleleCount, Integer.MAX_VALUE));
-        alleleHeap = new PriorityQueue<>(ploidy);
+        alleleHeap = new PriorityQueue<>(ploidy, Comparator.<Integer>naturalOrder().reversed());
         readLikelihoodsByGenotypeIndex = new double[genotypeCount][];
         log10 = ploidyLog10;
         // The number of possible components is limited by distinct allele count and ploidy.

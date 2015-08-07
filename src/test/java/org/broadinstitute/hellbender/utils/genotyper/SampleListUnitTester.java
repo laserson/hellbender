@@ -1,7 +1,5 @@
-package org.broadinstitute.hellbender.tools.walkers.genotyper;
+package org.broadinstitute.hellbender.utils.genotyper;
 
-import org.broadinstitute.hellbender.utils.genotyper.IndexedSampleList;
-import org.broadinstitute.hellbender.utils.genotyper.SampleList;
 import org.testng.Assert;
 
 import java.util.*;
