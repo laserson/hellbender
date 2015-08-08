@@ -59,7 +59,7 @@ public class SampleListUnitTester {
      * @param sampleCount the required sample count.
      * @return never {@code null}.
      */
-    static SampleList sampleList(final int sampleCount) {
+    public static SampleList sampleList(final int sampleCount) {
         if (sampleCount < 0)
             throw new IllegalArgumentException("the number of sample cannot be negative");
         final List<String> result = new ArrayList<>(sampleCount);

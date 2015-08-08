@@ -115,7 +115,7 @@ public final class AlleleListUnitTester {
      * @throws RuntimeException if {@code alleleCount} is negative or {@code maxAlleleLength} is less than 1.
      * @return never {@code null}.
      */
-    static AlleleList<Allele> alleleList(final int alleleCount, final int maxAlleleLength, final boolean skipIfRepeats) {
+    public static AlleleList<Allele> alleleList(final int alleleCount, final int maxAlleleLength, final boolean skipIfRepeats) {
         final Allele[] alleles = AlleleListUnitTester.generateRandomAlleles(alleleCount,maxAlleleLength);
         if (alleleCount > 0)
             alleles[0] = Allele.create(alleles[0].getBases(), true);
