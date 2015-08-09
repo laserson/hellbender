@@ -42,11 +42,11 @@ public final class QualityUtilsUnitTest extends BaseTest {
         final double actualTrueRate = QualityUtils.qualToProb(qual);
         Assert.assertEquals(actualTrueRate, trueRate, TOLERANCE);
 
-        // log10 tests
-        final double actualLog10ErrorRate = QualityUtils.qualToErrorProbLog10(qual);
-        Assert.assertEquals(actualLog10ErrorRate, Math.log10(errorRate), TOLERANCE);
-        final double actualLog10TrueRate = QualityUtils.qualToProbLog10(qual);
-        Assert.assertEquals(actualLog10TrueRate, Math.log10(trueRate), TOLERANCE);
+        // log tests
+        final double actualLogErrorRate = QualityUtils.qualToLogErrorProb(qual);
+        Assert.assertEquals(actualLogErrorRate, Math.log(errorRate), TOLERANCE);
+        final double actualLogTrueRate = QualityUtils.qualToLogProb(qual);
+        Assert.assertEquals(actualLogTrueRate, Math.log(trueRate), TOLERANCE);
 
         // test that we can convert our error rates to quals, accounting for boundaries
         final int expectedQual = Math.max(Math.min(qual & 0xFF, QualityUtils.MAX_SAM_QUAL_SCORE), 1);
@@ -86,19 +86,19 @@ public final class QualityUtilsUnitTest extends BaseTest {
     @Test
     public void testQualCaches() {
         Assert.assertEquals(QualityUtils.qualToErrorProb((byte) 20), 0.01, 1e-6);
-        Assert.assertEquals(QualityUtils.qualToErrorProbLog10((byte) 20), -2.0, 1e-6);
+        Assert.assertEquals(QualityUtils.qualToLogErrorProb((byte) 20), Math.log(0.01), 1e-6);
         Assert.assertEquals(QualityUtils.qualToProb((byte) 20), 0.99, 1e-6);
-        Assert.assertEquals(QualityUtils.qualToProbLog10((byte) 20), -0.0043648054, 1e-6);
+        Assert.assertEquals(QualityUtils.qualToLogProb((byte) 20), Math.log(0.99), 1e-6);
 
         Assert.assertEquals(QualityUtils.qualToErrorProb((byte) 30), 0.001, 1e-6);
-        Assert.assertEquals(QualityUtils.qualToErrorProbLog10((byte) 30), -3.0, 1e-6);
+        Assert.assertEquals(QualityUtils.qualToLogErrorProb((byte) 30), Math.log(0.001), 1e-6);
         Assert.assertEquals(QualityUtils.qualToProb((byte) 30), 0.999, 1e-6);
-        Assert.assertEquals(QualityUtils.qualToProbLog10((byte) 30), -0.000434511774, 1e-6);
+        Assert.assertEquals(QualityUtils.qualToLogProb((byte) 30), Math.log(0.999), 1e-6);
 
         Assert.assertEquals(QualityUtils.qualToErrorProb((byte) 40), 0.0001, 1e-6);
-        Assert.assertEquals(QualityUtils.qualToErrorProbLog10((byte) 40), -4.0, 1e-6);
+        Assert.assertEquals(QualityUtils.qualToLogErrorProb((byte) 40), Math.log(0.0001), 1e-6);
         Assert.assertEquals(QualityUtils.qualToProb((byte) 40), 0.9999, 1e-6);
-        Assert.assertEquals(QualityUtils.qualToProbLog10((byte) 40), -4.34316198e-5, 1e-6);
+        Assert.assertEquals(QualityUtils.qualToLogProb((byte) 40), Math.log(0.9999), 1e-6);
     }
 
     @Test()
