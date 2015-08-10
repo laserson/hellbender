@@ -27,16 +27,30 @@ public class RefAPIMetadata implements Serializable {
      * @param referenceName name of the reference
      * @param referenceNameToIdTable table from reference name to id
      * @param referenceWindowFunction custom reference window function used to map reads to desired reference bases
+     * @param apiKey the apiKey to use (when using Spark).
      */
-    public RefAPIMetadata(String referenceName, Map<String, String> referenceNameToIdTable, SerializableFunction<GATKRead, SimpleInterval> referenceWindowFunction) {
+    public RefAPIMetadata(String referenceName, Map<String, String> referenceNameToIdTable, SerializableFunction<GATKRead, SimpleInterval> referenceWindowFunction,
+                          String apiKey) {
+
         this.referenceName = referenceName;
         this.referenceNameToIdTable = Collections.unmodifiableMap(referenceNameToIdTable);
         this.referenceWindowFunction = referenceWindowFunction;
+        this.apikey = apiKey;
+    }
+
+    /**
+     * @param referenceName name of the reference
+     * @param referenceNameToIdTable table from reference name to id
+     * @param referenceWindowFunction custom reference window function used to map reads to desired reference bases
+     */
+    public RefAPIMetadata(String referenceName, Map<String, String> referenceNameToIdTable, SerializableFunction<GATKRead, SimpleInterval> referenceWindowFunction) {
+        this(referenceName, referenceNameToIdTable, referenceWindowFunction, null);
     }
 
     private final String referenceName;
     private final Map<String, String> referenceNameToIdTable;
     private final SerializableFunction<GATKRead, SimpleInterval> referenceWindowFunction;
+    private final String apikey;
 
     public String getReferenceName() {
         return referenceName;
@@ -48,5 +62,9 @@ public class RefAPIMetadata implements Serializable {
 
     public SerializableFunction<GATKRead, SimpleInterval> getReferenceWindowFunction() {
         return referenceWindowFunction;
+    }
+
+    public String getApikey() {
+        return apikey;
     }
 }

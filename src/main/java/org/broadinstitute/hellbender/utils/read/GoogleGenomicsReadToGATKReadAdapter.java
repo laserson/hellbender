@@ -37,13 +37,14 @@ import java.util.UUID;
  */
 public final class GoogleGenomicsReadToGATKReadAdapter implements GATKRead {
 
-    private final Read genomicsRead;
-    private final UUID uuid;
+    private Read genomicsRead;
+    private UUID uuid;
 
     public GoogleGenomicsReadToGATKReadAdapter( final Read genomicsRead ) {
         this(genomicsRead, UUID.randomUUID());
     }
 
+    private GoogleGenomicsReadToGATKReadAdapter() {}
     /**
      * Constructor that allows an explicit UUID to be passed in -- only meant
      * for internal use and test class use, which is why it's package protected.
@@ -663,5 +664,10 @@ public final class GoogleGenomicsReadToGATKReadAdapter implements GATKRead {
         result = 31 * result + uuid.hashCode();
 
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return uuid.toString() + ":" + genomicsRead.toString();
     }
 }

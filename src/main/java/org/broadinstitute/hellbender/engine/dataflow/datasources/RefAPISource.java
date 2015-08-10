@@ -5,6 +5,7 @@ import com.google.api.services.genomics.model.ListBasesResponse;
 import com.google.api.services.genomics.model.Reference;
 import com.google.api.services.genomics.model.ReferenceSet;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
+import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
 import com.google.cloud.genomics.dataflow.utils.GCSOptions;
 import com.google.cloud.genomics.dataflow.utils.GenomicsOptions;
 import com.google.cloud.genomics.utils.GenomicsFactory;
@@ -93,6 +94,25 @@ public class RefAPISource implements Serializable {
         }
 
         return referenceNameToIdTable;
+    }
+
+    /**
+     * Query the Google Genomics API for reference bases spanning the specified interval from the specified
+     * reference name.
+     *
+     * Footnote: queries larger than pageSize will be truncated.
+     *
+     * @param apiData - contains the hashmap that maps from reference name to Id needed for the API call
+     *                as well as the apiKey to use for the Genomics API.
+     * @param interval - the range of bases to retrieve.
+     * @return the reference bases specified by interval and apiData (using the Google Genomics API).
+     */
+    public ReferenceBases getReferenceBases(final RefAPIMetadata apiData, final SimpleInterval interval) {
+        String apiKey = apiData.getApikey();
+        Utils.nonNull(apiKey);
+        GCSOptions options = PipelineOptionsFactory.as(GCSOptions.class);
+        options.setApiKey(apiKey);
+        return getReferenceBases(options, apiData, interval);
     }
 
     /**
