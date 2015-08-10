@@ -81,7 +81,6 @@ import java.util.*;
     final AFCalculator biAlleleExactModel;
 
     protected IndependentAllelesDiploidExactAFCalculator() {
-        super();
         biAlleleExactModel = new ReferenceDiploidExactAFCalculator();
     }
 

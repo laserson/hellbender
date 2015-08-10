@@ -1,9 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.genotyper.afcalc;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Enumeration of usable AF calculation, their constraints (i.e. ploidy).
@@ -15,56 +12,44 @@ import java.util.Map;
 public enum AFCalculatorImplementation {
 
     /** default implementation */
-    EXACT_INDEPENDENT(IndependentAllelesDiploidExactAFCalculator.class, 2),
+    EXACT_INDEPENDENT(IndependentAllelesDiploidExactAFCalculator::new, 2),
 
     /** reference implementation of multi-allelic EXACT model.  Extremely slow for many alternate alleles */
-    EXACT_REFERENCE(ReferenceDiploidExactAFCalculator.class, 2),
+    EXACT_REFERENCE(ReferenceDiploidExactAFCalculator::new, 2),
 
     /** original biallelic exact model, for testing only */
-    EXACT_ORIGINAL(OriginalDiploidExactAFCalculator.class, 2, 2),
+    EXACT_ORIGINAL(OriginalDiploidExactAFCalculator::new, 2, 2),
 
     /** implementation that supports any sample ploidy.  Currently not available for the HaplotypeCaller */
-    EXACT_GENERAL_PLOIDY(GeneralPloidyExactAFCalculator.class);
+    EXACT_GENERAL_PLOIDY(GeneralPloidyExactAFCalculator::new);
 
     /**
      * Special max alt allele count indicating that this maximum is in fact unbound (can be anything).
      */
-    public final static int UNBOUND_ALTERNATIVE_ALLELE_COUNT = -1;
+    public static final int UNBOUND_ALTERNATIVE_ALLELE_COUNT = -1;
 
     /**
      * Special ploidy constant that indicates that in fact the ploidy is unbound (can be anything).
      */
-    public final static int UNBOUND_PLOIDY = -1;
-
-    private static Map<Class<? extends AFCalculator>,AFCalculatorImplementation> calculatorClassToValue = buildCalculatorClassToValueMap();
-
-    /**
-     * Reference to the calculator class.
-     */
-    public final Class<? extends AFCalculator> calculatorClass;
+    public static final int UNBOUND_PLOIDY = -1;
 
     /**
      * Maximum number of supported alternative alleles.
      */
-    public final int maxAltAlleles;
-
-    /**
-     * Reference to the constructor to instantiate a calculator for this implementation.
-     */
-    protected final Constructor<? extends AFCalculator> constructor;
+    private final int maxAltAlleles;
 
     /**
      * Supported ploidy.
      *
      * This is equal to {@link #UNBOUND_PLOIDY} if the class can handle any ploidy.
      */
-    public final int requiredPloidy;
+    private final int requiredPloidy;
 
     /**
      * Reference to the default implementation.
      */
-    public final static AFCalculatorImplementation DEFAULT = EXACT_INDEPENDENT;
-
+    public static final AFCalculatorImplementation DEFAULT = EXACT_INDEPENDENT;
+    private final Supplier<AFCalculator> afCalculatorSupplier;
 
     /**
      * Constructs a new instance given all its properties
@@ -72,27 +57,26 @@ public enum AFCalculatorImplementation {
      * @param requiredPloidy the required ploidy; zero or greater or {@link #UNBOUND_PLOIDY} to indicate that any ploidy is supported.
      * @param maxAltAlleles the maximum alternative alleles; zero or greater or {@link #UNBOUND_ALTERNATIVE_ALLELE_COUNT} to indicate that any maximum number of alternative alleles is supported.
      */
-    AFCalculatorImplementation(final Class<? extends AFCalculator> clazz, final int requiredPloidy, final int maxAltAlleles) {
-        calculatorClass = clazz;
+    AFCalculatorImplementation(final Supplier<AFCalculator> afCalculatorSupplier, final int requiredPloidy, final int maxAltAlleles) {
+        this.afCalculatorSupplier = afCalculatorSupplier;
         this.requiredPloidy = requiredPloidy;
         this.maxAltAlleles = maxAltAlleles;
-        this.constructor = findInstantiationConstructor(calculatorClass);
     }
 
     /**
      * Constructs a new instance leaving ploidy and max-allele count unbound.
      * @param clazz the calculator class that realizes this implementation.
      */
-    AFCalculatorImplementation(final Class<? extends AFCalculator> clazz) {
-        this(clazz,UNBOUND_PLOIDY, UNBOUND_ALTERNATIVE_ALLELE_COUNT);
+    AFCalculatorImplementation(final Supplier<AFCalculator> afCalculatorSupplier) {
+        this(afCalculatorSupplier,UNBOUND_PLOIDY, UNBOUND_ALTERNATIVE_ALLELE_COUNT);
     }
 
     /** Constructs a new instance leaving max-allele count unbound.
      * @param clazz the calculator class that realizes this implementation.
      * @param requiredPloidy the required ploidy; zero or greater or {@link #UNBOUND_PLOIDY} to indicate that any ploidy is supported.
      */
-    AFCalculatorImplementation(final Class<? extends AFCalculator> clazz, final int requiredPloidy) {
-        this(clazz,requiredPloidy,UNBOUND_PLOIDY);
+    AFCalculatorImplementation(final Supplier<AFCalculator> afCalculatorSupplier, final int requiredPloidy) {
+        this(afCalculatorSupplier,requiredPloidy,UNBOUND_PLOIDY);
     }
 
     /**
@@ -106,43 +90,7 @@ public enum AFCalculatorImplementation {
                 && (maxAltAlleles == UNBOUND_ALTERNATIVE_ALLELE_COUNT || maxAltAlleles >= requestedMaxAltAlleles);
     }
 
-    /**
-     * Resolve the constructor to use to instantiate calculators.
-     *
-     * @param clazz target class. Assume not to be {@code null}.
-     */
-    private Constructor<? extends AFCalculator> findInstantiationConstructor(final Class<? extends AFCalculator> clazz) {
-        if (Modifier.isAbstract(clazz.getModifiers())) {
-            throw new IllegalStateException("AF calculator implementation class cannot be abstract");
-        }
-
-        final Constructor<? extends AFCalculator> result;
-        try {
-            result = clazz.getDeclaredConstructor();
-        } catch (final NoSuchMethodException e) {
-            throw new IllegalStateException("cannot find a suitable (int,int) constructor for the AFCalculator implementation " + this + " class " + clazz.getName());
-        }
-
-        // Check whether there will be issue calling the constructor just due to protections:
-        if (Modifier.isPrivate(result.getModifiers()) || (!Modifier.isPublic(result.getModifiers()) && !clazz.getPackage().equals(getClass().getPackage()))) {
-            throw new IllegalStateException("triple int constructor for AFCalculator implementation " + this + " class " + clazz.getName() + " is not public ");
-        }
-        return result;
-    }
-
-    /**
-     * Creates new instance
-     *
-     * @throws IllegalStateException if the instance could not be create due to some exception. The {@link Exception#getCause() cause} will hold a reference to the actual exception.
-     * @return never {@code null}.
-     */
-    public AFCalculator newInstance() {
-        try {
-            return constructor.newInstance();
-        } catch (final Throwable e) {
-            throw new IllegalStateException("could not instantiate AFCalculator for implementation " + this + " class " + calculatorClass.getName());
-        }
-    }
+    public AFCalculator newInstance() { return this.afCalculatorSupplier.get(); }
 
     /**
      * Returns the best (fastest) model give the required ploidy and alternative allele count.
@@ -164,36 +112,5 @@ public enum AFCalculatorImplementation {
             return EXACT_REFERENCE;
         }
         return EXACT_GENERAL_PLOIDY;
-    }
-
-    /**
-     * Returns the value that corresponds to a given implementation calculator class.
-     *
-     * @param clazz the target class.
-     *
-     * @throws IllegalArgumentException if {@code clazz} is {@code null} or if it is abstract.
-     * @throws IllegalStateException if
-     *
-     * @return never {@code null}.
-     */
-    public static AFCalculatorImplementation fromCalculatorClass(final Class<? extends AFCalculator> clazz) {
-        if (clazz == null) {
-            throw new IllegalArgumentException("input class cannot be null");
-        }
-        final AFCalculatorImplementation result = calculatorClassToValue.get(clazz);
-        if (result == null) {
-            throw new IllegalStateException("Attempt to retrieve AFCalculatorImplementation instance from a non-registered calculator class " + clazz.getName());
-        }
-        return result;
-    }
-
-    // Initializes the content of the class to value map.
-    private static Map<Class<? extends AFCalculator>, AFCalculatorImplementation> buildCalculatorClassToValueMap() {
-        final Map<Class<? extends AFCalculator>,AFCalculatorImplementation> result = new HashMap<>(values().length);
-        for (final AFCalculatorImplementation value : values()) {
-            if (result.put(value.calculatorClass, value) != null)
-                throw new IllegalStateException("more than one value associated with class " + value.calculatorClass.getName());
-        }
-        return result;
     }
 }

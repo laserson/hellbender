@@ -3,9 +3,10 @@ package org.broadinstitute.hellbender.tools.walkers.genotyper.afcalc;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.utils.Utils;
 
-import java.io.File;
 import java.util.List;
 
 
@@ -13,43 +14,11 @@ import java.util.List;
  * Generic interface for calculating the probability of alleles segregating given priors and genotype likelihoods
  */
 public abstract class AFCalculator {
-    private final static Logger defaultLogger = Logger.getLogger(AFCalculator.class);
 
-
-    protected Logger logger = defaultLogger;
+    protected static final Logger logger = LogManager.getLogger(AFCalculator.class);
 
     private StateTracker stateTracker;
     private ExactCallLogger exactCallLogger = null;
-
-    /**
-     * Create a new AFCalc object capable of calculating the prob. that alleles are
-     * segregating among many samples.
-     *
-     * <p>
-     *    Restrictions in ploidy and number of alternative alleles that a instance can handle will be determined
-     *    by its implementation class {@link AFCalculatorImplementation}
-     * </p>
-     */
-    protected AFCalculator() {
-    }
-
-    /**
-     * Enable exact call logging to file
-     *
-     * @param exactCallsLog the destination file
-     */
-    public void enableProcessLog(final File exactCallsLog) {
-        exactCallLogger = new ExactCallLogger(exactCallsLog);
-    }
-
-    /**
-     * Use this logger instead of the default logger
-     *
-     * @param logger
-     */
-    public void setLogger(final Logger logger) {
-        this.logger = logger;
-    }
 
     /**
      * Compute the probability of the alleles segregating given the genotype likelihoods of the samples in vc
@@ -60,14 +29,10 @@ public abstract class AFCalculator {
      * @return result (for programming convenience)
      */
     public AFCalculationResult getLog10PNonRef(final VariantContext vc, final int defaultPloidy, final int maximumAlternativeAlleles, final double[] log10AlleleFrequencyPriors) {
-        if ( vc == null ) {
-            throw new IllegalArgumentException("VariantContext cannot be null");
-        }
+        Utils.nonNull(vc, "VariantContext cannot be null");
+        Utils.nonNull( log10AlleleFrequencyPriors == null, "priors vector cannot be null");
         if ( vc.getNAlleles() == 1 ) {
             throw new IllegalArgumentException("VariantContext has only a single reference allele, but getLog10PNonRef requires at least one at all " + vc);
-        }
-        if ( log10AlleleFrequencyPriors == null ) {
-            throw new IllegalArgumentException("priors vector cannot be null");
         }
 
         // reset the result, so we can store our new result there
@@ -143,13 +108,6 @@ public abstract class AFCalculator {
                                                    final List<Allele> allelesToUse,
                                                    final boolean assignGenotypes);
 
-    // ---------------------------------------------------------------------------
-    //
-    // accessors
-    //
-    // ---------------------------------------------------------------------------
-
-
     /**
      * Retrieves the state tracker.
      *
@@ -174,17 +132,4 @@ public abstract class AFCalculator {
         }
         return stateTracker;
     }
-
-    /**
-     * Used by testing code.
-     *
-     * Please don't use this method in production.
-     *
-     * @deprecated
-     */
-    @Deprecated
-    protected int getAltAlleleCountOfMAP(final int allele) {
-        return getStateTracker(false,allele + 1).getAlleleCountsOfMAP()[allele];
-    }
-
 }

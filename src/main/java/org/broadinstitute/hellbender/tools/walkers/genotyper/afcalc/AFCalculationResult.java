@@ -205,8 +205,9 @@ public class AFCalculationResult {
     public String toString() {
         final List<String> byAllele = new LinkedList<>();
         for ( final Allele a : getAllelesUsedInGenotyping() ) {
-            if (a.isNonReference())
+            if (a.isNonReference()) {
                 byAllele.add(String.format("%s => MLE %d / posterior %.2f", a, getAlleleCountAtMLE(a), getLog10PosteriorOfAFEq0ForAllele(a)));
+            }
         }
         return String.format("AFCalc%n\t\tlog10PosteriorOfAFGT0=%.2f%n\t\t%s", getLog10LikelihoodOfAFGT0(), Utils.join("\n\t\t", byAllele));
     }
@@ -249,8 +250,9 @@ public class AFCalculationResult {
      */
     public boolean anyPolymorphic(final double log10minPNonRef) {
         for ( final Allele a : getAllelesUsedInGenotyping() ) {
-            if (a.isNonReference() && isPolymorphic(a, log10minPNonRef))
+            if (a.isNonReference() && isPolymorphic(a, log10minPNonRef)) {
                 return true;
+            }
         }
         return false;
     }

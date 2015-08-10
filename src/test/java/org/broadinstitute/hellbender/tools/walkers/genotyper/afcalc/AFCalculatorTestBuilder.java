@@ -55,7 +55,38 @@ public class AFCalculatorTestBuilder {
     }
 
     public AFCalculator makeModel() {
-        return AFCalculatorFactory.createCalculator(modelType, nSamples, getNumAltAlleles(), HomoSapiensConstants.DEFAULT_PLOIDY);
+        return createCalculator(modelType, nSamples, getNumAltAlleles(), HomoSapiensConstants.DEFAULT_PLOIDY);
+    }
+
+    /**
+     * Create a new AFCalc
+     *
+     * @param implementation the calculation to use
+     * @param nSamples the number of samples we'll be using
+     * @param maxAltAlleles the max. alt alleles to consider for SNPs
+     * @param ploidy the sample ploidy.  Must be consistent with the implementation
+     *
+     * @return an initialized AFCalc
+     */
+    private static AFCalculator createCalculator(final AFCalculatorImplementation implementation, final int nSamples, final int maxAltAlleles, final int ploidy) {
+        if ( implementation == null ) {
+            throw new IllegalArgumentException("Calculation cannot be null");
+        }
+        if ( nSamples < 0 ) {
+            throw new IllegalArgumentException("nSamples must be greater than zero " + nSamples);
+        }
+        if ( maxAltAlleles < 1 ) {
+            throw new IllegalArgumentException("maxAltAlleles must be greater than zero " + maxAltAlleles);
+        }
+        if ( ploidy < 1 ) {
+            throw new IllegalArgumentException("sample ploidy must be greater than zero " + ploidy);
+        }
+
+        if ( ! implementation.usableForParams(ploidy, maxAltAlleles) ) {
+            throw new IllegalArgumentException("AFCalc " + implementation + " does not support requested ploidy " + ploidy);
+        }
+
+        return implementation.newInstance();
     }
 
     public double[] makePriors() {
