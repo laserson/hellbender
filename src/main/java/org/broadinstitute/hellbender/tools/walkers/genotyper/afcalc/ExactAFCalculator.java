@@ -30,12 +30,13 @@ abstract class ExactAFCalculator extends AFCalculator {
     protected static final Comparator<LikelihoodSum> LIKELIHOOD_NON_REF_THEN_SUM_COMPARATOR = new Comparator<LikelihoodSum>() {
         @Override
         public int compare(final LikelihoodSum o1, final LikelihoodSum o2) {
-            if (o1.allele == GATKVCFConstants.NON_REF_SYMBOLIC_ALLELE)
+            if (o1.allele == GATKVCFConstants.NON_REF_SYMBOLIC_ALLELE) {
                 return 1;
-            else if (o2.allele == GATKVCFConstants.NON_REF_SYMBOLIC_ALLELE)
+            } else if (o2.allele == GATKVCFConstants.NON_REF_SYMBOLIC_ALLELE) {
                 return -1;
-            else
+            } else {
                 return o1.compareTo(o2);
+            }
         }
     };
     /**
@@ -63,7 +64,7 @@ abstract class ExactAFCalculator extends AFCalculator {
 
         public LikelihoodSum(final Allele allele, final int index) { this.allele = allele; this.index = index; }
 
-        public int compareTo(LikelihoodSum other) {
+        public int compareTo(final LikelihoodSum other) {
             final double diff = sum - other.sum;
             return ( diff < 0.0 ) ? 1 : (diff > 0.0 ) ? -1 : 0;
         }
@@ -77,13 +78,16 @@ abstract class ExactAFCalculator extends AFCalculator {
     protected static ArrayList<double[]> getGLs(final GenotypesContext GLs, final boolean includeDummy) {
         final ArrayList<double[]> genotypeLikelihoods = new ArrayList<>(GLs.size() + 1);
 
-        if ( includeDummy ) genotypeLikelihoods.add(new double[]{0.0,0.0,0.0}); // dummy
-        for ( Genotype sample : GLs.iterateInSampleNameOrder() ) {
+        if ( includeDummy ) {
+            genotypeLikelihoods.add(new double[]{0.0, 0.0, 0.0}); // dummy
+        }
+        for ( final Genotype sample : GLs.iterateInSampleNameOrder() ) {
             if ( sample.hasLikelihoods() ) {
                 final double[] gls = sample.getLikelihoods().getAsVector();
 
-                if ( MathUtils.sum(gls) < GATKVariantContextUtils.SUM_GL_THRESH_NOCALL )
+                if ( MathUtils.sum(gls) < GATKVariantContextUtils.SUM_GL_THRESH_NOCALL ) {
                     genotypeLikelihoods.add(gls);
+                }
             }
         }
 
@@ -99,9 +103,9 @@ abstract class ExactAFCalculator extends AFCalculator {
         // only if output allele has reduced from the input alt allele set size we should care.
         final int altAlleleReduction = inputAltAlleles.size() - outputAltAlleles.size();
 
-        if (altAlleleReduction == 0)
+        if (altAlleleReduction == 0) {
             return vc;
-        else if (altAlleleReduction != 0) {
+        } else if (altAlleleReduction != 0) {
             logger.warn("this tool is currently set to genotype at most " + maximumAlternativeAlleles
                     + " alternate alleles in a given context, but the context at " + vc.getContig() + ":" + vc.getStart()
                     + " has " + (vc.getAlternateAlleles().size())
@@ -113,11 +117,14 @@ abstract class ExactAFCalculator extends AFCalculator {
             final VariantContextBuilder builder = new VariantContextBuilder(vc);
             builder.alleles(alleles);
             builder.genotypes(reduceScopeGenotypes(vc, defaultPloidy, alleles));
-            if (altAlleleReduction < 0)
-                throw new IllegalStateException("unexpected: reduction increased the number of alt. alleles!: " + - altAlleleReduction + " " + vc + " " + builder.make());
+            if (altAlleleReduction < 0) {
+                throw new IllegalStateException("unexpected: reduction increased the number of alt. alleles!: " + -altAlleleReduction + " " + vc + " " + builder.make());
+            }
             return builder.make();
         } else // if (altAlleleReduction < 0)
-            throw new IllegalStateException("unexpected: reduction increased the number of alt. alleles!: " + - altAlleleReduction + " " + vc);
+        {
+            throw new IllegalStateException("unexpected: reduction increased the number of alt. alleles!: " + -altAlleleReduction + " " + vc);
+        }
     }
 
     /**
@@ -140,8 +147,9 @@ abstract class ExactAFCalculator extends AFCalculator {
         final int numProperOriginalAltAlleles = numOriginalAltAlleles - (nonRefAltAllelePresent ? 1 : 0);
 
         // Avoid pointless allele reduction:
-        if (numAllelesToChoose >= numProperOriginalAltAlleles)
+        if (numAllelesToChoose >= numProperOriginalAltAlleles) {
             return vc.getAlternateAlleles();
+        }
 
         final LikelihoodSum[] likelihoodSums = new LikelihoodSum[numOriginalAltAlleles];
         for ( int i = 0; i < numOriginalAltAlleles; i++ ) {
@@ -160,18 +168,21 @@ abstract class ExactAFCalculator extends AFCalculator {
         // This heap will keep track of that index order.
         final PriorityQueue<LikelihoodSum> mostLikelyAllelesHeapByIndex = new PriorityQueue<>(numOriginalAltAlleles, LIKELIHOOD_INDEX_COMPARATOR);
 
-        for ( int i = 0; i < numAllelesToChoose; i++ )
+        for ( int i = 0; i < numAllelesToChoose; i++ ) {
             mostLikelyAllelesHeapByIndex.add(likelihoodSums[i]);
+        }
 
         // guaranteed no to have been added at this point thanks for checking on whether reduction was
         // needed in the first place.
-        if (nonRefAltAllelePresent)
+        if (nonRefAltAllelePresent) {
             mostLikelyAllelesHeapByIndex.add(likelihoodSums[nonRefAltAlleleIndex]);
+        }
 
         final ArrayList<Allele> orderedBestAlleles = new ArrayList<>(numAllelesToChoose);
 
-        while (!mostLikelyAllelesHeapByIndex.isEmpty())
+        while (!mostLikelyAllelesHeapByIndex.isEmpty()) {
             orderedBestAlleles.add(mostLikelyAllelesHeapByIndex.remove().allele);
+        }
 
         return orderedBestAlleles;
     }

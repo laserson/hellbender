@@ -21,18 +21,22 @@ public abstract class AFCalculatorProvider {
      * @return never {@code null}
      */
     public AFCalculator getInstance(final VariantContext variantContext, final int defaultPloidy, final int maximumAltAlleles) {
-        if (variantContext == null)
+        if (variantContext == null) {
             throw new IllegalArgumentException("variant context cannot be null");
+        }
 
         final int sampleCount = variantContext.getNSamples();
-        if  (sampleCount == 0)
-            return getInstance(defaultPloidy,maximumAltAlleles);
+        if  (sampleCount == 0) {
+            return getInstance(defaultPloidy, maximumAltAlleles);
+        }
 
         final GenotypesContext genotypes = variantContext.getGenotypes();
 
         final Genotype firstGenotype = genotypes.get(0);
         int ploidy = firstGenotype.getPloidy();
-        if (ploidy <= 0) ploidy = defaultPloidy;
+        if (ploidy <= 0) {
+            ploidy = defaultPloidy;
+        }
         for (int i = 1 ; i < sampleCount; i++) {
             final Genotype genotype = genotypes.get(i);
             final int declaredPloidy = genotype.getPloidy();

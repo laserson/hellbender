@@ -34,14 +34,16 @@ public abstract class AFPriorProvider {
      *  a draw of {@code totalPloidy} elements.
      */
     public double[] forTotalPloidy(final int totalPloidy) {
-        if (totalPloidy < 0)
+        if (totalPloidy < 0) {
             throw new IllegalArgumentException("the total-ploidy cannot be negative");
+        }
         ensureCapacity(totalPloidy);
         final double[] cachedResult = priorByTotalPloidy[totalPloidy];
-        if (cachedResult == null)
+        if (cachedResult == null) {
             return priorByTotalPloidy[totalPloidy] = buildPriors(totalPloidy);
-        else
+        } else {
             return cachedResult;
+        }
     }
 
     /**
@@ -49,10 +51,11 @@ public abstract class AFPriorProvider {
      * @param totalPloidy
      */
     protected void ensureCapacity(final int totalPloidy) {
-        if (priorByTotalPloidy == null)
+        if (priorByTotalPloidy == null) {
             priorByTotalPloidy = new double[totalPloidy + 1][];  // just enough for those cases in where we have a fix total-ploidy.
-        else if (priorByTotalPloidy.length - 1 < totalPloidy)
+        } else if (priorByTotalPloidy.length - 1 < totalPloidy) {
             priorByTotalPloidy = Arrays.copyOf(priorByTotalPloidy, Math.max(priorByTotalPloidy.length << 1, totalPloidy + 1));
+        }
     }
 
     /**

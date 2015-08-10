@@ -20,12 +20,15 @@ public class HeterozygosityAFPriorProvider extends AFPriorProvider {
      * @throws IllegalArgumentException if {@code heterozygosity} is not valid one in the interval (0,1).
      */
     public HeterozygosityAFPriorProvider(final double heterozygosity) {
-        if (heterozygosity <= 0)
+        if (heterozygosity <= 0) {
             throw new IllegalArgumentException("the heterozygosity must be greater than 0");
-        if (heterozygosity >= 1)
+        }
+        if (heterozygosity >= 1) {
             throw new IllegalArgumentException("the heterozygosity must be less than 1");
-        if (Double.isNaN(heterozygosity))
+        }
+        if (Double.isNaN(heterozygosity)) {
             throw new IllegalArgumentException("the heterozygosity cannot be a NaN");
+        }
         this.heterozygosity = heterozygosity;
         this.log10Heterozygosity = Math.log10(heterozygosity);
     }
@@ -36,11 +39,13 @@ public class HeterozygosityAFPriorProvider extends AFPriorProvider {
         Arrays.fill(result, log10Heterozygosity);
         result[0] = Double.NEGATIVE_INFINITY;
         MathUtils.Log10Cache.ensureCacheContains(totalPloidy);
-        for (int i = 1; i <= totalPloidy; i++)
+        for (int i = 1; i <= totalPloidy; i++) {
             result[i] -= MathUtils.Log10Cache.get(i);
+        }
         final double log10Sum = MathUtils.approximateLog10SumLog10(result);
-        if (log10Sum >= 0)
+        if (log10Sum >= 0) {
             throw new IllegalArgumentException("heterosygosity " + heterozygosity + " is too large of total ploidy " + totalPloidy);
+        }
         result[0] = MathUtils.log10OneMinusPow10(log10Sum);
         return result;
     }

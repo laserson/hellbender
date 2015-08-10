@@ -47,17 +47,39 @@ public class AFCalculationResult {
                                final double[] log10LikelihoodsOfAC,
                                final double[] log10PriorsOfAC,
                                final Map<Allele, Double> log10pRefByAllele) {
-        if ( allelesUsedInGenotyping == null || allelesUsedInGenotyping.size() < 1 ) throw new IllegalArgumentException("allelesUsedInGenotyping must be non-null list of at least 1 value " + allelesUsedInGenotyping);
-        if ( alleleCountsOfMLE == null ) throw new IllegalArgumentException("alleleCountsOfMLE cannot be null");
-        if ( alleleCountsOfMLE.length != allelesUsedInGenotyping.size() - 1) throw new IllegalArgumentException("alleleCountsOfMLE.length " + alleleCountsOfMLE.length + " != allelesUsedInGenotyping.size() " + allelesUsedInGenotyping.size());
-        if ( nEvaluations < 0 ) throw new IllegalArgumentException("nEvaluations must be >= 0 but saw " + nEvaluations);
-        if ( log10LikelihoodsOfAC.length != 2 ) throw new IllegalArgumentException("log10LikelihoodsOfAC must have length equal 2");
-        if ( log10PriorsOfAC.length != 2 ) throw new IllegalArgumentException("log10PriorsOfAC must have length equal 2");
-        if ( log10pRefByAllele == null ) throw new IllegalArgumentException("log10pRefByAllele cannot be null");
-        if ( log10pRefByAllele.size() != allelesUsedInGenotyping.size() - 1 ) throw new IllegalArgumentException("log10pRefByAllele has the wrong number of elements: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
-        if ( ! allelesUsedInGenotyping.containsAll(log10pRefByAllele.keySet()) ) throw new IllegalArgumentException("log10pRefByAllele doesn't contain all of the alleles used in genotyping: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
-        if ( ! MathUtils.goodLog10ProbVector(log10LikelihoodsOfAC, LOG_10_ARRAY_SIZES, false) ) throw new IllegalArgumentException("log10LikelihoodsOfAC are bad " + Utils.join(",", log10LikelihoodsOfAC));
-        if ( ! MathUtils.goodLog10ProbVector(log10PriorsOfAC, LOG_10_ARRAY_SIZES, true) ) throw new IllegalArgumentException("log10priors are bad " + Utils.join(",", log10PriorsOfAC));
+        if ( allelesUsedInGenotyping == null || allelesUsedInGenotyping.size() < 1 ) {
+            throw new IllegalArgumentException("allelesUsedInGenotyping must be non-null list of at least 1 value " + allelesUsedInGenotyping);
+        }
+        if ( alleleCountsOfMLE == null ) {
+            throw new IllegalArgumentException("alleleCountsOfMLE cannot be null");
+        }
+        if ( alleleCountsOfMLE.length != allelesUsedInGenotyping.size() - 1) {
+            throw new IllegalArgumentException("alleleCountsOfMLE.length " + alleleCountsOfMLE.length + " != allelesUsedInGenotyping.size() " + allelesUsedInGenotyping.size());
+        }
+        if ( nEvaluations < 0 ) {
+            throw new IllegalArgumentException("nEvaluations must be >= 0 but saw " + nEvaluations);
+        }
+        if ( log10LikelihoodsOfAC.length != 2 ) {
+            throw new IllegalArgumentException("log10LikelihoodsOfAC must have length equal 2");
+        }
+        if ( log10PriorsOfAC.length != 2 ) {
+            throw new IllegalArgumentException("log10PriorsOfAC must have length equal 2");
+        }
+        if ( log10pRefByAllele == null ) {
+            throw new IllegalArgumentException("log10pRefByAllele cannot be null");
+        }
+        if ( log10pRefByAllele.size() != allelesUsedInGenotyping.size() - 1 ) {
+            throw new IllegalArgumentException("log10pRefByAllele has the wrong number of elements: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
+        }
+        if ( ! allelesUsedInGenotyping.containsAll(log10pRefByAllele.keySet()) ) {
+            throw new IllegalArgumentException("log10pRefByAllele doesn't contain all of the alleles used in genotyping: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
+        }
+        if ( ! MathUtils.goodLog10ProbVector(log10LikelihoodsOfAC, LOG_10_ARRAY_SIZES, false) ) {
+            throw new IllegalArgumentException("log10LikelihoodsOfAC are bad " + Utils.join(",", log10LikelihoodsOfAC));
+        }
+        if ( ! MathUtils.goodLog10ProbVector(log10PriorsOfAC, LOG_10_ARRAY_SIZES, true) ) {
+            throw new IllegalArgumentException("log10priors are bad " + Utils.join(",", log10PriorsOfAC));
+        }
 
         this.alleleCountsOfMLE = alleleCountsOfMLE;
         this.nEvaluations = nEvaluations;
@@ -182,8 +204,10 @@ public class AFCalculationResult {
     @Override
     public String toString() {
         final List<String> byAllele = new LinkedList<>();
-        for ( final Allele a : getAllelesUsedInGenotyping() )
-            if ( a.isNonReference() ) byAllele.add(String.format("%s => MLE %d / posterior %.2f", a, getAlleleCountAtMLE(a), getLog10PosteriorOfAFEq0ForAllele(a)));
+        for ( final Allele a : getAllelesUsedInGenotyping() ) {
+            if (a.isNonReference())
+                byAllele.add(String.format("%s => MLE %d / posterior %.2f", a, getAlleleCountAtMLE(a), getLog10PosteriorOfAFEq0ForAllele(a)));
+        }
         return String.format("AFCalc%n\t\tlog10PosteriorOfAFGT0=%.2f%n\t\t%s", getLog10LikelihoodOfAFGT0(), Utils.join("\n\t\t", byAllele));
     }
 
@@ -210,7 +234,9 @@ public class AFCalculationResult {
      * Same as #isPolymorphic but takes a phred-scaled quality score as input
      */
     public boolean isPolymorphicPhredScaledQual(final Allele allele, final double minPNonRefPhredScaledQual) {
-        if ( minPNonRefPhredScaledQual < 0 ) throw new IllegalArgumentException("phredScaledQual " + minPNonRefPhredScaledQual + " < 0 ");
+        if ( minPNonRefPhredScaledQual < 0 ) {
+            throw new IllegalArgumentException("phredScaledQual " + minPNonRefPhredScaledQual + " < 0 ");
+        }
         final double log10Threshold = minPNonRefPhredScaledQual / -10;
         return isPolymorphic(allele, log10Threshold);
     }
@@ -222,9 +248,10 @@ public class AFCalculationResult {
      * @return true if any are poly, false otherwise
      */
     public boolean anyPolymorphic(final double log10minPNonRef) {
-        for ( final Allele a : getAllelesUsedInGenotyping() )
-            if ( a.isNonReference() && isPolymorphic(a, log10minPNonRef) )
+        for ( final Allele a : getAllelesUsedInGenotyping() ) {
+            if (a.isNonReference() && isPolymorphic(a, log10minPNonRef))
                 return true;
+        }
         return false;
     }
 
@@ -251,7 +278,9 @@ public class AFCalculationResult {
      */
     public double getLog10PosteriorOfAFEq0ForAllele(final Allele allele) {
         final Double log10pNonRef = log10pRefByAllele.get(allele);
-        if ( log10pNonRef == null ) throw new IllegalArgumentException("Unknown allele " + allele);
+        if ( log10pNonRef == null ) {
+            throw new IllegalArgumentException("Unknown allele " + allele);
+        }
         return log10pNonRef;
     }
 
@@ -265,8 +294,9 @@ public class AFCalculationResult {
      */
     private static double[] computePosteriors(final double[] log10LikelihoodsOfAC, final double[] log10PriorsOfAC) {
         final double[] log10UnnormalizedPosteriors = new double[log10LikelihoodsOfAC.length];
-        for ( int i = 0; i < log10LikelihoodsOfAC.length; i++ )
+        for ( int i = 0; i < log10LikelihoodsOfAC.length; i++ ) {
             log10UnnormalizedPosteriors[i] = log10LikelihoodsOfAC[i] + log10PriorsOfAC[i];
+        }
         return MathUtils.normalizeFromLog10(log10UnnormalizedPosteriors, true, false);
     }
 
@@ -282,11 +312,14 @@ public class AFCalculationResult {
      * @return an index value greater than 0 suitable for indexing into the MLE and other alt allele indexed arrays
      */
     private int altAlleleIndex(final Allele allele) {
-        if ( allele.isReference() ) throw new IllegalArgumentException("Cannot get the alt allele index for reference allele " + allele);
+        if ( allele.isReference() ) {
+            throw new IllegalArgumentException("Cannot get the alt allele index for reference allele " + allele);
+        }
         final int index = allelesUsedInGenotyping.indexOf(allele);
-        if ( index == -1 )
+        if ( index == -1 ) {
             throw new IllegalArgumentException("could not find allele " + allele + " in " + allelesUsedInGenotyping);
-        else
+        } else {
             return index - 1;
+        }
     }
 }

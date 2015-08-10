@@ -29,7 +29,7 @@ public class ExactCallLogger {
         try {
             callReport = new PrintStream(new BufferedOutputStream(new FileOutputStream(outputFile), 10000000));
             callReport.println(Utils.join("\t", Arrays.asList("loc", "variable", "key", "value")));
-        } catch (FileNotFoundException e) {
+        } catch (final FileNotFoundException e) {
             throw new UserException.CouldNotCreateOutputFile(outputFile, e);
         }
     }
@@ -42,7 +42,7 @@ public class ExactCallLogger {
         final long runtime;
         final AFCalculationResult originalCall;
 
-        public ExactCall(VariantContext vc, final long runtime, final AFCalculationResult originalCall) {
+        public ExactCall(final VariantContext vc, final long runtime, final AFCalculationResult originalCall) {
             this.vc = vc;
             this.runtime = runtime;
             this.originalCall = originalCall;
@@ -62,14 +62,17 @@ public class ExactCallLogger {
         printCallElement(vc, "type", "ignore", vc.getType());
 
         int allelei = 0;
-        for (final Allele a : vc.getAlleles())
+        for (final Allele a : vc.getAlleles()) {
             printCallElement(vc, "allele", allelei++, a.getDisplayString());
+        }
 
-        for (final Genotype g : vc.getGenotypes())
+        for (final Genotype g : vc.getGenotypes()) {
             printCallElement(vc, "PL", g.getSampleName(), g.getLikelihoodsString());
+        }
 
-        for (int priorI = 0; priorI < log10AlleleFrequencyPriors.length; priorI++)
+        for (int priorI = 0; priorI < log10AlleleFrequencyPriors.length; priorI++) {
             printCallElement(vc, "priorI", priorI, log10AlleleFrequencyPriors[priorI]);
+        }
 
         printCallElement(vc, "log10PosteriorOfAFEq0", "ignore", result.getLog10PosteriorOfAFEq0());
         printCallElement(vc, "log10PosteriorOfAFGt0", "ignore", result.getLog10PosteriorOfAFGT0());
@@ -102,12 +105,18 @@ public class ExactCallLogger {
      * @return a list of ExactCall objects in reader
      * @throws IOException
      */
-    public static List<ExactCall> readExactLog(final BufferedReader reader, final List<Integer> startsToKeep, GenomeLocParser parser) throws IOException {
-        if ( reader == null ) throw new IllegalArgumentException("reader cannot be null");
-        if ( startsToKeep == null ) throw new IllegalArgumentException("startsToKeep cannot be null");
-        if ( parser == null ) throw new IllegalArgumentException("GenomeLocParser cannot be null");
+    public static List<ExactCall> readExactLog(final BufferedReader reader, final List<Integer> startsToKeep, final GenomeLocParser parser) throws IOException {
+        if ( reader == null ) {
+            throw new IllegalArgumentException("reader cannot be null");
+        }
+        if ( startsToKeep == null ) {
+            throw new IllegalArgumentException("startsToKeep cannot be null");
+        }
+        if ( parser == null ) {
+            throw new IllegalArgumentException("GenomeLocParser cannot be null");
+        }
 
-        List<ExactCall> calls = new LinkedList<>();
+        final List<ExactCall> calls = new LinkedList<>();
 
         // skip the header line
         reader.readLine();
@@ -128,8 +137,9 @@ public class ExactCallLogger {
             GenomeLoc currentLoc = null;
             while (true) {
                 final String line = reader.readLine();
-                if (line == null)
+                if (line == null) {
                     return calls;
+                }
 
                 final String[] parts = line.split("\t");
                 final GenomeLoc lineLoc = parser.parseGenomeLoc(parts[0]);
@@ -137,8 +147,9 @@ public class ExactCallLogger {
                 final String key = parts[2];
                 final String value = parts[3];
 
-                if (currentLoc == null)
+                if (currentLoc == null) {
                     currentLoc = lineLoc;
+                }
 
                 if (variable.equals("type")) {
                     if (startsToKeep.isEmpty() || startsToKeep.contains(currentLoc.getStart())) {

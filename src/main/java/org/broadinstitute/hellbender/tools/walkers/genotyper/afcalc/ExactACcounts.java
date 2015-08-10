@@ -15,20 +15,21 @@ public final class ExactACcounts {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         return (obj instanceof ExactACcounts) && Arrays.equals(getCounts(), ((ExactACcounts) obj).getCounts());
     }
 
     @Override
     public int hashCode() {
-        if ( hashcode == -1 )
+        if ( hashcode == -1 ) {
             hashcode = Arrays.hashCode(getCounts());
+        }
         return hashcode;
     }
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         sb.append(getCounts()[0]);
         for ( int i = 1; i < getCounts().length; i++ ) {
             sb.append("/");

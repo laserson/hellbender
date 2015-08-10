@@ -46,7 +46,7 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
                                                  final Map<String, AlignmentContext> contexts,
                                                  final AlignmentContextUtils.ReadOrientation contextType,
                                                  final UnifiedArgumentCollection UAC) {
-        ConsensusAlleleCounter counter = new ConsensusAlleleCounter(true, UAC.MIN_INDEL_COUNT_FOR_GENOTYPING, UAC.MIN_INDEL_FRACTION_PER_SAMPLE);
+        final ConsensusAlleleCounter counter = new ConsensusAlleleCounter(true, UAC.MIN_INDEL_COUNT_FOR_GENOTYPING, UAC.MIN_INDEL_FRACTION_PER_SAMPLE);
         return counter.computeConsensusAlleles(ref, contexts, contextType);
     }
 
@@ -62,19 +62,21 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
                                          final GenomeLocParser locParser,
                                          final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap) {
 
-        Locatable loc = ref.getInterval();
+        final Locatable loc = ref.getInterval();
         if (contextType == AlignmentContextUtils.ReadOrientation.COMPLETE) {
             // starting a new site: clear allele list
             haplotypeMap.clear();
             perReadAlleleLikelihoodMap.clear(); // clean mapping sample-> per read, per allele likelihoods
             alleleList = getInitialAlleleList(tracker, ref, contexts, contextType, UAC, ignoreSNPAllelesWhenGenotypingIndels);
-            if (alleleList.isEmpty())
+            if (alleleList.isEmpty()) {
                 return null;
+            }
         }
 
         getHaplotypeMapFromAlleles(alleleList, ref, loc, haplotypeMap); // will update haplotypeMap adding elements
-        if (haplotypeMap == null || haplotypeMap.isEmpty())
+        if (haplotypeMap == null || haplotypeMap.isEmpty()) {
             return null;
+        }
 
         // start making the VariantContext
         // For all non-snp VC types, VC end location is just startLocation + length of ref allele including padding base.
@@ -84,15 +86,15 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
         final VariantContextBuilder builder = new VariantContextBuilder("UG_call", loc.getContig(), loc.getStart(), endLoc, alleleList);
 
         // create the genotypes; no-call everyone for now
-        GenotypesContext genotypes = GenotypesContext.create();
+        final GenotypesContext genotypes = GenotypesContext.create();
         final int ploidy = UAC.genotypeArgs.samplePloidy;
         final List<Allele> noCall = GATKVariantContextUtils.noCallAlleles(ploidy);
 
         // For each sample, get genotype likelihoods based on pileup
         // compute prior likelihoods on haplotypes, and initialize haplotype likelihood matrix with them.
 
-        for (Map.Entry<String, AlignmentContext> sample : contexts.entrySet()) {
-            AlignmentContext context = AlignmentContextUtils.stratify(sample.getValue(), contextType);
+        for (final Map.Entry<String, AlignmentContext> sample : contexts.entrySet()) {
+            final AlignmentContext context = AlignmentContextUtils.stratify(sample.getValue(), contextType);
 
             if (!perReadAlleleLikelihoodMap.containsKey(sample.getKey())){
                 // no likelihoods have been computed for this sample at this site
@@ -109,8 +111,9 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
 
                 if (DEBUG) {
                     System.out.format("Sample:%s Alleles:%s GL:", sample.getKey(), alleleList.toString());
-                    for (int k = 0; k < genotypeLikelihoods.length; k++)
+                    for (int k = 0; k < genotypeLikelihoods.length; k++) {
                         System.out.format("%1.4f ", genotypeLikelihoods[k]);
+                    }
                     System.out.println();
                 }
             }
@@ -124,34 +127,36 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
                                                  final Locatable loc,
                                                  final Map<Allele, Haplotype> haplotypeMap) {
         // protect against having an indel too close to the edge of a contig
-        if (loc.getStart() <= HAPLOTYPE_SIZE)
+        if (loc.getStart() <= HAPLOTYPE_SIZE) {
             haplotypeMap.clear();
-        // check if there is enough reference window to create haplotypes (can be an issue at end of contigs)
-        else if (ref.getWindow().getEnd() < loc.getEnd() + HAPLOTYPE_SIZE)
+        }// check if there is enough reference window to create haplotypes (can be an issue at end of contigs)
+        else if (ref.getWindow().getEnd() < loc.getEnd() + HAPLOTYPE_SIZE) {
             haplotypeMap.clear();
-        else if (alleleList.isEmpty())
+        } else if (alleleList.isEmpty()) {
             haplotypeMap.clear();
-        else {
+        } else {
             final int eventLength = getEventLength(alleleList);
             final int hsize = ref.getWindow().size() - Math.abs(eventLength) - 1;
             final int numPrefBases = ref.getInterval().getStart() - ref.getWindow().getStart() + 1;
 
             if (hsize <= 0)  // protect against event lengths larger than ref window sizes
+            {
                 haplotypeMap.clear();
-            else
+            } else {
                 haplotypeMap.putAll(Haplotype.makeHaplotypeListFromAlleles(alleleList, loc.getStart(),
-                    ref, hsize, numPrefBases));
+                        ref, hsize, numPrefBases));
+            }
         }
     }
 
-    public static int getEventLength(List<Allele> alleleList) {
-        Allele refAllele = alleleList.get(0);
+    public static int getEventLength(final List<Allele> alleleList) {
+        final Allele refAllele = alleleList.get(0);
         Allele altAllele = alleleList.get(1);
         // look for alt allele that has biggest length distance to ref allele
         int maxLenDiff = 0;
-        for (Allele a : alleleList) {
+        for (final Allele a : alleleList) {
             if (a.isNonReference()) {
-                int lenDiff = Math.abs(a.getBaseString().length() - refAllele.getBaseString().length());
+                final int lenDiff = Math.abs(a.getBaseString().length() - refAllele.getBaseString().length());
                 if (lenDiff > maxLenDiff) {
                     maxLenDiff = lenDiff;
                     altAllele = a;
@@ -182,16 +187,18 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
                 }
             }
            // ignore places where we don't have a variant
-            if (vc == null)
+            if (vc == null) {
                 return alleles;
+            }
 
             if (ignoreSNPAllelesWhenGenotypingIndels) {
                 // if there's an allele that has same length as the reference (i.e. a SNP or MNP), ignore it and don't genotype it
-                for (Allele a : vc.getAlleles())
+                for (final Allele a : vc.getAlleles()) {
                     if (a.isNonReference() && a.getBases().length == vc.getReference().getBases().length)
                         continue;
                     else
                         alleles.add(a);
+                }
 
             } else {
                 alleles.addAll(vc.getAlleles());
@@ -205,11 +212,12 @@ public class IndelGenotypeLikelihoodsCalculationModel extends GenotypeLikelihood
 
     // Overload function in GenotypeLikelihoodsCalculationModel so that, for an indel case, we consider a deletion as part of the pileup,
     // so that per-sample DP will include deletions covering the event.
-    protected int getFilteredDepth(ReadPileup pileup) {
+    protected int getFilteredDepth(final ReadPileup pileup) {
         int count = 0;
-        for (PileupElement p : pileup) {
-            if (p.isDeletion() || BaseUtils.isRegularBase(p.getBase()))
+        for (final PileupElement p : pileup) {
+            if (p.isDeletion() || BaseUtils.isRegularBase(p.getBase())) {
                 count++;
+            }
         }
 
         return count;

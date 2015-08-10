@@ -48,10 +48,12 @@ public class InfiniteRandomMatingPopulationModel implements GenotypingModel {
 
     @Override
     public <A extends Allele> GenotypingLikelihoods<A> calculateLikelihoods(final AlleleList<A> genotypingAlleles, final GenotypingData<A> data) {
-        if (genotypingAlleles == null)
+        if (genotypingAlleles == null) {
             throw new IllegalArgumentException("the allele cannot be null");
-        if (data == null)
+        }
+        if (data == null) {
             throw new IllegalArgumentException("the genotyping data cannot be null");
+        }
 
         final AlleleListPermutation<A> permutation = data.permutation(genotypingAlleles);
         final AlleleLikelihoodMatrixMapper<A> alleleLikelihoodMatrixMapper = AlleleLikelihoodMatrixMapper.newInstance(permutation);
@@ -89,10 +91,11 @@ public class InfiniteRandomMatingPopulationModel implements GenotypingModel {
     }
 
     private GenotypeLikelihoodCalculator getLikelihoodsCalculator(final int samplePloidy, final int alleleCount) {
-        if (samplePloidy >= cacheAlleleCountCapacity)
+        if (samplePloidy >= cacheAlleleCountCapacity) {
             return GenotypeLikelihoodCalculators.getInstance(samplePloidy, alleleCount);
-        else if (alleleCount >= cacheAlleleCountCapacity)
+        } else if (alleleCount >= cacheAlleleCountCapacity) {
             return GenotypeLikelihoodCalculators.getInstance(samplePloidy, alleleCount);
+        }
         final GenotypeLikelihoodCalculator[][] cache = likelihoodCalculators.get();
         final GenotypeLikelihoodCalculator result = cache[samplePloidy][alleleCount];
         return result != null ? result : (cache[samplePloidy][alleleCount] = GenotypeLikelihoodCalculators.getInstance(samplePloidy, alleleCount));

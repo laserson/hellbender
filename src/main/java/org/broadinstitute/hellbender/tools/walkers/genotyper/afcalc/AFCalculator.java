@@ -47,7 +47,7 @@ public abstract class AFCalculator {
      *
      * @param logger
      */
-    public void setLogger(Logger logger) {
+    public void setLogger(final Logger logger) {
         this.logger = logger;
     }
 
@@ -60,9 +60,15 @@ public abstract class AFCalculator {
      * @return result (for programming convenience)
      */
     public AFCalculationResult getLog10PNonRef(final VariantContext vc, final int defaultPloidy, final int maximumAlternativeAlleles, final double[] log10AlleleFrequencyPriors) {
-        if ( vc == null ) throw new IllegalArgumentException("VariantContext cannot be null");
-        if ( vc.getNAlleles() == 1 ) throw new IllegalArgumentException("VariantContext has only a single reference allele, but getLog10PNonRef requires at least one at all " + vc);
-        if ( log10AlleleFrequencyPriors == null ) throw new IllegalArgumentException("priors vector cannot be null");
+        if ( vc == null ) {
+            throw new IllegalArgumentException("VariantContext cannot be null");
+        }
+        if ( vc.getNAlleles() == 1 ) {
+            throw new IllegalArgumentException("VariantContext has only a single reference allele, but getLog10PNonRef requires at least one at all " + vc);
+        }
+        if ( log10AlleleFrequencyPriors == null ) {
+            throw new IllegalArgumentException("priors vector cannot be null");
+        }
 
         // reset the result, so we can store our new result there
         final StateTracker stateTracker = getStateTracker(true,maximumAlternativeAlleles);
@@ -70,8 +76,9 @@ public abstract class AFCalculator {
         final VariantContext vcWorking = reduceScope(vc,defaultPloidy, maximumAlternativeAlleles);
 
         final AFCalculationResult result = computeLog10PNonRef(vcWorking, defaultPloidy, log10AlleleFrequencyPriors, stateTracker);
-        if ( exactCallLogger != null )
+        if ( exactCallLogger != null ) {
             exactCallLogger.printCallInfo(vcWorking, log10AlleleFrequencyPriors, result);
+        }
 
         return result;
     }
@@ -158,12 +165,13 @@ public abstract class AFCalculator {
      * @return never {@code null}
      */
     protected StateTracker getStateTracker(final boolean reset, final int maximumAlternativeAlleleCount) {
-        if (stateTracker == null)
+        if (stateTracker == null) {
             stateTracker = new StateTracker(maximumAlternativeAlleleCount);
-        else if (reset)
+        } else if (reset) {
             stateTracker.reset(maximumAlternativeAlleleCount);
-        else
+        } else {
             stateTracker.ensureMaximumAlleleCapacity(maximumAlternativeAlleleCount);
+        }
         return stateTracker;
     }
 

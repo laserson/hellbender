@@ -33,7 +33,7 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
 
         // add AC=0 to the queue
         final int[] zeroCounts = new int[numAlternateAlleles];
-        ExactACset zeroSet = new ExactACset(numSamples+1, new ExactACcounts(zeroCounts));
+        final ExactACset zeroSet = new ExactACset(numSamples+1, new ExactACcounts(zeroCounts));
         ACqueue.add(zeroSet);
         indexesToACset.put(zeroSet.getACcounts(), zeroSet);
 
@@ -70,11 +70,13 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
                 final GenotypeLikelihoods.GenotypeLikelihoodsAllelePair alleles = GenotypeLikelihoods.getAllelePair(PLindexOfBestGL);
                 final int alleleLikelihoodIndex1 = alleles.alleleIndex1 - 1;
                 final int alleleLikelihoodIndex2 = alleles.alleleIndex2 - 1;
-                if ( alleles.alleleIndex1 != 0 )
+                if ( alleles.alleleIndex1 != 0 ) {
                     likelihoodSums[alleleLikelihoodIndex1].sum += likelihoods[PLindexOfBestGL] - likelihoods[PL_INDEX_OF_HOM_REF];
+                }
                 // don't double-count it
-                if ( alleles.alleleIndex2 != 0 && alleles.alleleIndex2 != alleles.alleleIndex1 )
+                if ( alleles.alleleIndex2 != 0 && alleles.alleleIndex2 != alleles.alleleIndex1 ) {
                     likelihoodSums[alleleLikelihoodIndex2].sum += likelihoods[PLindexOfBestGL] - likelihoods[PL_INDEX_OF_HOM_REF];
+                }
             }
         }
     }
@@ -115,7 +117,9 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
         // iterate over higher frequencies if possible
         final int ACwiggle = numChr - set.getACsum();
         if ( ACwiggle == 0 ) // all alternate alleles already sum to 2N so we cannot possibly go to higher frequencies
+        {
             return log10LofK;
+        }
 
         final int numAltAlleles = set.getACcounts().getCounts().length;
 
@@ -141,18 +145,21 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
 
                     // to get to this conformation, a sample would need to be BB or BC (remember that ref=0, so add one to the index)
                     final int PLindex = GenotypeLikelihoods.calculatePLindex(allele_i + 1, allele_j + 1);
-                    if ( allele_i == allele_j )
+                    if ( allele_i == allele_j ) {
                         sameAlleles.add(new DependentSet(ACcountsClone, PLindex));
-                    else
+                    } else {
                         differentAlleles.add(new DependentSet(ACcountsClone, PLindex));
+                    }
                 }
             }
 
             // IMPORTANT: we must first add the cases where the 2 new alleles are different so that the queue maintains its ordering
-            for ( DependentSet dependent : differentAlleles )
+            for ( final DependentSet dependent : differentAlleles ) {
                 updateACset(dependent.ACcounts, numChr, set, dependent.PLindex, ACqueue, indexesToACset, genotypeLikelihoods);
-            for ( DependentSet dependent : sameAlleles )
+            }
+            for ( final DependentSet dependent : sameAlleles ) {
                 updateACset(dependent.ACcounts, numChr, set, dependent.PLindex, ACqueue, indexesToACset, genotypeLikelihoods);
+            }
         }
 
         return log10LofK;
@@ -169,7 +176,7 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
                              final ArrayList<double[]> genotypeLikelihoods) {
         final ExactACcounts index = new ExactACcounts(newSetCounts);
         if ( !indexesToACset.containsKey(index) ) {
-            ExactACset set = new ExactACset(numChr/2 +1, index);
+            final ExactACset set = new ExactACset(numChr/2 +1, index);
             indexesToACset.put(index, set);
             ACqueue.add(set);
         }
@@ -189,8 +196,9 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
 
         // special case for k = 0 over all k
         if ( totalK == 0 ) {
-            for ( int j = 1; j < set.getLog10Likelihoods().length; j++ )
-                set.getLog10Likelihoods()[j] = set.getLog10Likelihoods()[j-1] + genotypeLikelihoods.get(j)[HOM_REF_INDEX];
+            for ( int j = 1; j < set.getLog10Likelihoods().length; j++ ) {
+                set.getLog10Likelihoods()[j] = set.getLog10Likelihoods()[j - 1] + genotypeLikelihoods.get(j)[HOM_REF_INDEX];
+            }
 
             final double log10Lof0 = set.getLog10Likelihoods()[set.getLog10Likelihoods().length-1];
             stateTracker.setLog10LikelihoodOfAFzero(log10Lof0);
@@ -220,8 +228,9 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
 
         // apply the priors over each alternate allele
         for ( final int ACcount : set.getACcounts().getCounts() ) {
-            if ( ACcount > 0 )
+            if ( ACcount > 0 ) {
                 log10LofK += log10AlleleFrequencyPriors[ACcount];
+            }
         }
 
         stateTracker.updateMAPifNeeded(log10LofK, set.getACcounts().getCounts());
@@ -244,7 +253,7 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
         }
     }
 
-    private double determineCoefficient(int PLindex, final int j, final int[] ACcounts, final int totalK) {
+    private double determineCoefficient(final int PLindex, final int j, final int[] ACcounts, final int totalK) {
         // the closed form representation generalized for multiple alleles is as follows:
         // AA: (2j - totalK) * (2j - totalK - 1)
         // AB: 2k_b * (2j - totalK)
@@ -254,14 +263,15 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
         // CC: k_c * (k_c - 1)
 
         // find the 2 alleles that are represented by this PL index
-        GenotypeLikelihoods.GenotypeLikelihoodsAllelePair alleles = GenotypeLikelihoods.getAllelePair(PLindex);
+        final GenotypeLikelihoods.GenotypeLikelihoodsAllelePair alleles = GenotypeLikelihoods.getAllelePair(PLindex);
 
         // *** note that throughout this method we subtract one from the alleleIndex because ACcounts ***
         // *** doesn't consider the reference allele whereas the GenotypeLikelihoods PL cache does.   ***
 
         // the AX het case
-        if ( alleles.alleleIndex1 == 0 )
-            return MathUtils.Log10Cache.get(2*ACcounts[alleles.alleleIndex2-1]) + MathUtils.Log10Cache.get(2*j-totalK);
+        if ( alleles.alleleIndex1 == 0 ) {
+            return MathUtils.Log10Cache.get(2 * ACcounts[alleles.alleleIndex2 - 1]) + MathUtils.Log10Cache.get(2 * j - totalK);
+        }
 
         final int k_i = ACcounts[alleles.alleleIndex1-1];
 
@@ -284,8 +294,9 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
                                           final int defaultPloidy,
                                           final List<Allele> allelesToUse,
                                           final boolean assignGenotypes) {
-        if (defaultPloidy != 2)
+        if (defaultPloidy != 2) {
             throw new IllegalArgumentException("cannot support ploidy different than 2 and the default ploidy is " + defaultPloidy);
+        }
         return allelesToUse.size() == 1
                 ? GATKVariantContextUtils.subsetToRefOnly(vc, 2)
                 : GATKVariantContextUtils.subsetDiploidAlleles(vc, allelesToUse,

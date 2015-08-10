@@ -49,18 +49,18 @@ class OriginalDiploidExactAFCalculator extends DiploidExactAFCalculator {
     private final static class ExactACCache {
         double[] kMinus2, kMinus1, kMinus0;
 
-        private static double[] create(int n) {
+        private static double[] create(final int n) {
             return new double[n];
         }
 
-        public ExactACCache(int n) {
+        public ExactACCache(final int n) {
             kMinus2 = create(n);
             kMinus1 = create(n);
             kMinus0 = create(n);
         }
 
         final public void rotate() {
-            double[] tmp = kMinus2;
+            final double[] tmp = kMinus2;
             kMinus2 = kMinus1;
             kMinus1 = kMinus0;
             kMinus0 = tmp;
@@ -80,9 +80,9 @@ class OriginalDiploidExactAFCalculator extends DiploidExactAFCalculator {
     }
 
     private Pair<Integer, Integer> linearExact(final VariantContext vc,
-                                              double[] log10AlleleFrequencyPriors,
-                                              double[] log10AlleleFrequencyLikelihoods,
-                                              double[] log10AlleleFrequencyPosteriors) {
+                                              final double[] log10AlleleFrequencyPriors,
+                                              final double[] log10AlleleFrequencyLikelihoods,
+                                              final double[] log10AlleleFrequencyPosteriors) {
         final ArrayList<double[]> genotypeLikelihoods = getGLs(vc.getGenotypes(), true);
         final int numSamples = genotypeLikelihoods.size()-1;
         final int numChr = 2*numSamples;
@@ -111,13 +111,15 @@ class OriginalDiploidExactAFCalculator extends DiploidExactAFCalculator {
 
                     double aa = Double.NEGATIVE_INFINITY;
                     double ab = Double.NEGATIVE_INFINITY;
-                    if (k < 2*j-1)
-                        aa = MathUtils.Log10Cache.get(2*j-k) + MathUtils.Log10Cache.get(2*j-k-1) + kMinus0[j-1] + gl[0];
+                    if (k < 2*j-1) {
+                        aa = MathUtils.Log10Cache.get(2 * j - k) + MathUtils.Log10Cache.get(2 * j - k - 1) + kMinus0[j - 1] + gl[0];
+                    }
 
-                    if (k < 2*j)
-                        ab = MathUtils.Log10Cache.get(2*k) + MathUtils.Log10Cache.get(2*j-k)+ kMinus1[j-1] + gl[1];
+                    if (k < 2*j) {
+                        ab = MathUtils.Log10Cache.get(2 * k) + MathUtils.Log10Cache.get(2 * j - k) + kMinus1[j - 1] + gl[1];
+                    }
 
-                    double log10Max;
+                    final double log10Max;
                     if (k > 1) {
                         final double bb = MathUtils.Log10Cache.get(k) + MathUtils.Log10Cache.get(k-1) + kMinus2[j-1] + gl[2];
                         log10Max = MathUtils.approximateLog10SumLog10(aa, ab, bb);

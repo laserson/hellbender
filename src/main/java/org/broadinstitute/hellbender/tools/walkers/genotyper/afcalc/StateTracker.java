@@ -78,7 +78,9 @@ final class StateTracker {
      * @param maxAltAlleles an integer >= 1
      */
     public StateTracker(final int maxAltAlleles) {
-        if ( maxAltAlleles < 0 ) throw new IllegalArgumentException("maxAltAlleles must be >= 0, saw " + maxAltAlleles);
+        if ( maxAltAlleles < 0 ) {
+            throw new IllegalArgumentException("maxAltAlleles must be >= 0, saw " + maxAltAlleles);
+        }
 
         alleleCountsOfMLE = new int[maxAltAlleles];
         alleleCountsOfMAP = new int[maxAltAlleles];
@@ -106,8 +108,9 @@ final class StateTracker {
         final int firstAltAlleleIndex = otherACsContainsReference ? 1 : 0;
 
         for ( int i = firstAltAlleleIndex; i < otherACcounts.length; i++ ) {
-            if ( alleleCountsOfMLE[i - firstAltAlleleIndex] > otherACcounts[i] )
+            if ( alleleCountsOfMLE[i - firstAltAlleleIndex] > otherACcounts[i] ) {
                 return false;
+            }
         }
 
         return true;
@@ -139,9 +142,11 @@ final class StateTracker {
     private double getLog10LikelihoodOfAFNotZero() {
         if ( log10LikelihoodsForAFGt0Sum == null ) {
             if ( log10LikelihoodsForAFGt0CacheIndex == 0 ) // there's nothing to sum up, so make the sum equal to the smallest thing we have
+            {
                 log10LikelihoodsForAFGt0Sum = MathUtils.LOG10_P_OF_ZERO;
-            else
+            } else {
                 log10LikelihoodsForAFGt0Sum = MathUtils.log10sumLog10(log10LikelihoodsForAFGt0, 0, log10LikelihoodsForAFGt0CacheIndex);
+            }
         }
         return log10LikelihoodsForAFGt0Sum;
     }
@@ -295,17 +300,20 @@ final class StateTracker {
      *
      * @param allelesUsedInGenotyping the list of alleles, where the first allele is reference
      */
-    protected void setAllelesUsedInGenotyping(List<Allele> allelesUsedInGenotyping) {
-        if ( allelesUsedInGenotyping == null || allelesUsedInGenotyping.isEmpty() )
+    protected void setAllelesUsedInGenotyping(final List<Allele> allelesUsedInGenotyping) {
+        if ( allelesUsedInGenotyping == null || allelesUsedInGenotyping.isEmpty() ) {
             throw new IllegalArgumentException("allelesUsedInGenotyping cannot be null or empty");
-        if ( allelesUsedInGenotyping.get(0).isNonReference() )
+        }
+        if ( allelesUsedInGenotyping.get(0).isNonReference() ) {
             throw new IllegalArgumentException("The first element of allelesUsedInGenotyping must be the reference allele");
+        }
 
         this.allelesUsedInGenotyping = allelesUsedInGenotyping;
     }
 
     public void ensureMaximumAlleleCapacity(final int capacity) {
-        if (this.alleleCountsOfMAP.length < capacity)
+        if (this.alleleCountsOfMAP.length < capacity) {
             reset(capacity);
+        }
     }
 }

@@ -20,20 +20,24 @@ public final class HeterogeneousPloidyModel implements PloidyModel {
     private final boolean isHomogeneous;
 
     public HeterogeneousPloidyModel(final SampleList sampleList, final int[] ploidies) {
-        if (sampleList == null)
+        if (sampleList == null) {
             throw new IllegalArgumentException("the sample list cannot be null");
-        if (ploidies == null)
+        }
+        if (ploidies == null) {
             throw new IllegalArgumentException("the ploidies cannot be null");
-        if (sampleList.numberOfSamples() != ploidies.length)
+        }
+        if (sampleList.numberOfSamples() != ploidies.length) {
             throw new IllegalArgumentException("sample-list and ploidy array length must match");
+        }
 
         this.ploidies = ploidies.clone();
 
         int ploidySum = 0;
         for (int i = 0; i < ploidies.length; i++) {
             final int p = this.ploidies[i];
-            if (p < 0)
+            if (p < 0) {
                 throw new IllegalArgumentException("no ploidy can be less than 0");
+            }
             ploidySum += p;
         }
         this.ploidySum = ploidySum;
@@ -43,8 +47,9 @@ public final class HeterogeneousPloidyModel implements PloidyModel {
 
     @Override
     public int samplePloidy(final int sampleIndex) {
-        if (sampleIndex < 0 || sampleIndex > ploidies.length)
+        if (sampleIndex < 0 || sampleIndex > ploidies.length) {
             throw new IllegalArgumentException("invalid sample index: " + sampleIndex);
+        }
         return ploidies[sampleIndex];
     }
 
@@ -69,7 +74,7 @@ public final class HeterogeneousPloidyModel implements PloidyModel {
     }
 
     @Override
-    public String getSample(int sampleIndex) {
+    public String getSample(final int sampleIndex) {
         return sampleList.getSample(sampleIndex);
     }
 }

@@ -17,28 +17,29 @@ public enum DiploidGenotype {
     public byte base1, base2;
 
     @Deprecated
-    private DiploidGenotype(char base1, char base2) {
+    private DiploidGenotype(final char base1, final char base2) {
         this((byte)base1, (byte)base2);
     }
 
-    private DiploidGenotype(byte base1, byte base2) {
+    private DiploidGenotype(final byte base1, final byte base2) {
         this.base1 = base1;
         this.base2 = base2;
     }
 
-    public boolean isHomRef(byte r) {
+    public boolean isHomRef(final byte r) {
         return isHom() && r == base1;
     }
 
-    public boolean isHomVar(byte r) {
+    public boolean isHomVar(final byte r) {
         return isHom() && r != base1;
     }
 
-    public boolean isHetRef(byte r) {
-        if ( base1 == r )
+    public boolean isHetRef(final byte r) {
+        if ( base1 == r ) {
             return r != base2;
-        else
+        } else {
             return base2 == r;
+        }
     }
 
     public boolean isHom() {
@@ -54,10 +55,11 @@ public enum DiploidGenotype {
      * @param hom the character to turn into a hom genotype, i.e. if it is A, then returned will be AA
      * @return the diploid genotype
      */
-    public static DiploidGenotype createHomGenotype(byte hom) {
-        int index = BaseUtils.simpleBaseToBaseIndex(hom);
-        if ( index == -1 )
+    public static DiploidGenotype createHomGenotype(final byte hom) {
+        final int index = BaseUtils.simpleBaseToBaseIndex(hom);
+        if ( index == -1 ) {
             throw new IllegalArgumentException(hom + " is not a valid base character");
+        }
         return conversionMatrix[index][index];
     }
 
@@ -67,13 +69,15 @@ public enum DiploidGenotype {
      * @param base2 base2
      * @return the diploid genotype
      */
-    public static DiploidGenotype createDiploidGenotype(byte base1, byte base2) {
-        int index1 = BaseUtils.simpleBaseToBaseIndex(base1);
-        if ( index1 == -1 )
+    public static DiploidGenotype createDiploidGenotype(final byte base1, final byte base2) {
+        final int index1 = BaseUtils.simpleBaseToBaseIndex(base1);
+        if ( index1 == -1 ) {
             throw new IllegalArgumentException(base1 + " is not a valid base character");
-        int index2 = BaseUtils.simpleBaseToBaseIndex(base2);
-        if ( index2 == -1 )
+        }
+        final int index2 = BaseUtils.simpleBaseToBaseIndex(base2);
+        if ( index2 == -1 ) {
             throw new IllegalArgumentException(base2 + " is not a valid base character");
+        }
         return conversionMatrix[index1][index2];
     }
 
@@ -83,11 +87,13 @@ public enum DiploidGenotype {
      * @param baseIndex2 base2
      * @return the diploid genotype
      */
-    public static DiploidGenotype createDiploidGenotype(int baseIndex1, int baseIndex2) {
-        if ( baseIndex1 == -1 )
+    public static DiploidGenotype createDiploidGenotype(final int baseIndex1, final int baseIndex2) {
+        if ( baseIndex1 == -1 ) {
             throw new IllegalArgumentException(baseIndex1 + " does not represent a valid base character");
-        if ( baseIndex2 == -1 )
+        }
+        if ( baseIndex2 == -1 ) {
             throw new IllegalArgumentException(baseIndex2 + " does not represent a valid base character");
+        }
         return conversionMatrix[baseIndex1][baseIndex2];
     }
 

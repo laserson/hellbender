@@ -27,8 +27,10 @@ public abstract class GenotypeLikelihoodsCalculationModel {
      * @param logger        logger
      * @param UAC           unified arg collection
      */
-    protected GenotypeLikelihoodsCalculationModel(UnifiedArgumentCollection UAC, Logger logger) {
-        if ( logger == null || UAC == null ) throw new GATKException("Bad arguments");
+    protected GenotypeLikelihoodsCalculationModel(final UnifiedArgumentCollection UAC, final Logger logger) {
+        if ( logger == null || UAC == null ) {
+            throw new GATKException("Bad arguments");
+        }
         this.UAC = UAC;
         this.logger = logger;
     }

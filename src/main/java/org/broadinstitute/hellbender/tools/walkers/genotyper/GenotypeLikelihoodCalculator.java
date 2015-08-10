@@ -161,10 +161,11 @@ public class GenotypeLikelihoodCalculator {
         this.alleleCount = alleleCount;
         this.ploidy = ploidy;
         genotypeCount = this.alleleFirstGenotypeOffsetByPloidy[ploidy][alleleCount];
-        if (genotypeCount == GenotypeLikelihoodCalculators.GENOTYPE_COUNT_OVERFLOW)
+        if (genotypeCount == GenotypeLikelihoodCalculators.GENOTYPE_COUNT_OVERFLOW) {
             throw new IllegalArgumentException(
                     String.format("the combination of ploidy (%s) and number of alleles (%s) results in a very large number of genotypes (> %s). You need to limit ploidy or the number of alternative alleles to analyze this locus",
                             ploidy, alleleCount, Integer.MAX_VALUE));
+        }
         alleleHeap = new PriorityQueue<>(ploidy, Comparator.<Integer>naturalOrder().reversed());
         readLikelihoodsByGenotypeIndex = new double[genotypeCount][];
         log10 = ploidyLog10;
@@ -178,20 +179,23 @@ public class GenotypeLikelihoodCalculator {
      * @param requestedCapacity number of read that need to be processed.
      */
     public void ensureReadCapacity(final int requestedCapacity) {
-        if (requestedCapacity < 0)
+        if (requestedCapacity < 0) {
             throw new IllegalArgumentException("illegal capacity value");
+        }
         if (readCapacity == -1) { // first time call.
             final int minimumCapacity = Math.max(requestedCapacity, 10); // Never go too small, 10 is the minimum.
             readAlleleLikelihoodByAlleleCount = new double[minimumCapacity * alleleCount * (ploidy+1)];
-            for (int i = 0; i < genotypeCount; i++)
+            for (int i = 0; i < genotypeCount; i++) {
                 readLikelihoodsByGenotypeIndex[i] = new double[minimumCapacity];
+            }
             readGenotypeLikelihoodComponents = new double[ploidy * minimumCapacity];
             readCapacity = minimumCapacity;
         } else if (readCapacity < requestedCapacity) {
             final int doubleCapacity = (requestedCapacity << 1);
             readAlleleLikelihoodByAlleleCount = new double[doubleCapacity * alleleCount * (ploidy+1)];
-            for (int i = 0; i < genotypeCount; i++)
+            for (int i = 0; i < genotypeCount; i++) {
                 readLikelihoodsByGenotypeIndex[i] = new double[doubleCapacity];
+            }
             readGenotypeLikelihoodComponents = new double[maximumDistinctAllelesInGenotype * doubleCapacity];
             readCapacity = doubleCapacity;
         }
@@ -210,7 +214,9 @@ public class GenotypeLikelihoodCalculator {
      */
     public int allelesToIndex(final int... alleleIndices) {
         // Special case ploidy == 0.
-        if (ploidy == 0) return 0;
+        if (ploidy == 0) {
+            return 0;
+        }
 
         alleleHeap.clear();
         for (int i = 0; i < alleleIndices.length; i++) {
@@ -242,12 +248,13 @@ public class GenotypeLikelihoodCalculator {
      * @return never {@code null}.
      */
     public GenotypeAlleleCounts genotypeAlleleCountsAt(final int index) {
-        if (index < 0 || index >= genotypeCount)
+        if (index < 0 || index >= genotypeCount) {
             throw new IllegalArgumentException("invalid likelihood index: " + index + " >= " + genotypeCount
-                    + " (genotype count for nalleles = " + alleleCount + " and ploidy " + ploidy );
-        if (index < GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY)
+                    + " (genotype count for nalleles = " + alleleCount + " and ploidy " + ploidy);
+        }
+        if (index < GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY) {
             return genotypeAlleleCounts[index];
-        else if (lastOverheadCounts == null || lastOverheadCounts.index() > index) {
+        } else if (lastOverheadCounts == null || lastOverheadCounts.index() > index) {
             final GenotypeAlleleCounts result = genotypeAlleleCounts[GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY - 1].copy();
             result.increase(index - GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY + 1);
             lastOverheadCounts = result;
@@ -272,11 +279,13 @@ public class GenotypeLikelihoodCalculator {
      * @return never {@code null}.
      */
     public <A extends Allele> GenotypeLikelihoods genotypeLikelihoods(final LikelihoodMatrix<A> likelihoods) {
-        if (likelihoods == null)
+        if (likelihoods == null) {
             throw new IllegalArgumentException("the likelihood map cannot be null");
+        }
 
-        if (likelihoods.numberOfAlleles() != alleleCount)
+        if (likelihoods.numberOfAlleles() != alleleCount) {
             throw new IllegalArgumentException("mismatch between allele list and alleleCount");
+        }
 
         final int readCount = likelihoods.numberOfReads();
 
@@ -305,8 +314,9 @@ public class GenotypeLikelihoodCalculator {
         for (int g = 0; g < genotypeCount; g++) {
             final double[] likelihoodsByRead = readLikelihoodsByGenotypeIndex[g];
             double s = - denominator;
-            for (int r = 0; r < readCount; r++)
+            for (int r = 0; r < readCount; r++) {
                 s += likelihoodsByRead[r];
+            }
             result[g] = s;
         }
         return result;
@@ -339,8 +349,9 @@ public class GenotypeLikelihoodCalculator {
                 default:
                     manyComponentGenotypeLikelihoodByRead(alleleCounts,readLikelihoods,readLikelihoodComponentsByAlleleCount, readCount);
             }
-            if (genotypeIndex < genotypeCount - 1)
+            if (genotypeIndex < genotypeCount - 1) {
                 alleleCounts = nextGenotypeAlleleCounts(alleleCounts);
+            }
         }
         return readLikelihoodsByGenotypeIndex;
     }
@@ -349,9 +360,9 @@ public class GenotypeLikelihoodCalculator {
         final int index = alleleCounts.index();
         final GenotypeAlleleCounts result;
         final int cmp = index - GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY + 1;
-        if (cmp < 0)
+        if (cmp < 0) {
             result = genotypeAlleleCounts[index + 1];
-        else if (cmp == 0) {
+        } else if (cmp == 0) {
             result = genotypeAlleleCounts[index].copy();
             result.increase();
         } else {
@@ -380,13 +391,15 @@ public class GenotypeLikelihoodCalculator {
             final int alleleCount = genotypeAllelesAndCounts[cc++];
             // alleleDataOffset will point to the index of the first read likelihood for that allele and allele count.
             int alleleDataOffset = alleleDataSize * alleleIndex + alleleCount * readCount;
-            for (int r = 0, readDataOffset = c; r < readCount; r++, readDataOffset += maximumDistinctAllelesInGenotype)
+            for (int r = 0, readDataOffset = c; r < readCount; r++, readDataOffset += maximumDistinctAllelesInGenotype) {
                 readGenotypeLikelihoodComponents[readDataOffset] = readLikelihoodComponentsByAlleleCount[alleleDataOffset++];
+            }
         }
 
         // Calculate the likelihood per read.
-        for (int r = 0, readDataOffset = 0; r < readCount; r++, readDataOffset += maximumDistinctAllelesInGenotype)
+        for (int r = 0, readDataOffset = 0; r < readCount; r++, readDataOffset += maximumDistinctAllelesInGenotype) {
             likelihoodByRead[r] = MathUtils.approximateLog10SumLog10(readGenotypeLikelihoodComponents, readDataOffset, readDataOffset + componentCount);
+        }
     }
 
     /**
@@ -419,9 +432,10 @@ public class GenotypeLikelihoodCalculator {
         final int allele = genotypeAlleleCounts.alleleIndexAt(0);
         // the count of the only component must be = ploidy.
         int offset = (allele * (ploidy + 1) + ploidy) * readCount;
-        for (int r = 0; r < readCount; r++)
+        for (int r = 0; r < readCount; r++) {
             likelihoodByRead[r] =
                     readLikelihoodComponentsByAlleleCount[offset++];
+        }
     }
 
     /**
@@ -445,9 +459,10 @@ public class GenotypeLikelihoodCalculator {
             // p = 2 because the frequency == 1 we already have it.
             for (int frequency = 2, destinationOffset = frequency1Offset + readCount; frequency <= ploidy; frequency++) {
                 final double log10frequency = log10[frequency];
-                for (int r = 0, sourceOffset = frequency1Offset; r < readCount; r++)
+                for (int r = 0, sourceOffset = frequency1Offset; r < readCount; r++) {
                     readAlleleLikelihoodByAlleleCount[destinationOffset++] =
                             readAlleleLikelihoodByAlleleCount[sourceOffset++] + log10frequency;
+                }
             }
         }
         return readAlleleLikelihoodByAlleleCount;
@@ -487,18 +502,22 @@ public class GenotypeLikelihoodCalculator {
      * @return 0 or greater but less than {@link #genotypeCount}.
      */
     public int alleleCountsToIndex(final int ... alleleCountArray) {
-        if (alleleCountArray == null)
+        if (alleleCountArray == null) {
             throw new IllegalArgumentException("the allele counts cannot be null");
-        if ((alleleCountArray.length & 1) != 0)
+        }
+        if ((alleleCountArray.length & 1) != 0) {
             throw new IllegalArgumentException("the allele counts array cannot have odd length");
+        }
         alleleHeap.clear();
         for (int i = 0; i < alleleCountArray.length; i += 2) {
             final int index = alleleCountArray[i];
             final int count = alleleCountArray[i+1];
-            if (count < 0)
+            if (count < 0) {
                 throw new IllegalArgumentException("no allele count can be less than 0");
-            for (int j = 0; j < count; j++)
+            }
+            for (int j = 0; j < count; j++) {
                 alleleHeap.add(index);
+            }
         }
         return alleleHeapToIndex();
     }
@@ -513,15 +532,18 @@ public class GenotypeLikelihoodCalculator {
      * @return a valid likelihood index.
      */
     private int alleleHeapToIndex() {
-        if (alleleHeap.size() != ploidy)
+        if (alleleHeap.size() != ploidy) {
             throw new IllegalArgumentException("the sum of allele counts must be equal to the ploidy of the calculator");
-        if (alleleHeap.peek() >= alleleCount)
+        }
+        if (alleleHeap.peek() >= alleleCount) {
             throw new IllegalArgumentException("invalid allele " + alleleHeap.peek() + " more than the maximum " + (alleleCount - 1));
+        }
         int result = 0;
         for (int p = ploidy; p > 0; p--) {
             final int allele = alleleHeap.remove();
-            if (allele < 0)
+            if (allele < 0) {
                 throw new IllegalArgumentException("invalid allele " + allele + " must be equal or greater than 0 ");
+            }
             result += alleleFirstGenotypeOffsetByPloidy[p][allele];
         }
         return result;
@@ -540,13 +562,15 @@ public class GenotypeLikelihoodCalculator {
      * @return never {@code null}.
      */
     public int[] genotypeIndexMap(final int[] oldToNewAlleleIndexMap) {
-        if (oldToNewAlleleIndexMap == null)
+        if (oldToNewAlleleIndexMap == null) {
             throw new IllegalArgumentException("the input encoding array cannot be null");
+        }
 
         final int resultAlleleCount = oldToNewAlleleIndexMap.length;
-        if (resultAlleleCount > alleleCount)
+        if (resultAlleleCount > alleleCount) {
             throw new IllegalArgumentException("this calculator does not have enough capacity for handling "
                     + resultAlleleCount + " alleles ");
+        }
         final int resultLength = resultAlleleCount == alleleCount
                 ? genotypeCount : GenotypeLikelihoodCalculators.genotypeCount(ploidy,resultAlleleCount);
 
@@ -556,8 +580,9 @@ public class GenotypeLikelihoodCalculator {
         GenotypeAlleleCounts alleleCounts = genotypeAlleleCounts[0];
         for (int i = 0; i < resultLength; i++) {
             genotypeIndexMapPerGenotypeIndex(i,alleleCounts, oldToNewAlleleIndexMap, result, sortedAlleleCounts);
-            if (i < resultLength - 1)
-                  alleleCounts = nextGenotypeAlleleCounts(alleleCounts);
+            if (i < resultLength - 1) {
+                alleleCounts = nextGenotypeAlleleCounts(alleleCounts);
+            }
         }
         return result;
     }
@@ -578,10 +603,12 @@ public class GenotypeLikelihoodCalculator {
             final int oldIndex = sortedAlleleCountsBuffer[jj++];
             final int repeats = sortedAlleleCountsBuffer[jj++];
             final int newIndex = oldToNewAlleleIndexMap[oldIndex];
-            if (newIndex < 0 || newIndex >= alleleCount)
+            if (newIndex < 0 || newIndex >= alleleCount) {
                 throw new IllegalArgumentException("found invalid new allele index (" + newIndex + ") for old index (" + oldIndex + ")");
-            for (int k = 0; k < repeats; k++)
+            }
+            for (int k = 0; k < repeats; k++) {
                 alleleHeap.add(newIndex);
+            }
         }
         final int genotypeIndex = alleleHeapToIndex(); // this cleans the heap for the next use.
         destination[newGenotypeIndex] = genotypeIndex;

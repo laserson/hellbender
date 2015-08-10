@@ -26,13 +26,14 @@ public final class ExactACset {
      * sum of all the non-reference alleles
      */
     public int getACsum() {
-        if ( sum == -1 )
+        if ( sum == -1 ) {
             sum = (int) MathUtils.sum(getACcounts().getCounts());
+        }
         return sum;
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         return (obj instanceof ExactACset) && getACcounts().equals(((ExactACset)obj).getACcounts());
     }
 

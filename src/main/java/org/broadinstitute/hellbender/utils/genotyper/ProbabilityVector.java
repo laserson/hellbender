@@ -17,12 +17,13 @@ public class ProbabilityVector {
      * @param vec                                  Probability (or likelihood) vector in log space
      * @param compressRange                        If true, compress by eliminating edges with little support
      */
-    public ProbabilityVector(double[] vec, boolean compressRange) {
+    public ProbabilityVector(final double[] vec, final boolean compressRange) {
 
-        int maxValIdx = MathUtils.maxElementIndex(vec);
-        double maxv = vec[maxValIdx];
-        if (maxv > 0.0)
+        final int maxValIdx = MathUtils.maxElementIndex(vec);
+        final double maxv = vec[maxValIdx];
+        if (maxv > 0.0) {
             throw new GATKException("BUG: Attempting to create a log-probability vector with positive elements");
+        }
 
         if (compressRange) {
             minVal = getMinIdx(vec, maxValIdx);
@@ -37,11 +38,11 @@ public class ProbabilityVector {
         }
     }
 
-    public ProbabilityVector(double[] vec) {
+    public ProbabilityVector(final double[] vec) {
         this(vec,true);
     }
 
-    public ProbabilityVector(ProbabilityVector other, boolean compressRange) {
+    public ProbabilityVector(final ProbabilityVector other, final boolean compressRange) {
         // create new probability vector from other.
         this(other.getUncompressedProbabilityVector(), compressRange);
         
@@ -50,24 +51,27 @@ public class ProbabilityVector {
     public int getMaxVal() { return maxVal;}
     public double[] getProbabilityVector() { return probabilityArray;}
     
-    public double[] getProbabilityVector(int minVal, int maxVal) {
+    public double[] getProbabilityVector(final int minVal, final int maxVal) {
         // get vector in specified range. If range is outside of current vector, fill with negative infinities
-        double[] x = new double[maxVal - minVal + 1];
+        final double[] x = new double[maxVal - minVal + 1];
 
-        for (int k=minVal; k <= maxVal; k++)
-            x[k-minVal] = getLogProbabilityForIndex(k);
+        for (int k=minVal; k <= maxVal; k++) {
+            x[k - minVal] = getLogProbabilityForIndex(k);
+        }
 
 
         return x;
     }
 
     public double[] getUncompressedProbabilityVector() {
-        double x[] = new double[maxVal+1];
+        final double[] x = new double[maxVal+1];
         
-        for (int i=0; i < minVal; i++)
+        for (int i=0; i < minVal; i++) {
             x[i] = Double.NEGATIVE_INFINITY;
-        for (int i=minVal; i <=maxVal; i++)
-            x[i] = probabilityArray[i-minVal];
+        }
+        for (int i=minVal; i <=maxVal; i++) {
+            x[i] = probabilityArray[i - minVal];
+        }
 
         return x;
     }
@@ -76,15 +80,16 @@ public class ProbabilityVector {
      * @param idx   Index to probe
      * @return      log10(Pr X = i) )
      */
-    public double getLogProbabilityForIndex(int idx) {
-    if (idx < minVal || idx > maxVal)
+    public double getLogProbabilityForIndex(final int idx) {
+    if (idx < minVal || idx > maxVal) {
         return Double.NEGATIVE_INFINITY;
-    else
-        return probabilityArray[idx-minVal];
+    } else {
+        return probabilityArray[idx - minVal];
+    }
     }
 
     //public ProbabilityVector
-    public static ProbabilityVector compressVector(double[] vec ) {
+    public static ProbabilityVector compressVector(final double[] vec ) {
         return new ProbabilityVector(vec, true);
     }
 
@@ -94,11 +99,12 @@ public class ProbabilityVector {
      * @param maxValIdx              Index to stop - usually index with max value in vector
      * @return                       Min index where vector > vec[maxValIdx]-LOG_DYNAMIC_RANGE
      */
-    private static int getMinIdx(double[] vec, int maxValIdx) {
+    private static int getMinIdx(final double[] vec, final int maxValIdx) {
         int edgeIdx;
         for (edgeIdx=0; edgeIdx<=maxValIdx; edgeIdx++ ) {
-            if (vec[edgeIdx] > vec[maxValIdx]-LOG_DYNAMIC_RANGE)
+            if (vec[edgeIdx] > vec[maxValIdx]-LOG_DYNAMIC_RANGE) {
                 break;
+            }
         }
 
         return edgeIdx;
@@ -112,11 +118,12 @@ public class ProbabilityVector {
      * @param maxValIdx              Index to stop - usually index with max value in vector
      * @return                       Max index where vector > vec[maxValIdx]-LOG_DYNAMIC_RANGE
      */
-    private static int getMaxIdx(double[] vec, int maxValIdx) {
+    private static int getMaxIdx(final double[] vec, final int maxValIdx) {
         int edgeIdx;
         for (edgeIdx=vec.length-1; edgeIdx>=maxValIdx; edgeIdx-- ) {
-            if (vec[edgeIdx] > vec[maxValIdx]-LOG_DYNAMIC_RANGE)
+            if (vec[edgeIdx] > vec[maxValIdx]-LOG_DYNAMIC_RANGE) {
                 break;
+            }
         }
 
         return edgeIdx;
@@ -129,18 +136,19 @@ public class ProbabilityVector {
      * @param other
      * @return
      */
-    public double logDotProduct(ProbabilityVector other) {
+    public double logDotProduct(final ProbabilityVector other) {
         // find overlap in range
-        int minRange = Math.max(this.minVal, other.getMinVal());
-        int maxRange = Math.min(this.maxVal, other.getMaxVal());
-        if (minRange > maxRange)
+        final int minRange = Math.max(this.minVal, other.getMinVal());
+        final int maxRange = Math.min(this.maxVal, other.getMaxVal());
+        if (minRange > maxRange) {
             return Double.NEGATIVE_INFINITY;
+        }
 
         // x = 0,1,2,   y = 2,3,4. minRange = 2, maxRange = 2
-        double[] result = new double[maxRange - minRange+1];
+        final double[] result = new double[maxRange - minRange+1];
         for (int k=0; k <= maxRange-minRange; k++) {
-            int startI = minRange - this.minVal;
-            int startJ = minRange - other.getMinVal();
+            final int startI = minRange - this.minVal;
+            final int startJ = minRange - other.getMinVal();
             result[k] = this.probabilityArray[k+startI] + other.probabilityArray[k+startJ];
             
 

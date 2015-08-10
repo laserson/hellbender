@@ -121,10 +121,11 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return 0 or less.
      */
     public double log10CombinationCount() {
-        if (log10CombinationCount == -1)
+        if (log10CombinationCount == -1) {
             return log10CombinationCount = calculateLog10CombinationCount();
-        else
+        } else {
             return log10CombinationCount;
+        }
     }
 
     /**
@@ -133,12 +134,13 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return 0 or less.
      */
     private double calculateLog10CombinationCount() {
-        if (ploidy <= 1)
+        if (ploidy <= 1) {
             return 0;
-        else {
+        } else {
             final int[] counts = new int[distinctAlleleCount];
-            for (int i = 0, j = 1; i < distinctAlleleCount; i++, j+=2)
+            for (int i = 0, j = 1; i < distinctAlleleCount; i++, j+=2) {
                 counts[i] = sortedAlleleCounts[j];
+            }
             return MathUtils.log10MultinomialCoefficient(ploidy, counts);
         }
     }
@@ -164,8 +166,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @throws IllegalArgumentException if {@code times} is negative.
      */
     protected void increase(final int times) {
-        for (int i = 0; i < times; i++)
+        for (int i = 0; i < times; i++) {
             increase();
+        }
     }
 
     /**
@@ -178,16 +181,18 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      */
     protected void increase() {
         // if the ploidy is zero there is only one possible genotype.
-        if (distinctAlleleCount == 0)
+        if (distinctAlleleCount == 0) {
             return;
+        }
 
         // Worth make this case faster.
         if (distinctAlleleCount == 1) {
             if (ploidy == 1) {
                 sortedAlleleCounts[0]++;
             } else {
-                if (sortedAlleleCounts.length < 4)
+                if (sortedAlleleCounts.length < 4) {
                     sortedAlleleCounts = Arrays.copyOf(sortedAlleleCounts, 4);
+                }
                 sortedAlleleCounts[2] = sortedAlleleCounts[0] + 1;
                 sortedAlleleCounts[3] = 1;
                 sortedAlleleCounts[0] = 0;
@@ -220,7 +225,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
                     sortedAlleleCounts[1]++; // freq1 has become freq0.
                     distinctAlleleCount--;
                 } else  // just need to mutate allele0 to allele0 + 1.
+                {
                     sortedAlleleCounts[0] = allele0Plus1;
+                }
             } else { // && freq0 > 1 as per sortedAlleleCounts format restrictions. In this case allele0 will mutated to '0' with frequency decreased by 1.
                 if (allele0And1AreConsecutive) { // we don't need to add a component for allele0 + 1 since it already exists.
                     sortedAlleleCounts[0] = 0;
@@ -228,7 +235,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
                     sortedAlleleCounts[3]++;
                 } else { // we need to insert allele0 + 1 in the sorted-allele-counts array and give it frequency 1.
                     if (sortedAlleleCounts.length < sortedAlleleCountsLength + 2) // make room for the new component.
+                    {
                         sortedAlleleCounts = Arrays.copyOf(sortedAlleleCounts, sortedAlleleCountsLength + 2);
+                    }
                     System.arraycopy(sortedAlleleCounts, 2, sortedAlleleCounts, 4, sortedAlleleCountsLength - 2);
                     sortedAlleleCounts[0] = 0;
                     sortedAlleleCounts[1] = freq0 - 1;
@@ -248,15 +257,19 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      */
     protected GenotypeAlleleCounts next() {
         // if the ploidy is zero there is only one possible genotype.
-        if (distinctAlleleCount == 0)
+        if (distinctAlleleCount == 0) {
             return this;
+        }
 
         // Worth make this case faster.
         if (distinctAlleleCount == 1) {
             if (ploidy == 1)  // A -> B , D -> E etc...
+            {
                 return new GenotypeAlleleCounts(1, index + 1, sortedAlleleCounts[0] + 1, 1);
-            else  // AAAAA -> AAAAB, DDD -> AAE etc...
+            } else  // AAAAA -> AAAAB, DDD -> AAE etc...
+            {
                 return new GenotypeAlleleCounts(ploidy, index + 1, 0, ploidy - 1, sortedAlleleCounts[0] + 1, 1);
+            }
         }
         // Now, all the following ifs are just the way to avoid working with dynamically sizing List<int[]>
         // as the final size of the resulting new sorted-allele-counts array varies depending on the situation.
@@ -322,8 +335,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return 0 or greater.
      */
     public int alleleIndexAt(final int rank) {
-        if (rank < 0 || rank >= distinctAlleleCount)
+        if (rank < 0 || rank >= distinctAlleleCount) {
             throw new IllegalArgumentException("the requested rank " + rank + " is out of range [0," + distinctAlleleCount + ")");
+        }
         return sortedAlleleCounts[rank << 1];
     }
 
@@ -340,8 +354,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      *
      */
     public int alleleRankFor(final int index) {
-        if (index < 0)
+        if (index < 0) {
             throw new IllegalArgumentException("the index must be 0 or greater");
+        }
         return alleleIndexToRank(index, 0, distinctAlleleCount);
     }
 
@@ -364,13 +379,16 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return never {@code null}.
      */
     public String toUnphasedGenotypeString() {
-        if (ploidy == 0) return "";
+        if (ploidy == 0) {
+            return "";
+        }
         final StringBuilder sb = new StringBuilder(distinctAlleleCount * 3);
         for (int i = 0; i < distinctAlleleCount; i += 2) {
             final int alleleIndex = sortedAlleleCounts[i];
             final int alleleCount = sortedAlleleCounts[i + 1];
-            for (int j = 0; j < alleleCount; j++)
+            for (int j = 0; j < alleleCount; j++) {
                 sb.append(alleleIndex).append('/');
+            }
 
         }
         sb.setLength(sb.length() - 1);
@@ -389,10 +407,11 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      */
     @Override
     public boolean equals(final Object o) {
-        if (o instanceof GenotypeAlleleCounts)
-            return equals((GenotypeAlleleCounts)o);
-        else
+        if (o instanceof GenotypeAlleleCounts) {
+            return equals((GenotypeAlleleCounts) o);
+        } else {
             return false;
+        }
     }
 
     /**
@@ -401,12 +420,15 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return never {@code null}.
      */
     public boolean equals(final GenotypeAlleleCounts o) {
-        if (o == this)
+        if (o == this) {
             return true;
-        if (o == null)
+        }
+        if (o == null) {
             return false;
-        if (ploidy != o.ploidy)
+        }
+        if (ploidy != o.ploidy) {
             return false;
+        }
         return Arrays.equals(sortedAlleleCounts, o.sortedAlleleCounts);
     }
 
@@ -434,14 +456,17 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      */
     @Override
     public int compareTo(final GenotypeAlleleCounts other) {
-        if (other == this)
+        if (other == this) {
             return 0;
-        if (other == null)
+        }
+        if (other == null) {
             throw new IllegalArgumentException("input genotype cannot be null");
-        if (other.ploidy == ploidy)
+        }
+        if (other.ploidy == ploidy) {
             return index - other.index;
-        else
+        } else {
             return ploidy - other.ploidy;
+        }
     }
 
     @Override
@@ -458,8 +483,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      *  the potential insertion point (within the interval [from,to]) as {@code -result - 1}
      */
     private int alleleIndexToRank(final int index,final int from, final int to) {
-        if (to <= from)
-            return - from - 1;
+        if (to <= from) {
+            return -from - 1;
+        }
         if (from == to - 1) {
             final int onlyIndex = sortedAlleleCounts[from << 1];
             return onlyIndex == index ? from : (onlyIndex > index) ? -from - 1 : -to - 1;
@@ -467,12 +493,13 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
 
         final int mid = (to + from) >> 1;
         final int midIndex = sortedAlleleCounts[mid << 1];
-        if (midIndex == index)
+        if (midIndex == index) {
             return mid;
-        else if (midIndex < index)
-            return alleleIndexToRank(index,mid + 1,to);
-        else
-            return alleleIndexToRank(index,0,mid);
+        } else if (midIndex < index) {
+            return alleleIndexToRank(index, mid + 1, to);
+        } else {
+            return alleleIndexToRank(index, 0, mid);
+        }
     }
 
     /**
@@ -485,8 +512,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return 1 or greater.
      */
     public int alleleCountAt(final int rank) {
-        if (rank < 0 || rank >= distinctAlleleCount)
+        if (rank < 0 || rank >= distinctAlleleCount) {
             throw new IllegalArgumentException("the rank is out of range");
+        }
         return sortedAlleleCounts[(rank << 1) + 1];
     }
 
@@ -521,8 +549,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * of each allele where the position in the array is equal to its index.
      */
     public int[] alleleCountsByIndex(final int maximumAlleleIndex) {
-        if (maximumAlleleIndex < 0)
+        if (maximumAlleleIndex < 0) {
             throw new IllegalArgumentException("the requested allele count cannot be less than 0");
+        }
         final int[] result = new int[maximumAlleleIndex + 1];
         copyAlleleCountsByIndex(result, 0, 0, maximumAlleleIndex);
         return result;
@@ -562,8 +591,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
             nextIndex++;
         }
         // Finally we take care of trailing requested allele indices.
-        while (nextIndex++ <= maximumAlleleIndex)
+        while (nextIndex++ <= maximumAlleleIndex) {
             dest[nextDestOffset++] = 0;
+        }
     }
 
     /**
@@ -591,13 +621,16 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      *   are required for the job.
      */
     public void copyAlleleCounts(final int[] dest, final int offset) {
-        if (dest == null)
+        if (dest == null) {
             throw new IllegalArgumentException("the destination cannot be null");
-        if (offset < 0)
+        }
+        if (offset < 0) {
             throw new IllegalArgumentException("the offset cannot be negative");
+        }
         final int sortedAlleleCountsLength = distinctAlleleCount << 1;
-        if (offset + sortedAlleleCountsLength > dest.length)
+        if (offset + sortedAlleleCountsLength > dest.length) {
             throw new IllegalArgumentException("the input array does not have enough capacity");
+        }
         System.arraycopy(sortedAlleleCounts, 0, dest, offset, sortedAlleleCountsLength);
     }
 
@@ -610,12 +643,13 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return never {@code null}.
      */
     protected static GenotypeAlleleCounts first(final int ploidy) {
-        if (ploidy < 0)
+        if (ploidy < 0) {
             throw new IllegalArgumentException("the ploidy must be 0 or greater");
-        else if (ploidy == 0)
-            return new GenotypeAlleleCounts(0,0);
-        else
+        } else if (ploidy == 0) {
+            return new GenotypeAlleleCounts(0, 0);
+        } else {
             return new GenotypeAlleleCounts(ploidy, 0, 0, ploidy);
+        }
     }
 
     /**
@@ -628,8 +662,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return never {@code null}.
      */
     public static GenotypeAlleleCounts makeNextGenotype(final GenotypeAlleleCounts g) {
-        if (g == null)
+        if (g == null) {
             throw new IllegalArgumentException("the next genotype");
+        }
         return g.next();
     }
 
@@ -639,10 +674,11 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return -1 if there is no alleles (ploidy == 0), 0 or greater otherwise.
      */
     public int maximumAlleleIndex() {
-        if (distinctAlleleCount == 0)
+        if (distinctAlleleCount == 0) {
             return -1;
-        else
+        } else {
             return sortedAlleleCounts[(distinctAlleleCount - 1) << 1];
+        }
     }
 
     /**
@@ -651,10 +687,11 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      * @return -1 if there is no allele (ploidy == 0), 0 or greater otherwise.
      */
     public int minimumAlleleIndex() {
-        if (distinctAlleleCount == 0)
+        if (distinctAlleleCount == 0) {
             return -1;
-        else
+        } else {
             return sortedAlleleCounts[0];
+        }
     }
 
     /**
@@ -677,23 +714,27 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
      */
     @SuppressWarnings("unchecked")
     public <T extends Allele> List<T> asAlleleList(final List<T> allelesToUse) {
-        if (allelesToUse == null)
+        if (allelesToUse == null) {
             throw new IllegalArgumentException("the input allele list cannot be null");
-        if (allelesToUse.size() < maximumAlleleIndex())
+        }
+        if (allelesToUse.size() < maximumAlleleIndex()) {
             throw new IllegalArgumentException("the provided alleles to use does not contain an element for the maximum allele ");
+        }
         if (distinctAlleleCount == 1 ) {
-            if (ploidy == 1)
+            if (ploidy == 1) {
                 return Collections.singletonList(allelesToUse.get(sortedAlleleCounts[0]));
-            else
+            } else {
                 return Collections.nCopies(ploidy, allelesToUse.get(sortedAlleleCounts[0]));
+            }
         } else {
             final Allele[] myAlleles = new Allele[ploidy];
             int nextIndex = 0;
             for (int i = 0, ii = 0; i < distinctAlleleCount; i++) {
                 final Allele allele = allelesToUse.get(sortedAlleleCounts[ii++]);
                 final int repeats = sortedAlleleCounts[ii++];
-                for (int j = 0; j < repeats; j++)
+                for (int j = 0; j < repeats; j++) {
                     myAlleles[nextIndex++] = allele;
+                }
             }
             return (List<T>) Arrays.asList(myAlleles);
         }
@@ -726,8 +767,9 @@ public final class GenotypeAlleleCounts implements Comparable<GenotypeAlleleCoun
         for (int i = 0,ii = 0; i < distinctAlleleCount; i++) {
             final int index = sortedAlleleCounts[ii++];
             final int repeats = sortedAlleleCounts[ii++];
-            for (int j = 0; j < repeats; j++)
+            for (int j = 0; j < repeats; j++) {
                 result[k++] = index;
+            }
         }
         return result;
     }

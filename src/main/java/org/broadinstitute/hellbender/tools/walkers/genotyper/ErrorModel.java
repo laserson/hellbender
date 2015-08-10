@@ -41,7 +41,7 @@ public class ErrorModel {
      */
     public ErrorModel(final UnifiedArgumentCollection UAC,
                       final ReadPileup refSamplePileup,
-                      VariantContext refSampleVC,
+                      final VariantContext refSampleVC,
                       final ReferenceContext refContext) {
         this.maxQualityScore = UAC.maxQualityScore;
         this.minQualityScore = UAC.minQualityScore;
@@ -52,7 +52,7 @@ public class ErrorModel {
         LinkedHashMap<Allele, Haplotype> haplotypeMap = null;
         double[][] perReadLikelihoods = null;
 
-        double[] model = new double[maxQualityScore+1];
+        final double[] model = new double[maxQualityScore+1];
         Arrays.fill(model, Double.NEGATIVE_INFINITY);
 
         boolean hasCalledAlleles = false;
@@ -60,7 +60,7 @@ public class ErrorModel {
         final PerReadAlleleLikelihoodMap perReadAlleleLikelihoodMap = new PerReadAlleleLikelihoodMap();
         if (refSampleVC != null) {
 
-            for (Allele allele : refSampleVC.getAlleles()) {
+            for (final Allele allele : refSampleVC.getAlleles()) {
                 if (allele.isCalled()) {
                     hasCalledAlleles = true;
                     break;
@@ -74,7 +74,7 @@ public class ErrorModel {
             }
         }
 
-        double p = QualityUtils.qualToErrorProbLog10((byte) (maxQualityScore - minQualityScore));
+        final double p = QualityUtils.qualToErrorProbLog10((byte) (maxQualityScore - minQualityScore));
         if (refSamplePileup == null || refSampleVC == null  || !hasCalledAlleles) {
             for (byte q=minQualityScore; q<=maxQualityScore; q++) {
                 // maximum uncertainty if there's no ref data at site
@@ -87,31 +87,36 @@ public class ErrorModel {
             int matches = 0;
             int coverage = 0;
 
-            Allele refAllele = refSampleVC.getReference();
+            final Allele refAllele = refSampleVC.getReference();
 
             if ( refSampleVC.isIndel()) {
                 //perReadLikelihoods = new double[readCounts.length][refSampleVC.getAlleles().size()];
                 final int eventLength = IndelGenotypeLikelihoodsCalculationModel.getEventLength(refSampleVC.getAlleles());
-                if (!haplotypeMap.isEmpty())
-                    perReadLikelihoods = pairModel.computeGeneralReadHaplotypeLikelihoods(refSamplePileup,haplotypeMap,refContext, eventLength, perReadAlleleLikelihoodMap);
+                if (!haplotypeMap.isEmpty()) {
+                    perReadLikelihoods = pairModel.computeGeneralReadHaplotypeLikelihoods(refSamplePileup, haplotypeMap, refContext, eventLength, perReadAlleleLikelihoodMap);
+                }
             }
             int idx = 0;
-            for (PileupElement refPileupElement : refSamplePileup) {
-                if (DEBUG)
+            for (final PileupElement refPileupElement : refSamplePileup) {
+                if (DEBUG) {
                     System.out.println(refPileupElement.toString());
+                }
                 boolean isMatch = false;
-                for (Allele allele : refSampleVC.getAlleles()) {
-                    boolean m = pileupElementMatches(refPileupElement, allele, refAllele, refContext.getBase());
-                    if (DEBUG) System.out.println(m);
+                for (final Allele allele : refSampleVC.getAlleles()) {
+                    final boolean m = pileupElementMatches(refPileupElement, allele, refAllele, refContext.getBase());
+                    if (DEBUG) {
+                        System.out.println(m);
+                    }
                     isMatch |= m;
                 }
                 if (refSampleVC.isIndel() && !haplotypeMap.isEmpty()) {
                     // ignore match/mismatch if reads, as determined by their likelihood, are not informative
-                    double[] perAlleleLikelihoods = perReadLikelihoods[idx++];
-                    if (!isInformativeElement(perAlleleLikelihoods))
+                    final double[] perAlleleLikelihoods = perReadLikelihoods[idx++];
+                    if (!isInformativeElement(perAlleleLikelihoods)) {
                         matches++;
-                    else
-                        matches += (isMatch?1:0);
+                    } else {
+                        matches += (isMatch ? 1 : 0);
+                    }
 
                 }   else {
                     matches += (isMatch?1:0);
@@ -119,13 +124,14 @@ public class ErrorModel {
                 coverage++;
             }
 
-            int mismatches = coverage - matches;
+            final int mismatches = coverage - matches;
             //System.out.format("Cov:%d match:%d mismatch:%d\n",coverage, matches, mismatches);
             for (byte q=minQualityScore; q<=maxQualityScore; q++) {
-                if (coverage==0)
+                if (coverage==0) {
                     model[q] = p;
-                else
-                    model[q] = log10PoissonProbabilitySiteGivenQual(q,coverage,  mismatches);
+                } else {
+                    model[q] = log10PoissonProbabilitySiteGivenQual(q, coverage, mismatches);
+                }
             }
             this.refDepth = coverage;
         }
@@ -134,15 +140,16 @@ public class ErrorModel {
         this.probabilityVector = new ProbabilityVector(model, compressRange);
     }
 
-    private boolean isInformativeElement(double[] likelihoods) {
+    private boolean isInformativeElement(final double[] likelihoods) {
         // if likelihoods are the same, they're not informative
         final double thresh = 0.1;
-        int maxIdx = MathUtils.maxElementIndex(likelihoods);
-        int minIdx = MathUtils.minElementIndex(likelihoods);
-        if (likelihoods[maxIdx]-likelihoods[minIdx]< thresh)
+        final int maxIdx = MathUtils.maxElementIndex(likelihoods);
+        final int minIdx = MathUtils.minElementIndex(likelihoods);
+        if (likelihoods[maxIdx]-likelihoods[minIdx]< thresh) {
             return false;
-        else
+        } else {
             return true;
+        }
     }
     /**
      * Simple constructor that just takes a given log-probability vector as error model.
@@ -150,7 +157,7 @@ public class ErrorModel {
      * @param pvector       Given vector of log-probabilities
      *
      */
-    public ErrorModel(double[] pvector) {
+    public ErrorModel(final double[] pvector) {
         this.maxQualityScore = (byte)(pvector.length-1);
         this.minQualityScore = 0;
         this.probabilityVector = new ProbabilityVector(pvector, compressRange);
@@ -158,11 +165,12 @@ public class ErrorModel {
 
     }
 
-    public static boolean pileupElementMatches(PileupElement pileupElement, Allele allele, Allele refAllele, byte refBase) {
-        if (DEBUG)
+    public static boolean pileupElementMatches(final PileupElement pileupElement, final Allele allele, final Allele refAllele, final byte refBase) {
+        if (DEBUG) {
             System.out.format("PE: base:%s isNextToDel:%b isNextToIns:%b eventBases:%s eventLength:%d Allele:%s RefAllele:%s\n",
-                pileupElement.getBase(), pileupElement.isBeforeDeletionStart(),
-                pileupElement.isBeforeInsertion(), pileupElement.getBasesOfImmediatelyFollowingInsertion(), pileupElement.getLengthOfImmediatelyFollowingIndel(), allele.toString(), refAllele.toString());
+                    pileupElement.getBase(), pileupElement.isBeforeDeletionStart(),
+                    pileupElement.isBeforeInsertion(), pileupElement.getBasesOfImmediatelyFollowingInsertion(), pileupElement.getLengthOfImmediatelyFollowingIndel(), allele.toString(), refAllele.toString());
+        }
 
         //pileupElement.
         // if test allele is ref, any base mismatch, or any insertion/deletion at start of pileup count as mismatch
@@ -171,27 +179,35 @@ public class ErrorModel {
             if(allele.getBases().length>0)
                 // todo - can't check vs. allele because allele is not padded so it doesn't include the reference base at this location
                 // could clean up/simplify this when unpadding is removed
+            {
                 return (pileupElement.getBase() == refBase && !pileupElement.isBeforeInsertion() && !pileupElement.isBeforeDeletionStart());
-            else
+            } else
                 // either null allele to compare, or ref/alt lengths are different (indel by definition).
                 // if we have an indel that we are comparing against a REF allele, any indel presence (of any length/content) is a mismatch
+            {
                 return (!pileupElement.isBeforeInsertion() && !pileupElement.isBeforeDeletionStart());
+            }
         }
 
         // for non-ref alleles to compare:
         if (refAllele.getBases().length == allele.getBases().length)
             // alleles have the same length (eg snp or mnp)
+        {
             return pileupElement.getBase() == allele.getBases()[0];
+        }
 
         // for non-ref alleles,
-        byte[] alleleBases = allele.getBases();
-        int eventLength = alleleBases.length - refAllele.getBases().length;
-        if (eventLength < 0 && pileupElement.isBeforeDeletionStart() && pileupElement.getLengthOfImmediatelyFollowingIndel() == -eventLength)
+        final byte[] alleleBases = allele.getBases();
+        final int eventLength = alleleBases.length - refAllele.getBases().length;
+        if (eventLength < 0 && pileupElement.isBeforeDeletionStart() && pileupElement.getLengthOfImmediatelyFollowingIndel() == -eventLength) {
             return true;
+        }
 
                 if (eventLength > 0 && pileupElement.isBeforeInsertion() &&
                 Arrays.equals(pileupElement.getBasesOfImmediatelyFollowingInsertion().getBytes(), Arrays.copyOfRange(alleleBases, 1, alleleBases.length))) // allele contains ref byte, but pileupElement's event bases doesn't
-            return true;
+                {
+                    return true;
+                }
 
         return false;
     }
@@ -209,14 +225,14 @@ public class ErrorModel {
      * @param mismatches            Number of mismatches
      * @return                      Likelihood of observations as a function of q
      */
-    private double log10PoissonProbabilitySiteGivenQual(byte q, int coverage, int mismatches) {
+    private double log10PoissonProbabilitySiteGivenQual(final byte q, final int coverage, final int mismatches) {
         // same as   log10ProbabilitySiteGivenQual but with Poisson approximation to avoid numerical underflows
-        double lambda = QualityUtils.qualToErrorProb(q) * (double )coverage;
+        final double lambda = QualityUtils.qualToErrorProb(q) * (double )coverage;
         // log10(e^-lambda*lambda^k/k!) = -lambda + k*log10(lambda) - log10factorial(k)
         return Math.log10(lambda)*mismatches - lambda*log10MinusE- MathUtils.log10Factorial(mismatches);
     }
 
-    public double getSiteLogErrorProbabilityGivenQual (int qual) {
+    public double getSiteLogErrorProbabilityGivenQual (final int qual) {
         return probabilityVector.getLogProbabilityForIndex(qual);
     }
 
@@ -248,9 +264,9 @@ public class ErrorModel {
     }
 
     public String toString() {
-        StringBuilder result = new StringBuilder("(");
+        final StringBuilder result = new StringBuilder("(");
         boolean skipComma = true;
-        for (double v : probabilityVector.getProbabilityVector()) {
+        for (final double v : probabilityVector.getProbabilityVector()) {
             if (skipComma) {
                 skipComma = false;
             }
@@ -263,9 +279,9 @@ public class ErrorModel {
         return result.toString();
     }
     
-    public static int getTotalReferenceDepth(HashMap<String, ErrorModel> perLaneErrorModels) {
+    public static int getTotalReferenceDepth(final HashMap<String, ErrorModel> perLaneErrorModels) {
         int n=0;
-        for (ErrorModel e : perLaneErrorModels.values()) {
+        for (final ErrorModel e : perLaneErrorModels.values()) {
             n += e.getReferenceDepth();
         }
         return n;

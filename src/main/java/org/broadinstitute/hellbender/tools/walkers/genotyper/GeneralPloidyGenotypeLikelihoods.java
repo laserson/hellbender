@@ -54,10 +54,10 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
         this.ignoreLaneInformation = ignoreLaneInformation;
 
         // check if at least one lane has actual data
-        if (perLaneErrorModels == null || perLaneErrorModels.isEmpty())
+        if (perLaneErrorModels == null || perLaneErrorModels.isEmpty()) {
             hasReferenceSampleData = false;
-        else {
-            for (Map.Entry<String,ErrorModel> elt : perLaneErrorModels.entrySet()) {
+        } else {
+            for (final Map.Entry<String,ErrorModel> elt : perLaneErrorModels.entrySet()) {
                 if (elt.getValue().hasData()) {
                     hasReferenceSampleData = true;
                     break;
@@ -65,11 +65,13 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
             }
         }
         // check sizes
-        if (nAlleles > MAX_NUM_ALLELES_TO_CACHE)
+        if (nAlleles > MAX_NUM_ALLELES_TO_CACHE) {
             throw new UserException("No support for this number of alleles");
+        }
 
-        if (nSamplesPerPool > MAX_NUM_SAMPLES_PER_POOL)
+        if (nSamplesPerPool > MAX_NUM_SAMPLES_PER_POOL) {
             throw new UserException("No support for such large number of samples per pool");
+        }
 
         likelihoodDim = GenotypeLikelihoods.numLikelihoods(nAlleles, numChromosomes);
 
@@ -77,8 +79,9 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
             log10Likelihoods = new double[likelihoodDim]; 
             Arrays.fill(log10Likelihoods, MIN_LIKELIHOOD);
         } else {
-            if (logLikelihoods.length != likelihoodDim)
+            if (logLikelihoods.length != likelihoodDim) {
                 throw new GATKException("BUG: inconsistent parameters when creating GeneralPloidyGenotypeLikelihoods object");
+            }
 
             log10Likelihoods = logLikelihoods; //.clone(); // is clone needed?
         }
@@ -137,7 +140,7 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
 
 
         private static int[] getInitialStateVector(final int nAlleles, final int numChromosomes) {
-            int[] initialState = new int[nAlleles];
+            final int[] initialState = new int[nAlleles];
             Arrays.fill(initialState, numChromosomes);
             return initialState;
         }
@@ -145,26 +148,29 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
         public void setInitialStateVector(final int[] stateVector) {
             if (restrictSumTo > 0) {
                 // check that desired vector is valid
-                if (MathUtils.sum(stateVector) != restrictSumTo)
+                if (MathUtils.sum(stateVector) != restrictSumTo) {
                     throw new GATKException("BUG: initial state vector nor compatible with sum iterator");
+                }
 
                 final int numAlleles = currentState.length;
                 final int ploidy = restrictSumTo;
 
                 linearIndex = GeneralPloidyGenotypeLikelihoods.getLinearIndex(stateVector, numAlleles, ploidy);
             }
-            else
+            else {
                 throw new GATKException("BUG: Not supported");
+            }
 
         }
         public void next() {
-            int initialDim = (restrictSumTo > 0)?1:0;
+            final int initialDim = (restrictSumTo > 0)?1:0;
             hasNext = next(finalState, initialDim);
-            if (hasNext)
+            if (hasNext) {
                 linearIndex++;
+            }
         }
 
-        private boolean next(final int[] finalState, int initialDim) {
+        private boolean next(final int[] finalState, final int initialDim) {
             boolean hasNextState = false;
             for (int currentDim=initialDim; currentDim < finalState.length; currentDim++) {
                 final int x = currentState[currentDim]+1;
@@ -193,8 +199,9 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
 
         public void reset() {
             Arrays.fill(currentState, 0);
-            if (restrictSumTo > 0)
+            if (restrictSumTo > 0) {
                 currentState[0] = restrictSumTo;
+            }
             hasNext = true;
             linearIndex = 0;
             currentSum = 0;
@@ -259,7 +266,7 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
 
         int idx = 0;
         while (iterator.hasNext()) {
-            double pl = log10Likelihoods[idx++];
+            final double pl = log10Likelihoods[idx++];
             if (pl > maxVal) {
                 maxVal = pl;
                 mlInd = iterator.getCurrentVector().clone();
@@ -285,25 +292,28 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
     public static double[] subsetToAlleles(final double[] oldLikelihoods, final int numChromosomes,
                                                    final List<Allele> originalAlleles, final List<Allele> allelesToSubset) {
 
-        int newPLSize = GeneralPloidyGenotypeLikelihoods.getNumLikelihoodElements(allelesToSubset.size(), numChromosomes);
-        double[] newPLs = new double[newPLSize];
+        final int newPLSize = GeneralPloidyGenotypeLikelihoods.getNumLikelihoodElements(allelesToSubset.size(), numChromosomes);
+        final double[] newPLs = new double[newPLSize];
 
 
         int idx = 0;
         // First fill boolean array stating whether each original allele is present in new mapping
         final boolean [] allelePresent = new boolean[originalAlleles.size()];
-        for ( Allele allele : originalAlleles )
+        for ( final Allele allele : originalAlleles ) {
             allelePresent[idx++] = allelesToSubset.contains(allele);
+        }
 
 
         // compute mapping from old idx to new idx
         // This might be needed in case new allele set is not ordered in the same way as old set
         // Example. Original alleles: {T*,C,G,A}. New alleles: {G,C}. Permutation key = [2,1]
 
-        int[] permutationKey = new int[allelesToSubset.size()];
+        final int[] permutationKey = new int[allelesToSubset.size()];
         for (int k=0; k < allelesToSubset.size(); k++)
             // for each allele to subset, find corresponding index in original allele list
+        {
             permutationKey[k] = originalAlleles.indexOf(allelesToSubset.get(k));
+        }
 
 
         if (VERBOSE) {
@@ -316,13 +326,14 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
             // for each entry in logPL table, associated originally with allele count stored in vec[],
             // see if this allele count conformation will be present in new logPL table.
             // For entry to be present, elements in dimensions not present in requested allele list have to have count = 0
-            int[] pVec = iterator.getCurrentVector();
-            double pl = oldLikelihoods[iterator.getLinearIndex()];
+            final int[] pVec = iterator.getCurrentVector();
+            final double pl = oldLikelihoods[iterator.getLinearIndex()];
             
             boolean keyPresent = true;
-            for (int k=0; k < allelePresent.length; k++)
-                if ( pVec[k]>0 && !allelePresent[k] )
+            for (int k=0; k < allelePresent.length; k++) {
+                if (pVec[k] > 0 && !allelePresent[k])
                     keyPresent = false;
+            }
 
             if (keyPresent) {// skip to next entry in logPLs if this conformation is not present in subset
 
@@ -330,11 +341,12 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
     
                 // map from old allele mapping count to new allele mapping
                 // In pseudo-Matlab notation: newCount = vec[permutationKey] for permutationKey vector
-                for (idx = 0; idx < newCount.length; idx++)
-                    newCount[idx] =  pVec[permutationKey[idx]];
+                for (idx = 0; idx < newCount.length; idx++) {
+                    newCount[idx] = pVec[permutationKey[idx]];
+                }
     
                 // get corresponding index from new count
-                int outputIdx = GeneralPloidyGenotypeLikelihoods.getLinearIndex(newCount, allelesToSubset.size(), numChromosomes);
+                final int outputIdx = GeneralPloidyGenotypeLikelihoods.getLinearIndex(newCount, allelesToSubset.size(), numChromosomes);
                 newPLs[outputIdx] = pl;
                 if (VERBOSE) {
                     System.out.println("Old Key:"+ Arrays.toString(pVec));
@@ -347,20 +359,23 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
         return  newPLs;
     }
 
-    public static int getLinearIndex(int[] vectorIdx, int numAlleles, int ploidy) {
+    public static int getLinearIndex(final int[] vectorIdx, final int numAlleles, final int ploidy) {
 
-        if (ploidy <= 0)
+        if (ploidy <= 0) {
             return 0;
+        }
 
         int linearIdx = 0;
         int cumSum = ploidy;
         for (int k=numAlleles-1;k>=1; k--) {
-            int idx = vectorIdx[k];
+            final int idx = vectorIdx[k];
             // how many blocks are before current position
-            if (idx == 0)
+            if (idx == 0) {
                 continue;
-            for (int p=0; p < idx; p++)
-                linearIdx += getNumLikelihoodElements( k, cumSum-p);
+            }
+            for (int p=0; p < idx; p++) {
+                linearIdx += getNumLikelihoodElements(k, cumSum - p);
+            }
             
             cumSum -= idx;
         }
@@ -387,26 +402,27 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
     * a cache of the PL ivector sizes as a function of # of alleles and pool sizes
     */
     
-    public static int getNumLikelihoodElements(int numAlleles, int ploidy) {
+    public static int getNumLikelihoodElements(final int numAlleles, final int ploidy) {
         return GenotypeLikelihoodVectorSizes[numAlleles][ploidy];
     }
 
     private final static int[][] GenotypeLikelihoodVectorSizes = fillGLVectorSizeCache(MAX_NUM_ALLELES_TO_CACHE, 2*MAX_NUM_SAMPLES_PER_POOL);
 
-    private static int[][] fillGLVectorSizeCache(int maxAlleles, int maxPloidy) {
+    private static int[][] fillGLVectorSizeCache(final int maxAlleles, final int maxPloidy) {
         
-        int[][] cache = new int[maxAlleles][maxPloidy];
+        final int[][] cache = new int[maxAlleles][maxPloidy];
         for (int numAlleles=1; numAlleles < maxAlleles; numAlleles++) {
             for (int ploidy=0; ploidy < maxPloidy; ploidy++) {
 
-                if (numAlleles == 1)
+                if (numAlleles == 1) {
                     cache[numAlleles][ploidy] = 1;
-                else if (ploidy == 1)
+                } else if (ploidy == 1) {
                     cache[numAlleles][ploidy] = numAlleles;
-                else {
+                } else {
                     int acc =0;
-                    for (int k=0; k <= ploidy; k++ )
-                        acc += cache[numAlleles-1][ploidy-k];
+                    for (int k=0; k <= ploidy; k++ ) {
+                        acc += cache[numAlleles - 1][ploidy - k];
+                    }
 
                     cache[numAlleles][ploidy] = acc;
                 }
@@ -421,21 +437,21 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
      * @return string representation
      */
     public String toString() {
-        StringBuilder s = new StringBuilder(1000);
+        final StringBuilder s = new StringBuilder(1000);
 
         s.append("Alleles:");
-        for (Allele a: this.alleles){
+        for (final Allele a: this.alleles){
             s.append(a.getDisplayString());
             s.append(",");
         }
         s.append("\nGLs:\n");
-        SumIterator iterator = new SumIterator(nAlleles,numChromosomes);
+        final SumIterator iterator = new SumIterator(nAlleles,numChromosomes);
         while (iterator.hasNext()) {
             if (!Double.isInfinite(getLikelihoods()[iterator.getLinearIndex()])) {
 
                 s.append("Count [");
-                StringBuilder b = new StringBuilder(iterator.getCurrentVector().length*2);
-                for (int it:iterator.getCurrentVector()) {
+                final StringBuilder b = new StringBuilder(iterator.getCurrentVector().length*2);
+                for (final int it:iterator.getCurrentVector()) {
                     b.append(it);
                     b.append(",");
                 }
@@ -448,8 +464,8 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
     }
 
 
-    public void computeLikelihoods(ErrorModel errorModel,
-        List<Allele> alleleList, List<Integer> numObservations, ReadPileup pileup) {
+    public void computeLikelihoods(final ErrorModel errorModel,
+        final List<Allele> alleleList, final List<Integer> numObservations, final ReadPileup pileup) {
 
         if (FAST_GL_COMPUTATION) {
             //  queue up elements to be computed. Assumptions:
@@ -466,7 +482,7 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
             final int[] zeroCounts = new int[nAlleles];
             zeroCounts[0] = numChromosomes;
 
-            ExactACset zeroSet =
+            final ExactACset zeroSet =
                     new ExactACset(1, new ExactACcounts(zeroCounts));
 
             ACqueue.add(zeroSet);
@@ -483,17 +499,18 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
                 maxLog10L = Math.max(maxLog10L, log10LofKs);
                 // clean up memory
                 indexesToACset.remove(ACset.getACcounts());
-                if ( VERBOSE )
+                if ( VERBOSE ) {
                     System.out.printf(" *** removing used set=%s%n", ACset.getACcounts());
+                }
 
              }
 
 
         }   else {
             int plIdx = 0;
-            SumIterator iterator = new SumIterator(nAlleles, numChromosomes);
+            final SumIterator iterator = new SumIterator(nAlleles, numChromosomes);
             while (iterator.hasNext()) {
-                ExactACset ACset =
+                final ExactACset ACset =
                        new ExactACset(1, new ExactACcounts(iterator.getCurrentVector()));
                 // for observed base X, add Q(jX,k) to likelihood vector for all k in error model
                 //likelihood(jA,jC,jG,jT) = logsum(logPr (errorModel[k],nA*Q(jA,k) +  nC*Q(jC,k) + nG*Q(jG,k) + nT*Q(jT,k))
@@ -522,13 +539,14 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
         final double log10LofK = set.getLog10Likelihoods()[0];
         
         // log result in PL vector
-        int idx = getLinearIndex(set.getACcounts().getCounts(), nAlleles, numChromosomes);
+        final int idx = getLinearIndex(set.getACcounts().getCounts(), nAlleles, numChromosomes);
         setLogPLs(idx, log10LofK);
 
         // can we abort early because the log10Likelihoods are so small?
         if ( log10LofK < maxLog10L - MAX_LOG10_ERROR_TO_STOP_EARLY ) {
-            if ( VERBOSE )
+            if ( VERBOSE ) {
                 System.out.printf(" *** breaking early set=%s log10L=%.2f maxLog10L=%.2f%n", set.getACcounts(), log10LofK, maxLog10L);
+            }
             return log10LofK;
         }
 
@@ -536,7 +554,9 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
         // by convention, ACcounts contained in set have full vector of possible pool ac counts including ref count.
         final int ACwiggle = numChromosomes - set.getACsum() + set.getACcounts().getCounts()[0];
         if ( ACwiggle == 0 ) // all alternate alleles already sum to 2N so we cannot possibly go to higher frequencies
+        {
             return log10LofK;
+        }
 
 
         // add conformations for other cases
@@ -544,10 +564,11 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
             final int[] ACcountsClone = set.getACcounts().getCounts().clone();
             ACcountsClone[allele]++;
             // is this a valid conformation?
-            int altSum = (int)MathUtils.sum(ACcountsClone) - ACcountsClone[0];
+            final int altSum = (int)MathUtils.sum(ACcountsClone) - ACcountsClone[0];
             ACcountsClone[0] = numChromosomes - altSum;
-            if (ACcountsClone[0] < 0)
+            if (ACcountsClone[0] < 0) {
                 continue;
+            }
 
 
             updateACset(ACcountsClone, ACqueue, indexesToACset);
@@ -581,11 +602,12 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
 
         final ExactACcounts index = new ExactACcounts(newSetCounts);
         if ( !indexesToACset.containsKey(index) ) {
-            ExactACset newSet = new ExactACset(1, index);
+            final ExactACset newSet = new ExactACset(1, index);
             indexesToACset.put(index, newSet);
             ACqueue.add(newSet);     
-            if (VERBOSE)
+            if (VERBOSE) {
                 System.out.println(" *** Adding set to queue:" + index.toString());
+            }
         }
 
     }
@@ -604,8 +626,9 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
 
     static {
         // cache 10^(-k/10)
-        for (int j=0; j <= SAMUtils.MAX_PHRED_SCORE; j++)
+        for (int j=0; j <= SAMUtils.MAX_PHRED_SCORE; j++) {
             qualVec[j] = Math.pow(10.0, -(double) j / 10.0);
+        }
     }
 
     private void fillCache() {
@@ -614,7 +637,7 @@ public abstract class GeneralPloidyGenotypeLikelihoods {
         logMismatchProbabilityArray = new double[1+numChromosomes][1+ SAMUtils.MAX_PHRED_SCORE];
         for (int i=0; i <= numChromosomes; i++) {
             for (int j=0; j <= SAMUtils.MAX_PHRED_SCORE; j++) {
-                double phi = (double)i/numChromosomes;
+                final double phi = (double)i/numChromosomes;
                 logMismatchProbabilityArray[i][j] = Math.log10(phi * (1.0 - qualVec[j]) + qualVec[j] / 3.0 * (1.0 - phi));
             }
         }

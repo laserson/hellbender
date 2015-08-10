@@ -72,7 +72,7 @@ public class DiploidSNPGenotypeLikelihoods {
      *
      * @param PCR_error_rate  the PCR error rate
      */
-    public DiploidSNPGenotypeLikelihoods(double PCR_error_rate) {
+    public DiploidSNPGenotypeLikelihoods(final double PCR_error_rate) {
         log10_PCR_error_3 = log10(PCR_error_rate) - log10_3;
         log10_1_minus_PCR_error = log10(1.0 - PCR_error_rate);
         setToZero();
@@ -84,7 +84,7 @@ public class DiploidSNPGenotypeLikelihoods {
      * @throws CloneNotSupportedException
      */
     protected Object clone() throws CloneNotSupportedException {
-        DiploidSNPGenotypeLikelihoods c = (DiploidSNPGenotypeLikelihoods)super.clone();
+        final DiploidSNPGenotypeLikelihoods c = (DiploidSNPGenotypeLikelihoods)super.clone();
         c.log10Likelihoods = log10Likelihoods.clone();
         return c;
     }
@@ -120,31 +120,34 @@ public class DiploidSNPGenotypeLikelihoods {
      * @param minBaseQual               the minimum base quality at which to consider a base valid
      * @return the number of good bases found in the pileup
      */
-    public int add(ReadPileup pileup, boolean ignoreBadBases, boolean capBaseQualsAtMappingQual, int minBaseQual) {
+    public int add(final ReadPileup pileup, final boolean ignoreBadBases, final boolean capBaseQualsAtMappingQual, final int minBaseQual) {
         int n = 0;
 
         // for each fragment, add to the likelihoods
-        FragmentCollection<PileupElement> fpile = pileup.toFragments();
+        final FragmentCollection<PileupElement> fpile = pileup.toFragments();
 
-        for ( PileupElement p : fpile.getSingletonReads() )
+        for ( final PileupElement p : fpile.getSingletonReads() ) {
             n += add(p, ignoreBadBases, capBaseQualsAtMappingQual, minBaseQual);
+        }
 
-        for ( List<PileupElement> overlappingPair : fpile.getOverlappingPairs() )
+        for ( final List<PileupElement> overlappingPair : fpile.getOverlappingPairs() ) {
             n += add(overlappingPair, ignoreBadBases, capBaseQualsAtMappingQual, minBaseQual);
+        }
 
         return n;
     }
 
-    public int add(PileupElement elt, boolean ignoreBadBases, boolean capBaseQualsAtMappingQual, int minBaseQual) {
-        byte obsBase = elt.getBase();
-        byte qual = qualToUse(elt, ignoreBadBases, capBaseQualsAtMappingQual, minBaseQual);
-        if ( qual == 0 )
+    public int add(final PileupElement elt, final boolean ignoreBadBases, final boolean capBaseQualsAtMappingQual, final int minBaseQual) {
+        final byte obsBase = elt.getBase();
+        final byte qual = qualToUse(elt, ignoreBadBases, capBaseQualsAtMappingQual, minBaseQual);
+        if ( qual == 0 ) {
             return 0;
+        }
 
         return add(obsBase, qual, (byte)0, (byte)0, 1);
     }
 
-    public int add(List<PileupElement> overlappingPair, boolean ignoreBadBases, boolean capBaseQualsAtMappingQual, int minBaseQual) {
+    public int add(final List<PileupElement> overlappingPair, final boolean ignoreBadBases, final boolean capBaseQualsAtMappingQual, final int minBaseQual) {
         final PileupElement p1 = overlappingPair.get(0);
         final PileupElement p2 = overlappingPair.get(1);
 
@@ -155,8 +158,9 @@ public class DiploidSNPGenotypeLikelihoods {
 
         if ( qualityScore1 == 0 ) {
             if ( qualityScore2 == 0 ) // abort early if we didn't see any good bases
+            {
                 return 0;
-            else {
+            } else {
                 return add(observedBase2, qualityScore2, (byte)0, (byte)0);
             }
         } else {
@@ -173,13 +177,13 @@ public class DiploidSNPGenotypeLikelihoods {
      * @param nObs        the number of times this quad of values was seen.  Generally 1, but reduced reads can have nObs > 1 for synthetic reads
      * @return 0 if the base is bad, 1 otherwise
      */
-    private int add(byte obsBase1, byte qual1, byte obsBase2, byte qual2, int nObs) {
+    private int add(final byte obsBase1, final byte qual1, final byte obsBase2, final byte qual2, final int nObs) {
         // TODO-- Right now we assume that there are at most 2 reads per fragment.  This assumption is fine
         // TODO--   given the current state of next-gen sequencing, but may need to be fixed in the future.
         // TODO--   However, when that happens, we'll need to be a lot smarter about the caching we do here.
 
         // Just look up the cached result if it's available, or compute and store it
-        DiploidSNPGenotypeLikelihoods gl;
+        final DiploidSNPGenotypeLikelihoods gl;
         if ( ! inCache(obsBase1, qual1, obsBase2, qual2, FIXED_PLOIDY) ) {
             gl = calculateCachedGenotypeLikelihoods(obsBase1, qual1, obsBase2, qual2, FIXED_PLOIDY);
         } else {
@@ -187,20 +191,21 @@ public class DiploidSNPGenotypeLikelihoods {
         }
 
         // for bad bases, there are no likelihoods
-        if ( gl == null )
+        if ( gl == null ) {
             return 0;
+        }
 
-        double[] likelihoods = gl.getLikelihoods();
+        final double[] likelihoods = gl.getLikelihoods();
 
-        for ( DiploidGenotype g : DiploidGenotype.values() ) {
-            double likelihood = likelihoods[g.ordinal()];
+        for ( final DiploidGenotype g : DiploidGenotype.values() ) {
+            final double likelihood = likelihoods[g.ordinal()];
             log10Likelihoods[g.ordinal()] += likelihood * nObs;
         }
 
         return 1;
     }
 
-    private int add(byte obsBase1, byte qual1, byte obsBase2, byte qual2) {
+    private int add(final byte obsBase1, final byte qual1, final byte obsBase2, final byte qual2) {
         return add(obsBase1, qual1, obsBase2, qual2, 1);
     }
 
@@ -212,56 +217,57 @@ public class DiploidSNPGenotypeLikelihoods {
 
     static DiploidSNPGenotypeLikelihoods[][][][][] CACHE = new DiploidSNPGenotypeLikelihoods[BaseUtils.BASES.length][QualityUtils.MAX_SAM_QUAL_SCORE +1][BaseUtils.BASES.length+1][QualityUtils.MAX_SAM_QUAL_SCORE +1][MAX_PLOIDY];
 
-    protected boolean inCache(byte observedBase1, byte qualityScore1, byte observedBase2, byte qualityScore2, int ploidy) {
+    protected boolean inCache(final byte observedBase1, final byte qualityScore1, final byte observedBase2, final byte qualityScore2, final int ploidy) {
         return getCache(CACHE, observedBase1, qualityScore1, observedBase2, qualityScore2, ploidy) != null;
     }
 
-    protected DiploidSNPGenotypeLikelihoods getCachedGenotypeLikelihoods(byte observedBase1, byte qualityScore1, byte observedBase2, byte qualityScore2, int ploidy) {
-        DiploidSNPGenotypeLikelihoods gl = getCache(CACHE, observedBase1, qualityScore1, observedBase2, qualityScore2, ploidy);
-        if ( gl == null )
+    protected DiploidSNPGenotypeLikelihoods getCachedGenotypeLikelihoods(final byte observedBase1, final byte qualityScore1, final byte observedBase2, final byte qualityScore2, final int ploidy) {
+        final DiploidSNPGenotypeLikelihoods gl = getCache(CACHE, observedBase1, qualityScore1, observedBase2, qualityScore2, ploidy);
+        if ( gl == null ) {
             throw new RuntimeException(String.format("BUG: trying to fetch an unset cached genotype likelihood at base1=%c, qual1=%d, base2=%c, qual2=%d, ploidy=%d",
                     observedBase1, qualityScore1, observedBase2, qualityScore2, ploidy));
+        }
         return gl;
     }
 
-    protected DiploidSNPGenotypeLikelihoods calculateCachedGenotypeLikelihoods(byte observedBase1, byte qualityScore1, byte observedBase2, byte qualityScore2, int ploidy) {
-        DiploidSNPGenotypeLikelihoods gl = calculateGenotypeLikelihoods(observedBase1, qualityScore1, observedBase2, qualityScore2);
+    protected DiploidSNPGenotypeLikelihoods calculateCachedGenotypeLikelihoods(final byte observedBase1, final byte qualityScore1, final byte observedBase2, final byte qualityScore2, final int ploidy) {
+        final DiploidSNPGenotypeLikelihoods gl = calculateGenotypeLikelihoods(observedBase1, qualityScore1, observedBase2, qualityScore2);
         setCache(CACHE, observedBase1, qualityScore1, observedBase2, qualityScore2, ploidy, gl);
         return gl;
     }
 
-    protected void setCache( DiploidSNPGenotypeLikelihoods[][][][][] cache,
-                             byte observedBase1, byte qualityScore1, byte observedBase2, byte qualityScore2, int ploidy,
-                             DiploidSNPGenotypeLikelihoods val ) {
-        int i = BaseUtils.simpleBaseToBaseIndex(observedBase1);
-        int j = qualityScore1;
-        int k = qualityScore2 != 0 ? BaseUtils.simpleBaseToBaseIndex(observedBase2) : BaseUtils.BASES.length;
-        int l = qualityScore2;
-        int m = ploidy;
+    protected void setCache( final DiploidSNPGenotypeLikelihoods[][][][][] cache,
+                             final byte observedBase1, final byte qualityScore1, final byte observedBase2, final byte qualityScore2, final int ploidy,
+                             final DiploidSNPGenotypeLikelihoods val ) {
+        final int i = BaseUtils.simpleBaseToBaseIndex(observedBase1);
+        final int j = qualityScore1;
+        final int k = qualityScore2 != 0 ? BaseUtils.simpleBaseToBaseIndex(observedBase2) : BaseUtils.BASES.length;
+        final int l = qualityScore2;
+        final int m = ploidy;
 
         cache[i][j][k][l][m] = val;
     }
 
-    protected DiploidSNPGenotypeLikelihoods getCache(DiploidSNPGenotypeLikelihoods[][][][][] cache,
-                                            byte observedBase1, byte qualityScore1, byte observedBase2, byte qualityScore2, int ploidy) {
-        int i = BaseUtils.simpleBaseToBaseIndex(observedBase1);
-        int j = qualityScore1;
-        int k = qualityScore2 != 0 ? BaseUtils.simpleBaseToBaseIndex(observedBase2) : BaseUtils.BASES.length;
-        int l = qualityScore2;
-        int m = ploidy;
+    protected DiploidSNPGenotypeLikelihoods getCache(final DiploidSNPGenotypeLikelihoods[][][][][] cache,
+                                            final byte observedBase1, final byte qualityScore1, final byte observedBase2, final byte qualityScore2, final int ploidy) {
+        final int i = BaseUtils.simpleBaseToBaseIndex(observedBase1);
+        final int j = qualityScore1;
+        final int k = qualityScore2 != 0 ? BaseUtils.simpleBaseToBaseIndex(observedBase2) : BaseUtils.BASES.length;
+        final int l = qualityScore2;
+        final int m = ploidy;
         return cache[i][j][k][l][m];
     }
 
-    protected DiploidSNPGenotypeLikelihoods calculateGenotypeLikelihoods(byte observedBase1, byte qualityScore1, byte observedBase2, byte qualityScore2) {
-        double[] log10FourBaseLikelihoods = computeLog10Likelihoods(observedBase1, qualityScore1, observedBase2, qualityScore2);
+    protected DiploidSNPGenotypeLikelihoods calculateGenotypeLikelihoods(final byte observedBase1, final byte qualityScore1, final byte observedBase2, final byte qualityScore2) {
+        final double[] log10FourBaseLikelihoods = computeLog10Likelihoods(observedBase1, qualityScore1, observedBase2, qualityScore2);
 
         try {
 
-            DiploidSNPGenotypeLikelihoods gl = (DiploidSNPGenotypeLikelihoods)this.clone();
+            final DiploidSNPGenotypeLikelihoods gl = (DiploidSNPGenotypeLikelihoods)this.clone();
             gl.setToZero();
 
             // we need to adjust for ploidy.  We take the raw p(obs | chrom) / ploidy, which is -log10(ploidy) in log space
-            for ( DiploidGenotype g : DiploidGenotype.values() ) {
+            for ( final DiploidGenotype g : DiploidGenotype.values() ) {
 
                 // todo assumes ploidy is 2 -- should be generalized.  Obviously the below code can be turned into a loop
                 double p_base = 0.0;
@@ -273,15 +279,15 @@ public class DiploidSNPGenotypeLikelihoods {
             }
 
             if ( VERBOSE ) {
-                for ( DiploidGenotype g : DiploidGenotype.values() ) { System.out.printf("%s\t", g); }
+                for ( final DiploidGenotype g : DiploidGenotype.values() ) { System.out.printf("%s\t", g); }
                 System.out.println();
-            for ( DiploidGenotype g : DiploidGenotype.values() ) { System.out.printf("%.2f\t", gl.log10Likelihoods[g.ordinal()]); }
+            for ( final DiploidGenotype g : DiploidGenotype.values() ) { System.out.printf("%.2f\t", gl.log10Likelihoods[g.ordinal()]); }
                 System.out.println();
             }
 
             return gl;
 
-         } catch ( CloneNotSupportedException e ) {
+         } catch ( final CloneNotSupportedException e ) {
              throw new RuntimeException(e);
          }
     }
@@ -296,13 +302,13 @@ public class DiploidSNPGenotypeLikelihoods {
      * @param qualityScore2  the qual of the base on the 2nd read of the fragment, or zero if NA
      * @return likelihoods for this observation or null if the base was not considered good enough to add to the likelihoods (Q0 or 'N', for example)
      */
-    protected double[] computeLog10Likelihoods(byte observedBase1, byte qualityScore1, byte observedBase2, byte qualityScore2) {
-        double[] log10FourBaseLikelihoods = baseZeros.clone();
+    protected double[] computeLog10Likelihoods(final byte observedBase1, final byte qualityScore1, final byte observedBase2, final byte qualityScore2) {
+        final double[] log10FourBaseLikelihoods = baseZeros.clone();
 
-        for ( byte trueBase : BaseUtils.BASES ) {
+        for ( final byte trueBase : BaseUtils.BASES ) {
             double likelihood = 0.0;
 
-            for ( byte fragmentBase : BaseUtils.BASES ) {
+            for ( final byte fragmentBase : BaseUtils.BASES ) {
                 double log10FragmentLikelihood = (trueBase == fragmentBase ? log10_1_minus_PCR_error : log10_PCR_error_3);
                 if ( qualityScore1 != 0 ) {
                     log10FragmentLikelihood += log10PofObservingBaseGivenChromosome(observedBase1, fragmentBase, qualityScore1);
@@ -332,14 +338,14 @@ public class DiploidSNPGenotypeLikelihoods {
      * @param qual         base quality
      * @return log10 likelihood
      */
-    protected double log10PofObservingBaseGivenChromosome(byte observedBase, byte chromBase, byte qual) {
+    protected double log10PofObservingBaseGivenChromosome(final byte observedBase, final byte chromBase, final byte qual) {
 
-        double logP;
+        final double logP;
 
         if ( observedBase == chromBase ) {
             // the base is consistent with the chromosome -- it's 1 - e
             //logP = oneMinusData[qual];
-            double e = pow(10, (qual / -10.0));
+            final double e = pow(10, (qual / -10.0));
             logP = log10(1.0 - e);
         } else {
             // the base is inconsistent with the chromosome -- it's e * P(chromBase | observedBase is an error)
@@ -361,18 +367,22 @@ public class DiploidSNPGenotypeLikelihoods {
      * @param minBaseQual                 Minimum allowed base quality
      * @return the actual base quality to use
      */
-    private static byte qualToUse(PileupElement p, boolean ignoreBadBases, boolean capBaseQualsAtMappingQual, int minBaseQual) {
-        if ( ignoreBadBases && !BaseUtils.isRegularBase( p.getBase() ) )
+    private static byte qualToUse(final PileupElement p, final boolean ignoreBadBases, final boolean capBaseQualsAtMappingQual, final int minBaseQual) {
+        if ( ignoreBadBases && !BaseUtils.isRegularBase( p.getBase() ) ) {
             return 0;
+        }
 
         byte qual = p.getQual();
 
-        if ( qual > SAMUtils.MAX_PHRED_SCORE )
-            throw new UserException.MisencodedBAM(p.getRead(), "we encountered an extremely high quality score (" + (int)qual + ")");
-        if ( capBaseQualsAtMappingQual )
+        if ( qual > SAMUtils.MAX_PHRED_SCORE ) {
+            throw new UserException.MisencodedBAM(p.getRead(), "we encountered an extremely high quality score (" + (int) qual + ")");
+        }
+        if ( capBaseQualsAtMappingQual ) {
             qual = (byte) Math.min(0xff & qual, p.getMappingQual());
-        if ( (int)qual < minBaseQual )
-            qual = (byte)0;
+        }
+        if ( (int)qual < minBaseQual ) {
+            qual = (byte) 0;
+        }
 
         return qual;
     }
@@ -392,8 +402,8 @@ public class DiploidSNPGenotypeLikelihoods {
      */
     public String toString() {
         double sum = 0;
-        StringBuilder s = new StringBuilder();
-        for (DiploidGenotype g : DiploidGenotype.values()) {
+        final StringBuilder s = new StringBuilder();
+        for (final DiploidGenotype g : DiploidGenotype.values()) {
             s.append(String.format("%s %.10f ", g, log10Likelihoods[g.ordinal()]));
 			sum += Math.pow(10, log10Likelihoods[g.ordinal()]);
         }
@@ -413,12 +423,12 @@ public class DiploidSNPGenotypeLikelihoods {
         return validate(true);
     }
 
-    public boolean validate(boolean throwException) {
+    public boolean validate(final boolean throwException) {
         try {
-            for ( DiploidGenotype g : DiploidGenotype.values() ) {
+            for ( final DiploidGenotype g : DiploidGenotype.values() ) {
                 String bad = null;
 
-                int i = g.ordinal();
+                final int i = g.ordinal();
                 if ( ! MathUtils.wellFormedDouble(log10Likelihoods[i]) || ! MathUtils.isNegativeOrZero(log10Likelihoods[i]) ) {
                     bad = String.format("Likelihood %f is badly formed", log10Likelihoods[i]);
                 }
@@ -427,11 +437,12 @@ public class DiploidSNPGenotypeLikelihoods {
                     throw new IllegalStateException(String.format("At %s: %s", g.toString(), bad));
                 }
             }
-        } catch ( IllegalStateException e ) {
-            if ( throwException )
+        } catch ( final IllegalStateException e ) {
+            if ( throwException ) {
                 throw new RuntimeException(e);
-            else
+            } else {
                 return false;
+            }
         }
 
         return true;
@@ -444,10 +455,10 @@ public class DiploidSNPGenotypeLikelihoods {
     private final static double[] baseZeros = new double[BaseUtils.BASES.length];
 
     static {
-        for ( DiploidGenotype g : DiploidGenotype.values() ) {
+        for ( final DiploidGenotype g : DiploidGenotype.values() ) {
             genotypeZeros[g.ordinal()] = 0.0;
         }
-        for ( byte base : BaseUtils.BASES ) {
+        for ( final byte base : BaseUtils.BASES ) {
             baseZeros[BaseUtils.simpleBaseToBaseIndex(base)] = 0.0;
         }
     }

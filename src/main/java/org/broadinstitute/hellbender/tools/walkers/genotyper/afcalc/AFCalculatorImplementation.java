@@ -112,8 +112,9 @@ public enum AFCalculatorImplementation {
      * @param clazz target class. Assume not to be {@code null}.
      */
     private Constructor<? extends AFCalculator> findInstantiationConstructor(final Class<? extends AFCalculator> clazz) {
-        if (Modifier.isAbstract(clazz.getModifiers()))
+        if (Modifier.isAbstract(clazz.getModifiers())) {
             throw new IllegalStateException("AF calculator implementation class cannot be abstract");
+        }
 
         final Constructor<? extends AFCalculator> result;
         try {
@@ -123,8 +124,9 @@ public enum AFCalculatorImplementation {
         }
 
         // Check whether there will be issue calling the constructor just due to protections:
-        if (Modifier.isPrivate(result.getModifiers()) || (!Modifier.isPublic(result.getModifiers()) && !clazz.getPackage().equals(getClass().getPackage())))
+        if (Modifier.isPrivate(result.getModifiers()) || (!Modifier.isPublic(result.getModifiers()) && !clazz.getPackage().equals(getClass().getPackage()))) {
             throw new IllegalStateException("triple int constructor for AFCalculator implementation " + this + " class " + clazz.getName() + " is not public ");
+        }
         return result;
     }
 
@@ -152,12 +154,15 @@ public enum AFCalculatorImplementation {
      */
     public static AFCalculatorImplementation bestValue(final int requiredPloidy, final int requiredAlternativeAlleleCount, final AFCalculatorImplementation preferred) {
         final AFCalculatorImplementation preferredValue = preferred == null ? DEFAULT : preferred;
-        if (preferredValue.usableForParams(requiredPloidy,requiredAlternativeAlleleCount))
+        if (preferredValue.usableForParams(requiredPloidy,requiredAlternativeAlleleCount)) {
             return preferredValue;
-        if (EXACT_INDEPENDENT.usableForParams(requiredPloidy,requiredAlternativeAlleleCount))
+        }
+        if (EXACT_INDEPENDENT.usableForParams(requiredPloidy,requiredAlternativeAlleleCount)) {
             return EXACT_INDEPENDENT;
-        if (EXACT_REFERENCE.usableForParams(requiredPloidy,requiredAlternativeAlleleCount))
+        }
+        if (EXACT_REFERENCE.usableForParams(requiredPloidy,requiredAlternativeAlleleCount)) {
             return EXACT_REFERENCE;
+        }
         return EXACT_GENERAL_PLOIDY;
     }
 
@@ -172,20 +177,23 @@ public enum AFCalculatorImplementation {
      * @return never {@code null}.
      */
     public static AFCalculatorImplementation fromCalculatorClass(final Class<? extends AFCalculator> clazz) {
-        if (clazz == null)
+        if (clazz == null) {
             throw new IllegalArgumentException("input class cannot be null");
+        }
         final AFCalculatorImplementation result = calculatorClassToValue.get(clazz);
-        if (result == null)
+        if (result == null) {
             throw new IllegalStateException("Attempt to retrieve AFCalculatorImplementation instance from a non-registered calculator class " + clazz.getName());
+        }
         return result;
     }
 
     // Initializes the content of the class to value map.
     private static Map<Class<? extends AFCalculator>, AFCalculatorImplementation> buildCalculatorClassToValueMap() {
         final Map<Class<? extends AFCalculator>,AFCalculatorImplementation> result = new HashMap<>(values().length);
-        for (final AFCalculatorImplementation value : values())
-            if (result.put(value.calculatorClass,value) != null)
+        for (final AFCalculatorImplementation value : values()) {
+            if (result.put(value.calculatorClass, value) != null)
                 throw new IllegalStateException("more than one value associated with class " + value.calculatorClass.getName());
+        }
         return result;
     }
 }

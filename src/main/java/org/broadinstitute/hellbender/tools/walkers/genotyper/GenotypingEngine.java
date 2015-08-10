@@ -20,13 +20,15 @@ public class GenotypingEngine {
 
         if (!inputPriors.isEmpty()) {
             // user-specified priors
-            if (inputPriors.size() != N)
-                throw new UserException.BadArgumentValue("inputPrior","Invalid length of inputPrior vector: vector length must be equal to # samples +1 ");
+            if (inputPriors.size() != N) {
+                throw new UserException.BadArgumentValue("inputPrior", "Invalid length of inputPrior vector: vector length must be equal to # samples +1 ");
+            }
 
             int idx = 1;
             for (final double prior: inputPriors) {
-                if (prior < 0.0)
-                    throw new UserException.BadArgumentValue("Bad argument: negative values not allowed","inputPrior");
+                if (prior < 0.0) {
+                    throw new UserException.BadArgumentValue("Bad argument: negative values not allowed", "inputPrior");
+                }
                 priors[idx++] = Math.log10(prior);
                 sum += prior;
             }

@@ -24,8 +24,9 @@ public final class HomogeneousPloidyModel implements PloidyModel, SampleList {
      *    or ploidy is 0 or less.
      */
     public HomogeneousPloidyModel(final SampleList samples, final int ploidy) {
-        if (ploidy <= 0)
+        if (ploidy <= 0) {
             throw new IllegalArgumentException("does not support negative ploidy");
+        }
         this.ploidy = ploidy;
 
         sampleList = samples;
@@ -53,10 +54,12 @@ public final class HomogeneousPloidyModel implements PloidyModel, SampleList {
     }
 
     private void checkSampleIndex(final int sampleIndex) {
-        if (sampleIndex < 0)
+        if (sampleIndex < 0) {
             throw new IllegalArgumentException("the sample index cannot be negative: " + sampleIndex);
-        if (sampleIndex >= sampleList.numberOfSamples())
+        }
+        if (sampleIndex >= sampleList.numberOfSamples()) {
             throw new IllegalArgumentException("the sample index is equal or larger than the sample count: " + sampleIndex + " >= " + sampleList.numberOfSamples());
+        }
     }
 
     @Override

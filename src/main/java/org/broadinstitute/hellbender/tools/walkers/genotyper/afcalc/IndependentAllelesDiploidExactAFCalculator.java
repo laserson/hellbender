@@ -94,7 +94,7 @@ import java.util.*;
          */
         final List<AFCalculationResult> supporting;
 
-        private MyAFCalculationResult(int[] alleleCountsOfMLE, int nEvaluations, List<Allele> allelesUsedInGenotyping, double[] log10LikelihoodsOfAC, double[] log10PriorsOfAC, Map<Allele, Double> log10pRefByAllele, List<AFCalculationResult> supporting) {
+        private MyAFCalculationResult(final int[] alleleCountsOfMLE, final int nEvaluations, final List<Allele> allelesUsedInGenotyping, final double[] log10LikelihoodsOfAC, final double[] log10PriorsOfAC, final Map<Allele, Double> log10pRefByAllele, final List<AFCalculationResult> supporting) {
             super(alleleCountsOfMLE, nEvaluations, allelesUsedInGenotyping, log10LikelihoodsOfAC, log10PriorsOfAC, log10pRefByAllele);
             this.supporting = supporting;
         }
@@ -105,8 +105,9 @@ import java.util.*;
                                             final double[] log10AlleleFrequencyPriors, final StateTracker stateTracker) {
         final List<AFCalculationResult> independentResultTrackers = computeAlleleIndependentExact(vc, defaultPloidy, log10AlleleFrequencyPriors);
 
-        if ( independentResultTrackers.size() == 0 )
+        if ( independentResultTrackers.size() == 0 ) {
             throw new IllegalStateException("Independent alleles model returned an empty list of results at VC " + vc);
+        }
 
         if ( independentResultTrackers.size() == 1 ) {
             // fast path for the very common bi-allelic use case
@@ -119,7 +120,7 @@ import java.util.*;
         }
     }
 
-    private AFCalculationResult combineAltAlleleIndependentExact(final VariantContext vc, int defaultPloidy, double[] log10AlleleFrequencyPriors) {
+    private AFCalculationResult combineAltAlleleIndependentExact(final VariantContext vc, final int defaultPloidy, final double[] log10AlleleFrequencyPriors) {
         final VariantContext combinedAltAllelesVariantContext = makeCombinedAltAllelesVariantContext(vc);
         final AFCalculationResult resultTracker = biAlleleExactModel.getLog10PNonRef(combinedAltAllelesVariantContext, defaultPloidy, vc.getNAlleles() - 1, log10AlleleFrequencyPriors);
         return resultTracker;
@@ -128,9 +129,9 @@ import java.util.*;
     private VariantContext makeCombinedAltAllelesVariantContext(final VariantContext vc) {
         final int nAltAlleles = vc.getNAlleles() - 1;
 
-        if ( nAltAlleles == 1 )
+        if ( nAltAlleles == 1 ) {
             return vc;
-        else {
+        } else {
             final VariantContextBuilder vcb = new VariantContextBuilder(vc);
             final Allele reference = vcb.getAlleles().get(0);
             vcb.alleles(Arrays.asList(reference, GATKVCFConstants.NON_REF_SYMBOLIC_ALLELE));
@@ -146,17 +147,19 @@ import java.util.*;
                     final List<Allele> newAlleles = new ArrayList<>(oldAlleles.size());
                     for (int i = 0; i < oldAlleles.size(); i++) {
                         final Allele oldAllele = oldAlleles.get(i);
-                        if (oldAllele.isReference())
+                        if (oldAllele.isReference()) {
                             newAlleles.add(reference);
-                        else if (oldAllele.isNoCall())
+                        } else if (oldAllele.isNoCall()) {
                             newAlleles.add(Allele.NO_CALL);
-                        else
+                        } else {
                             newAlleles.add(GATKVCFConstants.NON_REF_SYMBOLIC_ALLELE);
+                        }
                     }
                     gb.alleles(newAlleles);
                 }
-                if (combineAltAlleleLikelihoods(oldGenotype, genotypeCount, newLikelihoods, hetLikelihoods, homAltLikelihoods))
+                if (combineAltAlleleLikelihoods(oldGenotype, genotypeCount, newLikelihoods, hetLikelihoods, homAltLikelihoods)) {
                     gb.PL(newLikelihoods);
+                }
                 newGenotypes.add(gb.make());
             }
             return vcb.genotypes(newGenotypes).make();
@@ -187,12 +190,16 @@ import java.util.*;
      * Helper function to ensure that the computeAlleleIndependentExact is returning reasonable results
      */
     private static boolean goodIndependentResult(final VariantContext vc, final List<AFCalculationResult> results) {
-        if ( results.size() != vc.getNAlleles() - 1) return false;
+        if ( results.size() != vc.getNAlleles() - 1) {
+            return false;
+        }
         for ( int i = 0; i < results.size(); i++ ) {
-            if ( results.get(i).getAllelesUsedInGenotyping().size() != 2 )
+            if ( results.get(i).getAllelesUsedInGenotyping().size() != 2 ) {
                 return false;
-            if ( ! results.get(i).getAllelesUsedInGenotyping().contains(vc.getAlternateAllele(i)) )
+            }
+            if ( ! results.get(i).getAllelesUsedInGenotyping().contains(vc.getAlternateAllele(i)) ) {
                 return false;
+            }
         }
 
         return true;
@@ -235,8 +242,9 @@ import java.util.*;
         } else {
             final int nAlts = rootVC.getNAlleles() - 1;
             final List<Genotype> biallelicGenotypes = new ArrayList<>(rootVC.getNSamples());
-            for ( final Genotype g : rootVC.getGenotypes() )
+            for ( final Genotype g : rootVC.getGenotypes() ) {
                 biallelicGenotypes.add(combineGLsPrecise(g, altAlleleIndex, nAlts));
+            }
 
             final VariantContextBuilder vcb = new VariantContextBuilder(rootVC);
             final Allele altAllele = rootVC.getAlternateAllele(altAlleleIndex - 1);
@@ -268,10 +276,13 @@ import java.util.*;
      */
     @Deprecated
     protected Genotype combineGLs(final Genotype original, final int altIndex, final int nAlts ) {
-        if ( original.isNonInformative() )
+        if ( original.isNonInformative() ) {
             return new GenotypeBuilder(original).PL(BIALLELIC_NON_INFORMATIVE_PLS).alleles(BIALLELIC_NOCALL).make();
+        }
 
-        if ( altIndex < 1 || altIndex > nAlts ) throw new IllegalStateException("altIndex must be between 1 and nAlts " + nAlts);
+        if ( altIndex < 1 || altIndex > nAlts ) {
+            throw new IllegalStateException("altIndex must be between 1 and nAlts " + nAlts);
+        }
 
         final double[] normalizedPr = MathUtils.normalizeFromLog10(GenotypeLikelihoods.fromPLs(original.getPL()).getAsVector());
         final double[] biAllelicPr = new double[3];
@@ -282,22 +293,30 @@ import java.util.*;
             if ( pair.alleleIndex1 == altIndex ) {
                 if ( pair.alleleIndex2 == altIndex )
                     // hom-alt case
+                {
                     biAllelicPr[2] = normalizedPr[index];
-                else
+                } else
                     // het-alt case
+                {
                     biAllelicPr[1] += normalizedPr[index];
+                }
             } else {
                 if ( pair.alleleIndex2 == altIndex )
                     // het-alt case
+                {
                     biAllelicPr[1] += normalizedPr[index];
-                else
+                } else
                     // hom-non-alt
+                {
                     biAllelicPr[0] += normalizedPr[index];
+                }
             }
         }
 
         final double[] GLs = new double[3];
-        for ( int i = 0; i < GLs.length; i++ ) GLs[i] = Math.log10(biAllelicPr[i]);
+        for ( int i = 0; i < GLs.length; i++ ) {
+            GLs[i] = Math.log10(biAllelicPr[i]);
+        }
 
         return new GenotypeBuilder(original).PL(GLs).alleles(BIALLELIC_NOCALL).make();
     }
@@ -333,10 +352,13 @@ import java.util.*;
      */
     protected Genotype combineGLsPrecise(final Genotype original, final int altIndex, final int nAlts ) {
 
-        if ( original.isNonInformative() )
+        if ( original.isNonInformative() ) {
             return new GenotypeBuilder(original).PL(BIALLELIC_NON_INFORMATIVE_PLS).alleles(BIALLELIC_NOCALL).make();
+        }
 
-        if ( altIndex < 1 || altIndex > nAlts ) throw new IllegalStateException("altIndex must be between 1 and nAlts " + nAlts);
+        if ( altIndex < 1 || altIndex > nAlts ) {
+            throw new IllegalStateException("altIndex must be between 1 and nAlts " + nAlts);
+        }
 
         final int[] pls = original.getPL();
 
@@ -352,14 +374,19 @@ import java.util.*;
         int xxOffset = 0;
         for ( int index = 0; index < plCount; index++ ) {
             final GenotypeLikelihoods.GenotypeLikelihoodsAllelePair pair = GenotypeLikelihoods.getAllelePair(index);
-            int i = pair.alleleIndex1;
-            int j = pair.alleleIndex2;
+            final int i = pair.alleleIndex1;
+            final int j = pair.alleleIndex2;
             if (i == j) {
-              if (i == altIndex) BB = PHRED_2_LOG10_COEFF * pls[index]; else XXvalues[xxOffset++] = PHRED_2_LOG10_COEFF * pls[index];
-            } else if (i == altIndex || j == altIndex)
-              XBvalues[xbOffset++] = PHRED_2_LOG10_COEFF * pls[index];
-            else
-              XXvalues[xxOffset++] = PHRED_2_LOG10_COEFF * pls[index];
+              if (i == altIndex) {
+                  BB = PHRED_2_LOG10_COEFF * pls[index];
+              } else {
+                  XXvalues[xxOffset++] = PHRED_2_LOG10_COEFF * pls[index];
+              }
+            } else if (i == altIndex || j == altIndex) {
+                XBvalues[xbOffset++] = PHRED_2_LOG10_COEFF * pls[index];
+            } else {
+                XXvalues[xxOffset++] = PHRED_2_LOG10_COEFF * pls[index];
+            }
         }
 
         final double XB = MathUtils.log10sumLog10(XBvalues);
@@ -375,12 +402,13 @@ import java.util.*;
         // sort the results, so the most likely allele is first
         Collections.sort(sorted, compareAFCalcResultsByPNonRef);
 
-        double lastPosteriorGt0 = sorted.get(0).getLog10PosteriorOfAFGT0();
+        final double lastPosteriorGt0 = sorted.get(0).getLog10PosteriorOfAFGT0();
         final double log10SingleAllelePriorOfAFGt0 = conditionalPNonRefResults.get(0).getLog10PriorOfAFGT0();
 
         for ( int i = 0; i < sorted.size(); i++ ) {
-            if ( sorted.get(i).getLog10PosteriorOfAFGT0() > lastPosteriorGt0 )
+            if ( sorted.get(i).getLog10PosteriorOfAFGT0() > lastPosteriorGt0 ) {
                 throw new IllegalStateException("pNonRefResults not sorted: lastPosteriorGt0 " + lastPosteriorGt0 + " but current is " + sorted.get(i).getLog10PosteriorOfAFGT0());
+            }
 
                 final double log10PriorAFGt0 = (i + 1) * log10SingleAllelePriorOfAFGt0;
             final double log10PriorAFEq0 = Math.log10(1 - Math.pow(10, log10PriorAFGt0));
@@ -444,16 +472,18 @@ import java.util.*;
                                                 final double[] hetLikelihoods, final double[] homAltLikelihoods) {
 
         final int[] pls = g.getPL();
-        if (pls == null)
+        if (pls == null) {
             return false;
+        }
         int hetNextIndex = 0;
         int homAltNextIndex = 0;
         for (int plIndex = 1; plIndex < plMaxIndex; plIndex++) {
             final GenotypeLikelihoods.GenotypeLikelihoodsAllelePair alleles = GenotypeLikelihoods.getAllelePair(plIndex);
-            if (alleles.alleleIndex1 == 0 || alleles.alleleIndex2 == 0)
+            if (alleles.alleleIndex1 == 0 || alleles.alleleIndex2 == 0) {
                 hetLikelihoods[hetNextIndex++] = pls[plIndex] * PHRED_2_LOG10_COEFF;
-            else
+            } else {
                 homAltLikelihoods[homAltNextIndex++] = pls[plIndex] * PHRED_2_LOG10_COEFF;
+            }
         }
         dest[0] = pls[0] * PHRED_2_LOG10_COEFF;
         dest[1] = MathUtils.approximateLog10SumLog10(hetLikelihoods);
