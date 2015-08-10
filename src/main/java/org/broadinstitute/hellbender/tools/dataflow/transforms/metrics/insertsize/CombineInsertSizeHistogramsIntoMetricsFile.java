@@ -63,10 +63,7 @@ final class CombineInsertSizeHistogramsIntoMetricsFile
 
 
     /**
-     * Create a new
-     * @param aggregationLevel
-     * @param histogram
-     * @return
+     * Create
      */
     private static InsertSizeMetrics initializeInsertSizeMetric(InsertSizeAggregationLevel aggregationLevel, HistogramDataflow<Integer> histogram) {
         final InsertSizeMetrics metrics = new InsertSizeMetrics();
@@ -171,7 +168,6 @@ final class CombineInsertSizeHistogramsIntoMetricsFile
     @Override
     public MetricsFileDataflow<InsertSizeMetrics, Integer> extractOutput(CombineInsertSizeHistogramsIntoMetricsFile accumulator) {
         final MetricsFileDataflow<InsertSizeMetrics, Integer> metricsFile = new MetricsFileDataflow<>();
-
 
         double totalInserts = accumulator.histograms.values()
                 .stream()

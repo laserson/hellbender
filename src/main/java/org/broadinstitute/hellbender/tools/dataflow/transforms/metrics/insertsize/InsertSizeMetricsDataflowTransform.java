@@ -17,14 +17,13 @@ import com.google.common.collect.Sets;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.metrics.Header;
 import htsjdk.samtools.util.Histogram;
-import htsjdk.samtools.util.Log;
 import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollectionDefinition;
 import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramCombinerDataflow;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -42,6 +41,18 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
     private final Arguments args;
     private final PCollectionView<List<Header>> metricHeaders;
     private final PCollectionView<SAMFileHeader> samHeader;
+
+    /**
+     * This selects the second in pair in order to avoid double counting inserts from pairs.
+     * Ignore any non pair, duplicate or 0 length fragment because they don't make sense for count insert size.
+     */
+    private static final ReadFilter isSecondInMappedPair = r -> r.isPaired() &&
+            !r.isUnmapped() &&
+            !r.mateIsUnmapped() &&
+            !r.isFirstOfPair() &&
+            !(r.isSupplementaryAlignment() || r.isSecondaryAlignment()) &&
+            !r.isDuplicate() &&
+            r.getFragmentLength() != 0;
 
     public static class Arguments implements ArgumentCollectionDefinition, Serializable {
         public final static long serialVersionUID = 1l;
@@ -70,8 +81,6 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
         }
     }
 
-    private static final Log log = Log.getInstance(InsertSizeMetricsDataflowTransform.class);
-
     public InsertSizeMetricsDataflowTransform(Arguments args,PCollectionView<SAMFileHeader> samHeader, PCollectionView<List<Header>> metricHeaders) {
         args.validate();
         this.args = args;
@@ -94,11 +103,7 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
                 final GATKRead read = c.element();
                 final SAMFileHeader samFileHeader = c.sideInput(samHeader);
                 Integer metric = computeMetric(read);
-                List<InsertSizeAggregationLevel> aggregationLevels = InsertSizeAggregationLevel.getKeysForAllAggregationLevels(read, samFileHeader,
-                        args.METRIC_ACCUMULATION_LEVEL.contains(MetricAccumulationLevel.ALL_READS),
-                        args.METRIC_ACCUMULATION_LEVEL.contains(MetricAccumulationLevel.LIBRARY),
-                        args.METRIC_ACCUMULATION_LEVEL.contains(MetricAccumulationLevel.READ_GROUP),
-                        args.METRIC_ACCUMULATION_LEVEL.contains(MetricAccumulationLevel.SAMPLE));
+                List<InsertSizeAggregationLevel> aggregationLevels = InsertSizeAggregationLevel.getKeysForAllAggregationLevels(read, samFileHeader, args.METRIC_ACCUMULATION_LEVEL);
 
                 aggregationLevels.stream().forEach(k -> c.output(KV.of(k, metric)));
             }
@@ -121,7 +126,6 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
         })).setName("Re-key histograms");
 
         PCollection <KV<InsertSizeAggregationLevel,MetricsFileDataflow< InsertSizeMetrics, Integer >>> metricsFiles = reKeyedHistograms.apply(Combine.perKey(new CombineInsertSizeHistogramsIntoMetricsFile(args.DEVIATIONS, args.HISTOGRAM_WIDTH, args.MINIMUM_PCT)))
-                //.setCoder(SerializableCoder.of((Class<MetricsFileDataflow<InsertSizeMetrics, Integer>>) new MetricsFileDataflow<InsertSizeMetrics, Integer>().getClass()))
                 .setName("Add histograms and metrics to MetricsFile");
 
         PCollection<MetricsFileDataflow< InsertSizeMetrics, Integer >> metricsFilesNoKeys = metricsFiles.apply(ParDo.of(new DoFn<KV<?, MetricsFileDataflow<InsertSizeMetrics, Integer>>, MetricsFileDataflow<InsertSizeMetrics, Integer>>() {
@@ -142,15 +146,6 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
 
         return singleMetricsFileWithHeaders;
     }
-
-
-    private final ReadFilter isSecondInMappedPair = r -> r.isPaired() &&
-            !r.isUnmapped() &&
-            !r.mateIsUnmapped() &&
-            !r.isFirstOfPair() &&
-            !(r.isSupplementaryAlignment() || r.isSecondaryAlignment()) &&
-            !r.isDuplicate() &&
-            r.getFragmentLength() != 0;
 
     private Integer computeMetric(GATKRead read) {
         return Math.abs(read.getFragmentLength());
@@ -174,10 +169,10 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
             Set<Header> headers = Sets.newLinkedHashSet(accumulator.getHeaders());
             Set<Header> inputHeaders = Sets.newLinkedHashSet(input.getHeaders());
             inputHeaders.removeAll(headers);
-            inputHeaders.stream().forEach(accumulator::addHeader);
+            inputHeaders.forEach(accumulator::addHeader);
 
             accumulator.addAllMetrics(input.getMetrics());
-            input.getAllHistograms().stream().forEach(accumulator::addHistogram);
+            input.getAllHistograms().forEach(accumulator::addHistogram);
             return accumulator;
         }
 

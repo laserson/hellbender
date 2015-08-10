@@ -6,13 +6,20 @@ import com.google.cloud.dataflow.sdk.coders.DefaultCoder;
 import com.google.cloud.genomics.dataflow.coders.GenericJsonCoder;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SamPairUtil;
+import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
+import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+/**
+ * Multipart key for use with {@link InsertSizeMetrics}
+ * This is a {@link GenericJson} because it must be deterministically encoded.
+ */
 @DefaultCoder(GenericJsonCoder.class)
 public final class InsertSizeAggregationLevel extends GenericJson implements Serializable{
     public final static long serialVersionUID = 1l;
@@ -63,18 +70,21 @@ public final class InsertSizeAggregationLevel extends GenericJson implements Ser
         this.sample = sample;
     }
 
-    public static List<InsertSizeAggregationLevel> getKeysForAllAggregationLevels(final GATKRead read, final SAMFileHeader header, final boolean includeAll, final boolean includeLibrary, final boolean includeReadGroup, final boolean includeSample) {
+    /**
+     * Get back keys for the given aggregation levels.
+     */
+    public static List<InsertSizeAggregationLevel> getKeysForAllAggregationLevels(final GATKRead read, final SAMFileHeader header, Set<MetricAccumulationLevel> levelsToInclude) {
         final List<InsertSizeAggregationLevel> aggregationLevels = new ArrayList<>();
-        if (includeAll) {
+        if (levelsToInclude.contains(MetricAccumulationLevel.ALL_READS)) {
             aggregationLevels.add(new InsertSizeAggregationLevel(read, header, false, false, false));
         }
-        if (includeLibrary) {
+        if (levelsToInclude.contains(MetricAccumulationLevel.LIBRARY)) {
             aggregationLevels.add(new InsertSizeAggregationLevel(read, header, true, false, true));
         }
-        if (includeReadGroup) {
+        if (levelsToInclude.contains(MetricAccumulationLevel.READ_GROUP)) {
             aggregationLevels.add(new InsertSizeAggregationLevel(read, header, true, true, true));
         }
-        if (includeSample) {
+        if (levelsToInclude.contains(MetricAccumulationLevel.SAMPLE)) {
             aggregationLevels.add(new InsertSizeAggregationLevel(read, header, false, false, true));
         }
         return aggregationLevels;
