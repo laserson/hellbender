@@ -7,6 +7,7 @@ import org.broadinstitute.hellbender.tools.walkers.indels.PairHMMIndelErrorModel
 import org.broadinstitute.hellbender.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
+import org.broadinstitute.hellbender.utils.genotyper.ProbabilityVector;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
 import org.broadinstitute.hellbender.utils.pileup.ReadPileup;

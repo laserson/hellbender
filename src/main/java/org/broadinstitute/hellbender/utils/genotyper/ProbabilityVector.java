@@ -1,4 +1,4 @@
-package org.broadinstitute.hellbender.tools.walkers.genotyper;
+package org.broadinstitute.hellbender.utils.genotyper;
 
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.MathUtils;
