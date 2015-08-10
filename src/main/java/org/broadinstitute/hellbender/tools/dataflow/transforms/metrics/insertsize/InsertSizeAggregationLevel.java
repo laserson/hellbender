@@ -54,10 +54,7 @@ public final class InsertSizeAggregationLevel extends GenericJson implements Ser
     /**
      * This is required by {@link GenericJsonCoder} but should not be used
      */
-    public InsertSizeAggregationLevel() {
-    }
-
-    ;
+    public InsertSizeAggregationLevel() {}
 
     public InsertSizeAggregationLevel(final String orientation, final String library, final String readgroup, final String sample) {
         this.orientation = orientation;

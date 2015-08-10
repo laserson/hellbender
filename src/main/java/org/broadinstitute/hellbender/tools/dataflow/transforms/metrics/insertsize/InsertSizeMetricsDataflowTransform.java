@@ -23,8 +23,9 @@ import org.broadinstitute.hellbender.cmdline.ArgumentCollectionDefinition;
 import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramDataflow;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramCombinerDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.DataflowHistogram;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
@@ -104,26 +105,26 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
         })).setName("Calculate metric and key")
                 .setCoder(KvCoder.of(GenericJsonCoder.of(InsertSizeAggregationLevel.class), BigEndianIntegerCoder.of()));
 
-        CombineFn<Integer, DataflowHistogram<Integer>, DataflowHistogram<Integer>> combiner = new DataflowHistogramCombiner<>();
-        PCollection<KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>> histograms = kvPairs.apply(Combine.<InsertSizeAggregationLevel, Integer,DataflowHistogram<Integer>>perKey(combiner)).setName("Add reads to histograms");
+        CombineFn<Integer, HistogramDataflow<Integer>, HistogramDataflow<Integer>> combiner = new HistogramCombinerDataflow<>();
+        PCollection<KV<InsertSizeAggregationLevel,HistogramDataflow<Integer>>> histograms = kvPairs.apply(Combine.<InsertSizeAggregationLevel, Integer,HistogramDataflow<Integer>>perKey(combiner)).setName("Add reads to histograms");
 
-        PCollection<KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel,DataflowHistogram<Integer>>>> reKeyedHistograms = histograms.apply(ParDo.of(new DoFn<KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>>, KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>>>>() {
+        PCollection<KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel,HistogramDataflow<Integer>>>> reKeyedHistograms = histograms.apply(ParDo.of(new DoFn<KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>>, KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>>>>() {
             public final static long serialVersionUID = 1l;
 
             @Override
             public void processElement(ProcessContext c) throws Exception {
-                KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>> histo = c.element();
+                KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>> histo = c.element();
                 InsertSizeAggregationLevel oldKey = histo.getKey();
                 InsertSizeAggregationLevel newKey = new InsertSizeAggregationLevel(null, oldKey.getLibrary(), oldKey.getReadGroup(), oldKey.getSample());
                 c.output(KV.of(newKey, histo));
             }
         })).setName("Re-key histograms");
 
-        PCollection <KV<InsertSizeAggregationLevel,MetricsFileDataflow < InsertSizeMetrics, Integer >>> metricsFiles = reKeyedHistograms.apply(Combine.perKey(new CombineHistogramsIntoMetricsFile(args.DEVIATIONS, args.HISTOGRAM_WIDTH, args.MINIMUM_PCT)))
+        PCollection <KV<InsertSizeAggregationLevel,MetricsFileDataflow< InsertSizeMetrics, Integer >>> metricsFiles = reKeyedHistograms.apply(Combine.perKey(new CombineInsertSizeHistogramsIntoMetricsFile(args.DEVIATIONS, args.HISTOGRAM_WIDTH, args.MINIMUM_PCT)))
                 //.setCoder(SerializableCoder.of((Class<MetricsFileDataflow<InsertSizeMetrics, Integer>>) new MetricsFileDataflow<InsertSizeMetrics, Integer>().getClass()))
                 .setName("Add histograms and metrics to MetricsFile");
 
-        PCollection<MetricsFileDataflow < InsertSizeMetrics, Integer >> metricsFilesNoKeys = metricsFiles.apply(ParDo.of(new DoFn<KV<?, MetricsFileDataflow<InsertSizeMetrics, Integer>>, MetricsFileDataflow<InsertSizeMetrics, Integer>>() {
+        PCollection<MetricsFileDataflow< InsertSizeMetrics, Integer >> metricsFilesNoKeys = metricsFiles.apply(ParDo.of(new DoFn<KV<?, MetricsFileDataflow<InsertSizeMetrics, Integer>>, MetricsFileDataflow<InsertSizeMetrics, Integer>>() {
             public final static long serialVersionUID = 1l;
 
             @Override
@@ -142,13 +143,6 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
         return singleMetricsFileWithHeaders;
     }
 
-    public static class DataflowHistogramCombiner<K extends Comparable<K>> extends Combine.AccumulatingCombineFn<K, DataflowHistogram<K>, DataflowHistogram<K>>{
-        public static final long serialVersionUID = 1l;
-        @Override
-        public DataflowHistogram<K> createAccumulator() {
-            return new DataflowHistogram<>();
-        }
-    }
 
     private final ReadFilter isSecondInMappedPair = r -> r.isPaired() &&
             !r.isUnmapped() &&

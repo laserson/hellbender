@@ -29,8 +29,8 @@ import org.broadinstitute.hellbender.engine.dataflow.datasources.RefAPIMetadata;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.RefAPISource;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReferenceShard;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.VariantShard;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.DataflowHistogram;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.GoogleGenomicsReadToGATKReadAdapter;
@@ -46,7 +46,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,9 +67,7 @@ public final class DataflowUtils {
     private DataflowUtils(){} //prevent instantiation
 
     /**
-     * Standard method for regis
-     *
-     * tering all coders needed by the GATK
+     * Standard method for registering all coders needed by the GATK
      *
      * @param p pipeline for which to register coders
      */
@@ -93,7 +90,7 @@ public final class DataflowUtils {
 
         //metrics coders
         p.getCoderRegistry().registerCoder(MetricsFileDataflow.class, CoderFactories.forCoder(SerializableCoder.of(MetricsFileDataflow.class)));
-        p.getCoderRegistry().registerCoder(DataflowHistogram.class, CoderFactories.forCoder(SerializableCoder.of(DataflowHistogram.class)));
+        p.getCoderRegistry().registerCoder(HistogramDataflow.class, CoderFactories.forCoder(SerializableCoder.of(HistogramDataflow.class)));
     }
 
     /**
@@ -234,7 +231,6 @@ public final class DataflowUtils {
      */
     public static class LoadReadsFromFileFn extends DoFn<File, GATKRead> {
         private static final long serialVersionUID = 1L;
-
 
         private final List<SimpleInterval> intervals;
         private final ValidationStringency stringency;

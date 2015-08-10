@@ -24,7 +24,7 @@ import java.io.File;
 import java.util.*;
 
 public final class RnaSeqMetricsCollector extends SAMRecordMultiLevelCollector<RnaSeqMetrics, Integer> {
-    public final static long serialVersionUID = 1l;
+    private final static long serialVersionUID = 1l;
 
     public enum StrandSpecificity {NONE, FIRST_READ_TRANSCRIPTION_STRAND, SECOND_READ_TRANSCRIPTION_STRAND}
 

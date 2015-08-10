@@ -4,8 +4,8 @@ import com.google.cloud.dataflow.sdk.transforms.Combine;
 import com.google.cloud.dataflow.sdk.values.KV;
 import htsjdk.samtools.util.Histogram;
 import org.broadinstitute.hellbender.exceptions.GATKException;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.DataflowHistogram;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 
 import java.util.Comparator;
@@ -15,24 +15,27 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class CombineHistogramsIntoMetricsFile
-        extends Combine.CombineFn<KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>>, CombineHistogramsIntoMetricsFile, MetricsFileDataflow<InsertSizeMetrics, Integer>> {
-    public final static long serialVersionUID = 1l;
+/**
+ * CombineFN to combine the {@link HistogramDataflow}s of insert sizes into a single {@link MetricsFileDataflow}
+ */
+final class CombineInsertSizeHistogramsIntoMetricsFile
+        extends Combine.CombineFn<KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>>, CombineInsertSizeHistogramsIntoMetricsFile, MetricsFileDataflow<InsertSizeMetrics, Integer>> {
+    private final static long serialVersionUID = 1l;
     private static final String BIN_LABEL = "insert_size";
 
     private final double DEVIATIONS;
     private final Integer HISTOGRAM_WIDTH;
     private final float MINIMUM_PERCENT;
 
-    private final Map<InsertSizeAggregationLevel, DataflowHistogram<Integer>> histograms = new HashMap<>();
+    private final Map<InsertSizeAggregationLevel, HistogramDataflow<Integer>> histograms = new HashMap<>();
 
-    public CombineHistogramsIntoMetricsFile(double deviations, Integer histogramWidth, float minimumPercent) {
+    public CombineInsertSizeHistogramsIntoMetricsFile(double deviations, Integer histogramWidth, float minimumPercent) {
         this.DEVIATIONS = deviations;
         this.HISTOGRAM_WIDTH = histogramWidth;
         this.MINIMUM_PERCENT = minimumPercent;
     }
 
-    public void addHistogramToMetricsFile(final InsertSizeAggregationLevel aggregationLevel, final DataflowHistogram<Integer> histogram, final MetricsFileDataflow<InsertSizeMetrics, Integer> metricsFile, final double totalInserts) {
+    public void addHistogramToMetricsFile(final InsertSizeAggregationLevel aggregationLevel, final HistogramDataflow<Integer> histogram, final MetricsFileDataflow<InsertSizeMetrics, Integer> metricsFile, final double totalInserts) {
         if (histogramHasEnoughInsertsToInclude(histogram, totalInserts)) {
             final InsertSizeMetrics metrics = initializeInsertSizeMetric(aggregationLevel, histogram);
 
@@ -49,11 +52,23 @@ public class CombineHistogramsIntoMetricsFile
         }
     }
 
-    private boolean histogramHasEnoughInsertsToInclude(DataflowHistogram<?> histogram, double totalInserts) {
+    /**
+     * Decide if it's worth including this histogram in the output
+     * @param totalInserts count of all the inserts from all histograms in this aggregation level
+     * @return is the number of inserts in this histogram greater than {@link #MINIMUM_PERCENT} of all the total number of inserts in this aggregation level
+     */
+    private boolean histogramHasEnoughInsertsToInclude(HistogramDataflow<?> histogram, double totalInserts) {
         return histogram.getCount() > totalInserts * MINIMUM_PERCENT;
     }
 
-    private static InsertSizeMetrics initializeInsertSizeMetric(InsertSizeAggregationLevel aggregationLevel, DataflowHistogram<Integer> histogram) {
+
+    /**
+     * Create a new
+     * @param aggregationLevel
+     * @param histogram
+     * @return
+     */
+    private static InsertSizeMetrics initializeInsertSizeMetric(InsertSizeAggregationLevel aggregationLevel, HistogramDataflow<Integer> histogram) {
         final InsertSizeMetrics metrics = new InsertSizeMetrics();
         metrics.SAMPLE = aggregationLevel.getSample();
         metrics.LIBRARY = aggregationLevel.getLibrary();
@@ -71,7 +86,7 @@ public class CombineHistogramsIntoMetricsFile
         return metrics;
     }
 
-    private static void setWidthValues(DataflowHistogram<Integer> histogram, InsertSizeMetrics metrics) {
+    private static void setWidthValues(HistogramDataflow<Integer> histogram, InsertSizeMetrics metrics) {
         final double median = histogram.getMedian();
         double covered = 0;
         double low = median;
@@ -127,12 +142,12 @@ public class CombineHistogramsIntoMetricsFile
     }
 
     @Override
-    public CombineHistogramsIntoMetricsFile createAccumulator() {
-        return new CombineHistogramsIntoMetricsFile(this.DEVIATIONS, this.HISTOGRAM_WIDTH, this.MINIMUM_PERCENT);
+    public CombineInsertSizeHistogramsIntoMetricsFile createAccumulator() {
+        return new CombineInsertSizeHistogramsIntoMetricsFile(this.DEVIATIONS, this.HISTOGRAM_WIDTH, this.MINIMUM_PERCENT);
     }
 
     @Override
-    public CombineHistogramsIntoMetricsFile addInput(CombineHistogramsIntoMetricsFile accumulator, KV<InsertSizeAggregationLevel, DataflowHistogram<Integer>> input) {
+    public CombineInsertSizeHistogramsIntoMetricsFile addInput(CombineInsertSizeHistogramsIntoMetricsFile accumulator, KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>> input) {
         if(accumulator.histograms.containsKey(input.getKey())){
             throw new GATKException("Cannot merge two histograms with the same key. " +
                     "CombineHistogramsIntoMetrics file assumes that each key is represented only once. " +
@@ -143,18 +158,18 @@ public class CombineHistogramsIntoMetricsFile
     }
 
     @Override
-    public CombineHistogramsIntoMetricsFile mergeAccumulators(Iterable<CombineHistogramsIntoMetricsFile> accumulators) {
-        Map<InsertSizeAggregationLevel, DataflowHistogram<Integer>> histograms = StreamSupport.stream(accumulators.spliterator(), false)
+    public CombineInsertSizeHistogramsIntoMetricsFile mergeAccumulators(Iterable<CombineInsertSizeHistogramsIntoMetricsFile> accumulators) {
+        Map<InsertSizeAggregationLevel, HistogramDataflow<Integer>> histograms = StreamSupport.stream(accumulators.spliterator(), false)
                 .flatMap(a -> a.histograms.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        CombineHistogramsIntoMetricsFile accum = createAccumulator();
+        CombineInsertSizeHistogramsIntoMetricsFile accum = createAccumulator();
         accum.histograms.putAll(histograms);
         return accum;
     }
 
     @Override
-    public MetricsFileDataflow<InsertSizeMetrics, Integer> extractOutput(CombineHistogramsIntoMetricsFile accumulator) {
+    public MetricsFileDataflow<InsertSizeMetrics, Integer> extractOutput(CombineInsertSizeHistogramsIntoMetricsFile accumulator) {
         final MetricsFileDataflow<InsertSizeMetrics, Integer> metricsFile = new MetricsFileDataflow<>();
 
 
@@ -163,7 +178,7 @@ public class CombineHistogramsIntoMetricsFile
                 .mapToDouble(Histogram::getCount)
                 .sum();
 
-        Map<InsertSizeAggregationLevel, DataflowHistogram<Integer>> sortedHistograms = new TreeMap<>(Comparator.comparing((InsertSizeAggregationLevel a) -> a.getSample() != null ? a.getSample() : "")
+        Map<InsertSizeAggregationLevel, HistogramDataflow<Integer>> sortedHistograms = new TreeMap<>(Comparator.comparing((InsertSizeAggregationLevel a) -> a.getSample() != null ? a.getSample() : "")
                 .thenComparing(a -> a.getLibrary() != null ? a.getLibrary() : "")
                 .thenComparing(a -> a.getReadGroup() != null ? a.getReadGroup() : ""));
         sortedHistograms.putAll(accumulator.histograms);

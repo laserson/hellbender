@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.tools.dataflow.transforms.metrics;
 
 import htsjdk.samtools.metrics.MetricsFile;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.SerializableMetric;
 
 import java.io.Serializable;
 import java.io.StringWriter;

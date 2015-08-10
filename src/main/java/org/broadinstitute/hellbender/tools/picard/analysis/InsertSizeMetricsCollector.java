@@ -15,7 +15,7 @@ import java.util.*;
 /**
  * Collects InsertSizeMetrics on the specified accumulationLevels using
  */
-public final class InsertSizeMetricsCollector extends MultiLevelCollector<InsertSizeMetrics, Integer, InsertSizeCollectorArgs> {
+public final class InsertSizeMetricsCollector extends MultiLevelCollector<InsertSizeMetrics, Integer, InsertSizeMetricsCollector.InsertSizeCollectorArgs> {
     public final static long serialVersionUID = 1l;
 
     // When generating the Histogram, discard any data categories (out of FR, TANDEM, RF) that have fewer than this
@@ -112,9 +112,7 @@ public final class InsertSizeMetricsCollector extends MultiLevelCollector<Insert
 
         @SuppressWarnings("unchecked")
         public void addMetricsToFile(final MetricsFile<InsertSizeMetrics,Integer> file) {
-            for (final Histogram<Integer> h : this.Histograms.values()) {
-                totalInserts += h.getCount();
-            }
+            totalInserts = this.Histograms.values().stream().mapToDouble(Histogram::getCount).sum();
 
             for(final Map.Entry<SamPairUtil.PairOrientation, Histogram<Integer>> entry : Histograms.entrySet()) {
                 final SamPairUtil.PairOrientation pairOrientation = entry.getKey();
@@ -190,25 +188,24 @@ public final class InsertSizeMetricsCollector extends MultiLevelCollector<Insert
             return histogramWidth;
         }
     }
-}
 
-// Arguments that need to be calculated once per SAMRecord that are then passed to each PerUnitMetricCollector
-// for the given record
-final class InsertSizeCollectorArgs  {
-    private final int insertSize;
-    private final SamPairUtil.PairOrientation po;
+    // Arguments that need to be calculated once per SAMRecord that are then passed to each PerUnitMetricCollector
+    // for the given record
+    static final class InsertSizeCollectorArgs {
+        private final int insertSize;
+        private final SamPairUtil.PairOrientation po;
 
+        public int getInsertSize() {
+            return insertSize;
+        }
 
-    public int getInsertSize() {
-        return insertSize;
-    }
+        public SamPairUtil.PairOrientation getPairOrientation() {
+            return po;
+        }
 
-    public SamPairUtil.PairOrientation getPairOrientation() {
-        return po;
-    }
-
-    public InsertSizeCollectorArgs(final int insertSize, final SamPairUtil.PairOrientation po) {
-        this.insertSize = insertSize;
-        this.po = po;
+        public InsertSizeCollectorArgs(final int insertSize, final SamPairUtil.PairOrientation po) {
+            this.insertSize = insertSize;
+            this.po = po;
+        }
     }
 }

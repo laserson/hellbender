@@ -18,8 +18,8 @@ import org.broadinstitute.hellbender.cmdline.argumentcollections.OptionalInterva
 import org.broadinstitute.hellbender.cmdline.programgroups.DataFlowProgramGroup;
 import org.broadinstitute.hellbender.engine.dataflow.DataflowCommandLineProgram;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize.InsertSizeMetricsDataflowTransform;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
@@ -62,7 +62,7 @@ public class InsertSizeMetricsDataflow extends DataflowCommandLineProgram {
         final PCollection<GATKRead> initialReads = readsDataflowSource.getReadPCollection(intervals);
 
         final List<Header> defaultHeaders = getDefaultHeaders();
-        final PCollectionView<List<Header>> metricHeaders = pipeline.apply(Create.of(defaultHeaders).withCoder(SerializableCoder.of(Header.class))).apply(View.asList());
+        final PCollectionView<List<Header>> metricHeaders = pipeline.apply("Create view of metric headers", Create.of(defaultHeaders).withCoder(SerializableCoder.of(Header.class))).apply(View.asList());
 
         final InsertSizeMetricsDataflowTransform insertSizeMetricsDataflowTransform = new InsertSizeMetricsDataflowTransform(arguments, headerSingleton, metricHeaders);
 

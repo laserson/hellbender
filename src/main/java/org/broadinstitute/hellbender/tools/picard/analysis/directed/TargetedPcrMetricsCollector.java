@@ -16,7 +16,7 @@ import java.util.*;
  * @author Jonathan Burke
  */
 public final class TargetedPcrMetricsCollector extends TargetMetricsCollector<TargetedPcrMetrics> {
-    public final static long serialVersionUID = 1l;
+    private final static long serialVersionUID = 1l;
     //maybe instead just inject this into the TargetedMetricCollector ->
 
     public TargetedPcrMetricsCollector(final Set<MetricAccumulationLevel> accumulationLevels, final List<SAMReadGroupRecord> samRgRecords, final ReferenceSequenceFile refFile, final File perTargetCoverage, final IntervalList targetIntervals, final IntervalList probeIntervals, final String probeSetName) {

@@ -22,8 +22,9 @@ import org.broadinstitute.hellbender.engine.dataflow.GATKTestPipeline;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramCombinerDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.DataflowHistogram;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize.InsertSizeMetricsDataflowTransform;
 import org.broadinstitute.hellbender.tools.picard.analysis.CollectInsertSizeMetrics;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
@@ -176,9 +177,9 @@ public final class InsertSizeMetricsTransformUnitTest{
     @Test
     public void testHistogrammer(){
         List<Integer> records = IntStream.rangeClosed(1,1000).boxed().collect(Collectors.toList());
-        Combine.CombineFn<Integer, DataflowHistogram<Integer>, DataflowHistogram<Integer>> combiner = new InsertSizeMetricsDataflowTransform.DataflowHistogramCombiner<>();
+        Combine.CombineFn<Integer, HistogramDataflow<Integer>, HistogramDataflow<Integer>> combiner = new HistogramCombinerDataflow<>();
 
-        DataflowHistogram<Integer> result = combiner.apply(records);
+        HistogramDataflow<Integer> result = combiner.apply(records);
         Assert.assertEquals(result.getCount(),1000.0);
         Assert.assertEquals(result.getMax(),1000.0);
         Assert.assertEquals(result.getMin(),1.0);
@@ -198,8 +199,8 @@ public final class InsertSizeMetricsTransformUnitTest{
         return kvs;
     }
 
-    private DataflowHistogram<Integer> createDummyHistogram() {
-        DataflowHistogram<Integer> h1= new DataflowHistogram<>();
+    private HistogramDataflow<Integer> createDummyHistogram() {
+        HistogramDataflow<Integer> h1= new HistogramDataflow<>();
         h1.addInput(10);
         h1.addInput(20);
         h1.addInput(10);
@@ -283,7 +284,7 @@ public final class InsertSizeMetricsTransformUnitTest{
     @Test
     public void dataflowSerializeMetricsFileTest(){
         MetricsFileDataflow<InsertSizeMetrics,Integer> metrics = new MetricsFileDataflow<>();
-        metrics.addHistogram(new DataflowHistogram<>());
+        metrics.addHistogram(new HistogramDataflow<>());
 
         @SuppressWarnings("unchecked")
         MetricsFileDataflow<InsertSizeMetrics, Integer> newMetrics =
@@ -294,7 +295,7 @@ public final class InsertSizeMetricsTransformUnitTest{
     @Test
     public void javaSerializeMetricsFileTest() throws IOException, ClassNotFoundException {
         final MetricsFileDataflow<InsertSizeMetrics,Integer> metrics = new MetricsFileDataflow<>();
-        metrics.addHistogram(new DataflowHistogram<>());
+        metrics.addHistogram(new HistogramDataflow<>());
         final MetricsFileDataflow<InsertSizeMetrics,Integer> deserializedMetrics = TestUtil.serializeAndDeserialize(metrics);
 
         Assert.assertEquals(deserializedMetrics.getAllHistograms(), metrics.getAllHistograms());
