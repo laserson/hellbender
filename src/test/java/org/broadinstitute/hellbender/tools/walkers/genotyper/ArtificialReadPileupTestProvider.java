@@ -3,8 +3,11 @@ package org.broadinstitute.hellbender.tools.walkers.genotyper;
 
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMReadGroupRecord;
+import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.TextCigarCodec;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
+import org.broadinstitute.hellbender.engine.TestingReferenceDataSource;
 import org.broadinstitute.hellbender.utils.*;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
 import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
@@ -19,24 +22,28 @@ public class ArtificialReadPileupTestProvider {
     final int contigStart = 1;
     final int contigStop = refBases.length();
     final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeader(1, 1, contigStop - contigStart + 1);
-    final String artificialContig = "chr1";
+    final String artificialContig = "1";
     final String artificialReadName = "synth";
     final int artificialRefStart = 1;
     final int artificialMappingQuality = 60;
-    Map<String, GATKSAMReadGroupRecord> sample2RG = new HashMap<String, GATKSAMReadGroupRecord>();
+    Map<String, SAMReadGroupRecord> sample2RG = new HashMap<>();
     List<SAMReadGroupRecord> sampleRGs;
     List<String> sampleNames = new ArrayList<>();
     private String sampleName(int i) { return sampleNames.get(i); }
-    private GATKSAMReadGroupRecord sampleRG(String name) { return sample2RG.get(name); }
+    private SAMReadGroupRecord sampleRG(String name) { return sample2RG.get(name); }
     public final int locStart = 105; // start position where we desire artificial variant
     private final int readLength = 10; // desired read length in pileup
     public final int readOffset = 4;
     private final int readStart = locStart - readOffset;
     public final GenomeLocParser genomeLocParser = new GenomeLocParser(header.getSequenceDictionary());
     public final GenomeLoc loc = genomeLocParser.createGenomeLoc(artificialContig,locStart,locStart);
-    public final GenomeLoc window = genomeLocParser.createGenomeLoc(artificialContig,locStart-100,locStart+100);
-    public final String windowBases = refBases.substring(locStart-100-1,locStart+100);
-    public final ReferenceContext referenceContext = new ReferenceContext(genomeLocParser,loc,window,windowBases.getBytes());
+
+    private static final int lead = 100;
+    private static final int trail = 100;
+    public final GenomeLoc window = genomeLocParser.createGenomeLoc(artificialContig,locStart-lead,locStart+trail);
+    public final String windowBases = refBases.substring(locStart-lead-1,locStart+trail);
+
+    public final ReferenceContext referenceContext = new ReferenceContext(new TestingReferenceDataSource(artificialContig, windowBases.getBytes()), new SimpleInterval(loc), lead, trail);
 
     byte BASE_QUAL = 50;
 
@@ -45,7 +52,7 @@ public class ArtificialReadPileupTestProvider {
 
         for ( int i = 0; i < numSamples; i++ ) {
             sampleNames.add(String.format("%s%04d", SAMPLE_PREFIX, i));
-            GATKSAMReadGroupRecord rg = createRG(sampleName(i));
+            SAMReadGroupRecord rg = createRG(sampleName(i));
             sampleRGs.add(rg);
             sample2RG.put(sampleName(i), rg);
         }
@@ -93,7 +100,7 @@ public class ArtificialReadPileupTestProvider {
             altAllele = refChar;
         }
 
-        Map<String,AlignmentContext> contexts = new HashMap<String,AlignmentContext>();
+        Map<String,AlignmentContext> contexts = new HashMap<>();
 
         for (String sample: sampleNames) {
             AlignmentContext context = new AlignmentContext(loc, generateRBPForVariant(loc, refAllele, altAllele, altBases, numReadsPerAllele, sample, addBaseErrors, phredScaledBaseErrorRate));
@@ -104,8 +111,8 @@ public class ArtificialReadPileupTestProvider {
         return contexts;
     }
 
-    private GATKSAMReadGroupRecord createRG(String name) {
-        GATKSAMReadGroupRecord rg = new GATKSAMReadGroupRecord(name);
+    private SAMReadGroupRecord createRG(String name) {
+        SAMReadGroupRecord rg = new SAMReadGroupRecord(name);
         rg.setPlatform("ILLUMINA");
         rg.setSample(name);
         return rg;
@@ -124,7 +131,7 @@ public class ArtificialReadPileupTestProvider {
     private List<PileupElement> createPileupElements(String allele, GenomeLoc loc, int numReadsPerAllele, String sample, int readStart, String altBases, boolean addErrors, int phredScaledErrorRate, int refAlleleLength, boolean isReference) {
 
         int alleleLength = allele.length();
-        List<PileupElement> pileupElements = new ArrayList<PileupElement>();
+        List<PileupElement> pileupElements = new ArrayList<>();
 
         int readCounter = 0;
         for ( int d = 0; d < numReadsPerAllele; d++ ) {
@@ -135,7 +142,7 @@ public class ArtificialReadPileupTestProvider {
             byte[] readQuals = new byte[readBases.length];
             Arrays.fill(readQuals, (byte) phredScaledErrorRate);
 
-            GATKRead read = new GATKSAMRecord(header);
+            GATKRead read = ArtificialReadUtils.createArtificialRead(TextCigarCodec.decode(SAMRecord.NO_ALIGNMENT_CIGAR));
             read.setBaseQualities(readQuals);
             read.setBases(readBases);
             read.setName(artificialReadName+readCounter++);
@@ -154,14 +161,13 @@ public class ArtificialReadPileupTestProvider {
                     read.setCigar(readBases.length+"M");
             }
 
-            read.setReadPairedFlag(false);
-            read.setAlignmentStart(readStart);
+            read.setIsPaired(false);
+            read.setPosition(loc.getContig(), readStart);
             read.setMappingQuality(artificialMappingQuality);
-            read.setReferenceName(loc.getContig());
-            read.setReadNegativeStrandFlag(false);
-            read.setReadGroup(sampleRG(sample));
+            read.setIsReverseStrand(false);
+            read.setReadGroup(sampleRG(sample).getId());
 
-            pileupElements.add(LocusIteratorByState.createPileupForReadAndOffset(read, readOffset));
+            pileupElements.add(PileupElement.createPileupForReadAndOffset(read, readOffset));
         }
 
         return pileupElements;

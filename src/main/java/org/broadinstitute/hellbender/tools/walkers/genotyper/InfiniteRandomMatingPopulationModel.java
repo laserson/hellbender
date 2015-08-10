@@ -83,7 +83,7 @@ public class InfiniteRandomMatingPopulationModel implements GenotypingModel {
         final int samplePloidy = ploidyModel.samplePloidy(0);
         final int alleleCount = genotypingAlleles.numberOfAlleles();
         final GenotypeLikelihoodCalculator likelihoodsCalculator = getLikelihoodsCalculator(samplePloidy,alleleCount);
-        final LikelihoodMatrix<A> sampleLikelihoods = alleleLikelihoodMatrixMapper.map(data.readLikelihoods().sampleMatrix(0));
+        final LikelihoodMatrix<A> sampleLikelihoods = alleleLikelihoodMatrixMapper.apply(data.readLikelihoods().sampleMatrix(0));
         final List<GenotypeLikelihoods> genotypeLikelihoods = Collections.singletonList(likelihoodsCalculator.genotypeLikelihoods(sampleLikelihoods));
         return new GenotypingLikelihoods<>(genotypingAlleles,ploidyModel,genotypeLikelihoods);
     }
@@ -108,7 +108,7 @@ public class InfiniteRandomMatingPopulationModel implements GenotypingModel {
         for (int i = 0; i < sampleCount; i++) {
             final int samplePloidy = ploidyModel.samplePloidy(i);
             final GenotypeLikelihoodCalculator likelihoodsCalculator = getLikelihoodsCalculator(samplePloidy,alleleCount);
-            final LikelihoodMatrix<A> sampleLikelihoods = alleleLikelihoodMatrixMapper.map(data.readLikelihoods().sampleMatrix(i));
+            final LikelihoodMatrix<A> sampleLikelihoods = alleleLikelihoodMatrixMapper.apply(data.readLikelihoods().sampleMatrix(i));
             genotypeLikelihoods.add(likelihoodsCalculator.genotypeLikelihoods(sampleLikelihoods));
         }
         return new GenotypingLikelihoods<>(genotypingAlleles,ploidyModel,genotypeLikelihoods);
@@ -124,7 +124,7 @@ public class InfiniteRandomMatingPopulationModel implements GenotypingModel {
         final int alleleCount = genotypingAlleles.numberOfAlleles();
         final GenotypeLikelihoodCalculator likelihoodsCalculator = getLikelihoodsCalculator(samplePloidy,alleleCount);
         for (int i = 0; i < sampleCount; i++) {
-            final LikelihoodMatrix<A> sampleLikelihoods = alleleLikelihoodMatrixMapper.map(data.readLikelihoods().sampleMatrix(i));
+            final LikelihoodMatrix<A> sampleLikelihoods = alleleLikelihoodMatrixMapper.apply(data.readLikelihoods().sampleMatrix(i));
             genotypeLikelihoods.add(likelihoodsCalculator.genotypeLikelihoods(sampleLikelihoods));
         }
         return new GenotypingLikelihoods<>(genotypingAlleles,ploidyModel,genotypeLikelihoods);

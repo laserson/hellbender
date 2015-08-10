@@ -4,6 +4,7 @@ package org.broadinstitute.hellbender.dev.pipelines.bqsr;
 import htsjdk.samtools.SAMFileHeader;
 import org.broadinstitute.hellbender.dev.tools.walkers.bqsr.BaseRecalibrationArgumentCollection;
 import org.broadinstitute.hellbender.dev.tools.walkers.bqsr.BaseRecalibratorWorker;
+import org.broadinstitute.hellbender.engine.FastaReferenceDataSource;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.engine.ReferenceDataSource;
 import org.broadinstitute.hellbender.exceptions.GATKException;
@@ -45,7 +46,7 @@ public final class CalibrationTablesBuilder {
         this.header = header;
         // 2. the reference we copied
         final File refFile = new File(referenceFileName);
-        this.reference = new ReferenceDataSource(refFile);
+        this.reference = new FastaReferenceDataSource(refFile);
         // 3. create the class that'll do the actual work
         this.br = BaseRecalibratorWorker.fromArgs(header, toolArgs);
         if (null==br) throw new RuntimeException("invalid tool arguments");
@@ -57,7 +58,7 @@ public final class CalibrationTablesBuilder {
         this.header = header;
         // 2. the reference we copied
         final File refFile = new File(referenceFileName);
-        this.reference = new ReferenceDataSource(refFile);
+        this.reference = new FastaReferenceDataSource(refFile);
         // 3. create the class that'll do the actual work
         this.br = BaseRecalibratorWorker.fromCommandLine(header, commandLineArguments, System.out);
         if (null==br) throw new GATKException("invalid tool arguments");

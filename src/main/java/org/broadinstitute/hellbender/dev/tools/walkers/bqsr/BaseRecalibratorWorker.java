@@ -9,6 +9,7 @@ import org.broadinstitute.hellbender.cmdline.ArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.CommandLineParser;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
 import org.broadinstitute.hellbender.cmdline.programgroups.ReadProgramGroup;
+import org.broadinstitute.hellbender.engine.FastaReferenceDataSource;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.engine.ReferenceDataSource;
 import org.broadinstitute.hellbender.engine.filters.CountingReadFilter;
@@ -141,7 +142,7 @@ public final class BaseRecalibratorWorker {
         minimumQToUse = BRAC.PRESERVE_QSCORES_LESS_THAN;
 
         if (null!=refFile) {
-            referenceDataSource = new ReferenceDataSource(refFile);
+            referenceDataSource = new FastaReferenceDataSource(refFile);
         }
     }
 

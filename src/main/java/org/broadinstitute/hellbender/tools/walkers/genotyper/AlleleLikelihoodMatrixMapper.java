@@ -1,20 +1,21 @@
 package org.broadinstitute.hellbender.tools.walkers.genotyper;
 
 import htsjdk.variant.variantcontext.Allele;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.genotyper.AlleleListPermutation;
 import org.broadinstitute.hellbender.utils.genotyper.LikelihoodMatrix;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 /**
  * Creates {@link org.broadinstitute.gatk.utils.genotyper.ReadLikelihoods.Matrix} mappers to be used when working with a subset of the original alleles.
  *
  * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
  */
-public abstract class AlleleLikelihoodMatrixMapper<A extends Allele> {
-
-    public abstract LikelihoodMatrix<A> map(final LikelihoodMatrix<A> original);
+@FunctionalInterface
+public interface AlleleLikelihoodMatrixMapper<A extends Allele> extends UnaryOperator<LikelihoodMatrix<A>>{
 
     /**
      * Instantiates a new mapper given an allele-list permutation.
@@ -26,43 +27,13 @@ public abstract class AlleleLikelihoodMatrixMapper<A extends Allele> {
      * @return never {@code null}.
      */
     public static <A extends Allele> AlleleLikelihoodMatrixMapper<A> newInstance(final AlleleListPermutation<A> permutation) {
-        if (permutation == null)
-            throw new IllegalArgumentException("the permutation must not be null");
-        if (permutation.isNonPermuted())
-            return asIs();
-        else
-            return general(permutation);
-    }
-
-    /**
-     * Returns trivial mapper that just maps to the original matrix without changes.
-     *
-     * @param <A> the allele type.
-     * @return never {@code null}.
-     */
-    @SuppressWarnings("unchecked")
-    private static <A extends Allele> AlleleLikelihoodMatrixMapper<A> asIs() {
-        return AS_IS;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static final AlleleLikelihoodMatrixMapper AS_IS = new AlleleLikelihoodMatrixMapper<Allele>() {
-            @Override
-            public LikelihoodMatrix<Allele> map(final LikelihoodMatrix original) {
-                return original;
-            }
-    };
-
-    /**
-     * Constructs a new mapper instance that work with general permutation without making any assumption.
-     * @param permutation the permutation to apply to requested matrices wrappers.
-     * @param <A> allele type.
-     * @return never {@code null}.
-     */
-    private static <A extends Allele> AlleleLikelihoodMatrixMapper<A> general(final AlleleListPermutation<A> permutation) {
+        Utils.nonNull(permutation, "the permutation must not be null");
+        if (permutation.isNonPermuted()) {
+            return read -> read;
+        }
         return new AlleleLikelihoodMatrixMapper<A>() {
             @Override
-            public LikelihoodMatrix<A> map(final LikelihoodMatrix<A> original) {
+            public LikelihoodMatrix<A> apply(final LikelihoodMatrix<A> original) {
                 return new LikelihoodMatrix<A>() {
 
                     @Override
@@ -91,7 +62,7 @@ public abstract class AlleleLikelihoodMatrixMapper<A extends Allele> {
                     }
 
                     @Override
-                    public int indexOfRead(GATKRead read) {
+                    public int indexOfRead(final GATKRead read) {
                         return original.indexOfRead(read);
                     }
 
@@ -123,4 +94,5 @@ public abstract class AlleleLikelihoodMatrixMapper<A extends Allele> {
             }
         };
     }
+
 }

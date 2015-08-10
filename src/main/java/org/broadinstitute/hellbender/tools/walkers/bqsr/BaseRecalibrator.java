@@ -8,10 +8,7 @@ import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
 import org.broadinstitute.hellbender.cmdline.programgroups.ReadProgramGroup;
-import org.broadinstitute.hellbender.engine.FeatureContext;
-import org.broadinstitute.hellbender.engine.ReadWalker;
-import org.broadinstitute.hellbender.engine.ReferenceContext;
-import org.broadinstitute.hellbender.engine.ReferenceDataSource;
+import org.broadinstitute.hellbender.engine.*;
 import org.broadinstitute.hellbender.engine.filters.CountingReadFilter;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
@@ -196,7 +193,7 @@ public final class BaseRecalibrator extends ReadWalker {
         initializeRecalibrationEngine();
         minimumQToUse = PRESERVE_QSCORES_LESS_THAN;
 
-        referenceDataSource = new ReferenceDataSource(referenceArguments.getReferenceFile());
+        referenceDataSource = new FastaReferenceDataSource(referenceArguments.getReferenceFile());
     }
 
     /**

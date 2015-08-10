@@ -1,7 +1,8 @@
 package org.broadinstitute.hellbender.tools.walkers.genotyper;
 
 import htsjdk.variant.variantcontext.Allele;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.engine.AlignmentContextUtils;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
@@ -18,8 +19,8 @@ public class IndelGenotypeLikelihoodsUnitTest extends BaseTest {
 
 
     final UnifiedArgumentCollection UAC = new UnifiedArgumentCollection();
-    final Logger logger = Logger.getLogger(IndelGenotypeLikelihoodsUnitTest.class);
-    final IndelGenotypeLikelihoodsCalculationModel model = new IndelGenotypeLikelihoodsCalculationModel(UAC,logger);
+    final Logger logger = LogManager.getLogger(IndelGenotypeLikelihoodsUnitTest.class);
+    final IndelGenotypeLikelihoodsCalculationModel model = new IndelGenotypeLikelihoodsCalculationModel(UAC, logger);
 
     ArtificialReadPileupTestProvider pileupProvider;
 
