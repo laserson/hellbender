@@ -25,6 +25,7 @@ import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramCombinerDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramDataflow;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize.CombineInsertSizeMetricsFiles;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize.InsertSizeMetricsDataflowTransform;
 import org.broadinstitute.hellbender.tools.picard.analysis.CollectInsertSizeMetrics;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
@@ -228,7 +229,7 @@ public final class InsertSizeMetricsTransformUnitTest{
 
 
         PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> files = p.apply(Create.of(ImmutableList.of(mf1, mf2, mf3)));
-        PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> combined = files.apply(Combine.globally(new InsertSizeMetricsDataflowTransform.CombineMetricsFiles()));
+        PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> combined = files.apply(Combine.globally(new CombineInsertSizeMetricsFiles()));
         DirectPipelineRunner.EvaluationResults results =  (DirectPipelineRunner.EvaluationResults)p.run();
         MetricsFileDataflow<InsertSizeMetrics, Integer> metricsFile = results.getPCollection(combined).get(0);
 
@@ -242,7 +243,7 @@ public final class InsertSizeMetricsTransformUnitTest{
         Combine.CombineFn<MetricsFileDataflow<InsertSizeMetrics,Integer>,
                 MetricsFileDataflow<InsertSizeMetrics,Integer>,
                 MetricsFileDataflow<InsertSizeMetrics,Integer>> combiner =
-                new InsertSizeMetricsDataflowTransform.CombineMetricsFiles();
+                new CombineInsertSizeMetricsFiles();
 
         MetricsFileDataflow<InsertSizeMetrics, Integer> mf1 = getInsertSizeMetricsIntegerMetricsFileDataflow();
 
