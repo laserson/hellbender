@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Original bi-allelic ~O(N) implementation.  Kept here for posterity and reference
  */
-class OriginalDiploidExactAFCalculator extends DiploidExactAFCalculator {
+final class OriginalDiploidExactAFCalculator extends DiploidExactAFCalculator {
     protected OriginalDiploidExactAFCalculator() {
     }
 
@@ -36,7 +36,7 @@ class OriginalDiploidExactAFCalculator extends DiploidExactAFCalculator {
         final double log10PRef = log10Posteriors[1] > log10Posteriors[0] ? MathUtils.LOG10_P_OF_ZERO : 0.0;
         final Map<Allele, Double> log10pRefByAllele = Collections.singletonMap(vc.getAlternateAllele(0), log10PRef);
 
-        return new AFCalculationResult(new int[]{mleK}, 0, vc.getAlleles(),
+        return new AFCalculationResult(new int[]{mleK}, vc.getAlleles(),
                 MathUtils.normalizeFromLog10(log10Likelihoods, true),
                 MathUtils.normalizeFromLog10(log10Priors, true),
                 log10pRefByAllele);

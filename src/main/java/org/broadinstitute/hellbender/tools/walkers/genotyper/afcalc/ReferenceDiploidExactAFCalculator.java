@@ -1,6 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.genotyper.afcalc;
 
-public class ReferenceDiploidExactAFCalculator extends DiploidExactAFCalculator {
+public final class ReferenceDiploidExactAFCalculator extends DiploidExactAFCalculator {
     protected ReferenceDiploidExactAFCalculator() {
     }
 }

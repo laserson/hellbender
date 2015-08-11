@@ -15,7 +15,7 @@ import java.util.*;
  * Note that all of the values -- i.e. priors -- are checked now that they are meaningful, which means
  * that users of this code can rely on the values coming out of these functions.
  */
-public class AFCalculationResult {
+public final class AFCalculationResult {
     private static final int AF0 = 0;
     private static final int AF1p = 1;
     private static final int LOG_10_ARRAY_SIZES = 2;
@@ -31,31 +31,30 @@ public class AFCalculationResult {
      */
     private final int[] alleleCountsOfMLE;
 
-    private int nEvaluations = 0;
-
     /**
      * The list of alleles actually used in computing the AF
      */
-    private List<Allele> allelesUsedInGenotyping = null;
+    private final List<Allele> allelesUsedInGenotyping;
 
     /**
      * Create a results object capability of storing results for calls with up to maxAltAlleles
      */
     public AFCalculationResult(final int[] alleleCountsOfMLE,
-                               final int nEvaluations,
                                final List<Allele> allelesUsedInGenotyping,
                                final double[] log10LikelihoodsOfAC,
                                final double[] log10PriorsOfAC,
                                final Map<Allele, Double> log10pRefByAllele) {
-        if ( allelesUsedInGenotyping == null || allelesUsedInGenotyping.size() < 1 ) {
+        Utils.nonNull(alleleCountsOfMLE, "alleleCountsOfMLE cannot be null");
+        Utils.nonNull(log10PriorsOfAC, "log10PriorsOfAC cannot be null");
+        Utils.nonNull(log10LikelihoodsOfAC, "log10LikelihoodsOfAC cannot be null");
+        Utils.nonNull(log10LikelihoodsOfAC, "log10LikelihoodsOfAC cannot be null");
+        Utils.nonNull(log10pRefByAllele, "log10pRefByAllele cannot be null");
+        Utils.nonNull(allelesUsedInGenotyping, "allelesUsedInGenotyping cannot be null");
+        if ( allelesUsedInGenotyping.isEmpty() ) {
             throw new IllegalArgumentException("allelesUsedInGenotyping must be non-null list of at least 1 value " + allelesUsedInGenotyping);
         }
-        Utils.nonNull(alleleCountsOfMLE, "alleleCountsOfMLE cannot be null");
         if ( alleleCountsOfMLE.length != allelesUsedInGenotyping.size() - 1) {
             throw new IllegalArgumentException("alleleCountsOfMLE.length " + alleleCountsOfMLE.length + " != allelesUsedInGenotyping.size() " + allelesUsedInGenotyping.size());
-        }
-        if ( nEvaluations < 0 ) {
-            throw new IllegalArgumentException("nEvaluations must be >= 0 but saw " + nEvaluations);
         }
         if ( log10LikelihoodsOfAC.length != 2 ) {
             throw new IllegalArgumentException("log10LikelihoodsOfAC must have length equal 2");
@@ -63,7 +62,6 @@ public class AFCalculationResult {
         if ( log10PriorsOfAC.length != 2 ) {
             throw new IllegalArgumentException("log10PriorsOfAC must have length equal 2");
         }
-        Utils.nonNull(log10pRefByAllele, "log10pRefByAllele cannot be null");
         if ( log10pRefByAllele.size() != allelesUsedInGenotyping.size() - 1 ) {
             throw new IllegalArgumentException("log10pRefByAllele has the wrong number of elements: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
         }
@@ -77,14 +75,14 @@ public class AFCalculationResult {
             throw new IllegalArgumentException("log10priors are bad " + Utils.join(",", log10PriorsOfAC));
         }
 
-        this.alleleCountsOfMLE = alleleCountsOfMLE;
-        this.nEvaluations = nEvaluations;
-        this.allelesUsedInGenotyping = allelesUsedInGenotyping;
+        //make defensive copies of all arguments
+        this.alleleCountsOfMLE = alleleCountsOfMLE.clone();
+        this.allelesUsedInGenotyping = Collections.unmodifiableList(new ArrayList<>(allelesUsedInGenotyping));
 
         this.log10LikelihoodsOfAC = Arrays.copyOf(log10LikelihoodsOfAC, LOG_10_ARRAY_SIZES);
         this.log10PriorsOfAC = Arrays.copyOf(log10PriorsOfAC, LOG_10_ARRAY_SIZES);
         this.log10PosteriorsOfAC = computePosteriors(log10LikelihoodsOfAC, log10PriorsOfAC);
-        this.log10pRefByAllele = new HashMap<>(log10pRefByAllele);
+        this.log10pRefByAllele = Collections.unmodifiableMap(new HashMap<>(log10pRefByAllele));
     }
 
     /**
@@ -93,8 +91,9 @@ public class AFCalculationResult {
      * @param log10PriorsOfAC
      * @return
      */
-    public AFCalculationResult withNewPriors(final double[] log10PriorsOfAC) {
-        return new AFCalculationResult(alleleCountsOfMLE, nEvaluations, allelesUsedInGenotyping, log10LikelihoodsOfAC, log10PriorsOfAC, log10pRefByAllele);
+    public AFCalculationResult copyWithNewPriors(final double[] log10PriorsOfAC) {
+        Utils.nonNull(log10PriorsOfAC);
+        return new AFCalculationResult(alleleCountsOfMLE, allelesUsedInGenotyping, log10LikelihoodsOfAC, log10PriorsOfAC, log10pRefByAllele);
     }
 
     /**
@@ -105,10 +104,12 @@ public class AFCalculationResult {
      * maxAltAlleles in length, and so only the first getAllelesUsedInGenotyping.size() - 1 values
      * are meaningful.
      *
+     * This method returns a copy of the internally-stored array.
+     *
      * @return a vector with allele counts, not all of which may be meaningful
      */
     public int[] getAlleleCountsOfMLE() {
-        return alleleCountsOfMLE;
+        return alleleCountsOfMLE.clone();
     }
 
     /**
@@ -119,7 +120,8 @@ public class AFCalculationResult {
      * @return the AC of allele
      */
     public int getAlleleCountAtMLE(final Allele allele) {
-        return getAlleleCountsOfMLE()[altAlleleIndex(allele)];
+        Utils.nonNull(allele);
+        return alleleCountsOfMLE[altAlleleIndex(allele)];
     }
 
     /**
@@ -179,7 +181,7 @@ public class AFCalculationResult {
     @Override
     public String toString() {
         final List<String> byAllele = new LinkedList<>();
-        for ( final Allele a : getAllelesUsedInGenotyping() ) {
+        for ( final Allele a : allelesUsedInGenotyping) {
             if (a.isNonReference()) {
                 byAllele.add(String.format("%s => MLE %d / posterior %.2f", a, getAlleleCountAtMLE(a), getLog10PosteriorOfAFEq0ForAllele(a)));
             }
@@ -188,7 +190,7 @@ public class AFCalculationResult {
     }
 
     /**
-     * Are we sufficiently confidence in being non-ref that the site is considered polymorphic?
+     * Are we sufficiently confident in being non-ref that the site is considered polymorphic?
      *
      * We are non-ref if the probability of being non-ref > the emit confidence (often an argument).
      * Suppose posterior AF > 0 is log10: -5 => 10^-5
@@ -203,6 +205,7 @@ public class AFCalculationResult {
      * @return true if there's enough confidence (relative to log10minPNonRef) to reject AF == 0
      */
     public boolean isPolymorphic(final Allele allele, final double log10minPNonRef) {
+        Utils.nonNull(allele);
         return getLog10PosteriorOfAFEq0ForAllele(allele) < log10minPNonRef;
     }
 
@@ -215,21 +218,6 @@ public class AFCalculationResult {
         }
         final double log10Threshold = minPNonRefPhredScaledQual / -10;
         return isPolymorphic(allele, log10Threshold);
-    }
-
-    /**
-     * Are any of the alleles polymorphic w.r.t. #isPolymorphic?
-     *
-     * @param log10minPNonRef the confidence threshold, in log10 space
-     * @return true if any are poly, false otherwise
-     */
-    public boolean anyPolymorphic(final double log10minPNonRef) {
-        for ( final Allele a : getAllelesUsedInGenotyping() ) {
-            if (a.isNonReference() && isPolymorphic(a, log10minPNonRef)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -255,9 +243,7 @@ public class AFCalculationResult {
      */
     public double getLog10PosteriorOfAFEq0ForAllele(final Allele allele) {
         final Double log10pNonRef = log10pRefByAllele.get(allele);
-        if ( log10pNonRef == null ) {
-            throw new IllegalArgumentException("Unknown allele " + allele);
-        }
+        Utils.nonNull(log10pNonRef, "Unknown allele " + allele);
         return log10pNonRef;
     }
 

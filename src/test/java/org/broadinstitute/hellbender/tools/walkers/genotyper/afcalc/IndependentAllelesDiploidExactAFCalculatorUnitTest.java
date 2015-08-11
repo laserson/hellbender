@@ -156,7 +156,7 @@ public class IndependentAllelesDiploidExactAFCalculatorUnitTest extends BaseTest
         for ( int i = 0; i < log10LAlleles.size(); i++ ) {
             final double log10LAllele1 = log10LAlleles.get(i);
             final double[] L1 = MathUtils.normalizeFromLog10(new double[]{log10LAllele1, 0.0}, true);
-            final AFCalculationResult result1 = new AFCalculationResult(new int[]{1}, 1, Arrays.asList(A, C), L1, rawPriors, Collections.singletonMap(C, -10000.0));
+            final AFCalculationResult result1 = new AFCalculationResult(new int[]{1}, Arrays.asList(A, C), L1, rawPriors, Collections.singletonMap(C, -10000.0));
             originalPriors.add(result1);
             pNonRefN.add(log10pNonRef*(i+1));
         }

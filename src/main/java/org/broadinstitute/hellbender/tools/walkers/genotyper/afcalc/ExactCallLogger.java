@@ -158,7 +158,7 @@ public class ExactCallLogger {
                         builder.chr(currentLoc.getContig()).start(currentLoc.getStart()).stop(stop);
                         builder.genotypes(genotypes);
                         final int[] mleInts = ArrayUtils.toPrimitive(mle.toArray(new Integer[]{}));
-                        final AFCalculationResult result = new AFCalculationResult(mleInts, 1, alleles, posteriors, priors, log10pRefByAllele);
+                        final AFCalculationResult result = new AFCalculationResult(mleInts, alleles, posteriors, priors, log10pRefByAllele);
                         calls.add(new ExactCall(builder.make(), runtimeNano, result));
                     }
                     break;

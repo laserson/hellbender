@@ -10,6 +10,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class AFCalculationResultUnitTest extends BaseTest {
     private static class MyTest {
@@ -63,18 +64,36 @@ public final class AFCalculationResultUnitTest extends BaseTest {
     }
 
 
-    final static double[] log10Even = MathUtils.normalizeFromLog10(new double[]{0.5, 0.5}, true);
-    final static Allele C = Allele.create("C");
-    final static List<Allele> alleles = Arrays.asList(Allele.create("A", true), C);
+    static final double[] log10Even = MathUtils.normalizeFromLog10(new double[]{0.5, 0.5}, true);
+    private static final Allele C = Allele.create("C");
+    private static final Allele A = Allele.create("A", true);
+    static final List<Allele> alleles = Arrays.asList(A, C);
 
-    @Test(enabled = true, dataProvider = "TestComputePosteriors")
+    @Test(dataProvider = "TestComputePosteriors")
     private void testComputingPosteriors(final MyTest data) {
-        final AFCalculationResult result = new AFCalculationResult(new int[]{0}, 1, alleles, data.Ls, log10Even, Collections.singletonMap(C, -1.0));
+        final int[] zeroAC = {0};
+        final AFCalculationResult result = new AFCalculationResult(zeroAC, alleles, data.Ls, log10Even, Collections.singletonMap(C, -1.0));
 
         Assert.assertEquals(result.getLog10PosteriorOfAFEq0(), data.expectedPosteriors[0], 1e-3, "AF = 0 not expected");
         Assert.assertEquals(result.getLog10PosteriorOfAFGT0(), data.expectedPosteriors[1], 1e-3, "AF > 0 not expected");
 
-        final double[] actualPosteriors = new double[]{result.getLog10PosteriorOfAFEq0(), result.getLog10PosteriorOfAFGT0()};
+        Assert.assertEquals(result.getLog10PriorOfAFEq0(), log10Even[0], 1e-3, "prior for AF > 0 not expected");
+        Assert.assertEquals(result.getLog10PriorOfAFGT0(), log10Even[1], 1e-3, "prior for AF > 0 not expected");
+
+        Assert.assertEquals(result.getLog10LikelihoodOfAFEq0(), data.Ls[0], 1e-3, "likelihood for AF > 0 not expected");
+        Assert.assertEquals(result.getLog10LikelihoodOfAFGT0(), data.Ls[1], 1e-3, "likelihood for AF > 0 not expected");
+
+        Assert.assertEquals(result.getAllelesUsedInGenotyping(), alleles, "alleles are different");
+
+        Assert.assertNotNull(result.toString());//just making sure it does not blow up, ignoring contents
+
+
+        Assert.assertEquals(result.getAlleleCountAtMLE(C), zeroAC[0]);
+        //getLog10PosteriorOfAFEq0ForAllele
+        //withNewPriors
+
+        Assert.assertEquals(result.getAlleleCountsOfMLE(), zeroAC, "getAlleleCountsOfMLE not as expected");
+        final double[] actualPosteriors = {result.getLog10PosteriorOfAFEq0(), result.getLog10PosteriorOfAFGT0()};
         Assert.assertEquals(MathUtils.sumLog10(actualPosteriors), 1.0, 1e-3, "Posteriors don't sum to 1 with 1e-3 precision");
     }
 
@@ -102,14 +121,13 @@ public final class AFCalculationResultUnitTest extends BaseTest {
     private AFCalculationResult makePolymorphicTestData(final double pNonRef) {
         return new AFCalculationResult(
                 new int[]{0},
-                1,
                 alleles,
                 MathUtils.normalizeFromLog10(new double[]{1 - pNonRef, pNonRef}, true, false),
                 log10Even,
                 Collections.singletonMap(C, Math.log10(1 - pNonRef)));
     }
 
-    @Test(enabled = true, dataProvider = "TestIsPolymorphic")
+    @Test(dataProvider = "TestIsPolymorphic")
     private void testIsPolymorphic(final double pNonRef, final double pThreshold, final boolean shouldBePoly) {
             final AFCalculationResult result = makePolymorphicTestData(pNonRef);
             final boolean actualIsPoly = result.isPolymorphic(C, Math.log10(1 - pThreshold));
@@ -118,7 +136,7 @@ public final class AFCalculationResultUnitTest extends BaseTest {
                             + actualIsPoly + " but the expected result is " + shouldBePoly);
     }
 
-    @Test(enabled = true, dataProvider = "TestIsPolymorphic")
+    @Test(dataProvider = "TestIsPolymorphic")
     private void testIsPolymorphicQual(final double pNonRef, final double pThreshold, final boolean shouldBePoly) {
         final AFCalculationResult result = makePolymorphicTestData(pNonRef);
         final double qual = QualityUtils.phredScaleCorrectRate(pThreshold);
@@ -126,5 +144,16 @@ public final class AFCalculationResultUnitTest extends BaseTest {
         Assert.assertEquals(actualIsPoly, shouldBePoly,
                 "isPolymorphic with pNonRef " + pNonRef + " and threshold " + pThreshold + " returned "
                         + actualIsPoly + " but the expected result is " + shouldBePoly);
+    }
+
+    @Test(dataProvider = "TestComputePosteriors")
+    private void test(final MyTest data) {
+        final AFCalculationResult result = new AFCalculationResult(new int[]{0}, alleles, data.Ls, log10Even, Collections.singletonMap(C, -1.0));
+
+        Assert.assertEquals(result.getLog10PosteriorOfAFEq0(), data.expectedPosteriors[0], 1e-3, "AF = 0 not expected");
+        Assert.assertEquals(result.getLog10PosteriorOfAFGT0(), data.expectedPosteriors[1], 1e-3, "AF > 0 not expected");
+
+        final double[] actualPosteriors = {result.getLog10PosteriorOfAFEq0(), result.getLog10PosteriorOfAFGT0()};
+        Assert.assertEquals(MathUtils.sumLog10(actualPosteriors), 1.0, 1e-3, "Posteriors don't sum to 1 with 1e-3 precision");
     }
 }

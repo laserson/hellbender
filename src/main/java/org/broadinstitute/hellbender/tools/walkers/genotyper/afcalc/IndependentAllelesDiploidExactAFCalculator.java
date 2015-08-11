@@ -60,7 +60,7 @@ import java.util.*;
  * as P(D | AF_* == 0) = prod_i P (D | AF_i == 0), after applying the theta^i
  * prior for the ith least likely allele.
  */
- public class IndependentAllelesDiploidExactAFCalculator extends DiploidExactAFCalculator {
+ public final class IndependentAllelesDiploidExactAFCalculator extends DiploidExactAFCalculator {
 
     /**
      * The min. confidence of an allele to be included in the joint posterior.
@@ -82,21 +82,6 @@ import java.util.*;
 
     protected IndependentAllelesDiploidExactAFCalculator() {
         biAlleleExactModel = new ReferenceDiploidExactAFCalculator();
-    }
-
-    /**
-     * Trivial subclass that helps with debugging by keeping track of the supporting information for this joint call
-     */
-    private static class MyAFCalculationResult extends AFCalculationResult {
-        /**
-         * List of the supporting bi-allelic AFCalcResults that went into making this multi-allelic joint call
-         */
-        final List<AFCalculationResult> supporting;
-
-        private MyAFCalculationResult(final int[] alleleCountsOfMLE, final int nEvaluations, final List<Allele> allelesUsedInGenotyping, final double[] log10LikelihoodsOfAC, final double[] log10PriorsOfAC, final Map<Allele, Double> log10pRefByAllele, final List<AFCalculationResult> supporting) {
-            super(alleleCountsOfMLE, nEvaluations, allelesUsedInGenotyping, log10LikelihoodsOfAC, log10PriorsOfAC, log10pRefByAllele);
-            this.supporting = supporting;
-        }
     }
 
     @Override
@@ -414,7 +399,7 @@ import java.util.*;
             final double[] thetaTONPriors = new double[] { log10PriorAFEq0, log10PriorAFGt0 };
 
             // bind pNonRef for allele to the posterior value of the AF > 0 with the new adjusted prior
-            sorted.set(i, sorted.get(i).withNewPriors(MathUtils.normalizeFromLog10(thetaTONPriors, true)));
+            sorted.set(i, sorted.get(i).copyWithNewPriors(MathUtils.normalizeFromLog10(thetaTONPriors, true)));
         }
 
         return sorted;
@@ -438,7 +423,6 @@ import java.util.*;
                                                       final AFCalculationResult combinedAltAllelesResult) {
 
 
-        int nEvaluations = 0;
         final int nAltAlleles = sortedResultsWithThetaNPriors.size();
         final int[] alleleCountsOfMLE = new int[nAltAlleles];
         final Map<Allele, Double> log10pRefByAllele = new HashMap<>(nAltAlleles);
@@ -454,17 +438,14 @@ import java.util.*;
 
             // bind pNonRef for allele to the posterior value of the AF > 0 with the new adjusted prior
             log10pRefByAllele.put(altAllele, sortedResultWithThetaNPriors.getLog10PosteriorOfAFEq0());
-
-            // trivial -- update the number of evaluations
-            nEvaluations += sortedResultWithThetaNPriors.nEvaluations;
         }
 
-        return new MyAFCalculationResult(alleleCountsOfMLE, nEvaluations, vc.getAlleles(),
+        return new AFCalculationResult(alleleCountsOfMLE, vc.getAlleles(),
                 // necessary to ensure all values < 0
                 MathUtils.normalizeFromLog10(new double[] { combinedAltAllelesResult.getLog10LikelihoodOfAFEq0(), combinedAltAllelesResult.getLog10LikelihoodOfAFGT0() }, true),
                 // priors incorporate multiple alt alleles, must be normalized
                 MathUtils.normalizeFromLog10(new double[] { combinedAltAllelesResult.getLog10PriorOfAFEq0(), combinedAltAllelesResult.getLog10PriorOfAFGT0() }, true),
-                log10pRefByAllele, sortedResultsWithThetaNPriors);
+                log10pRefByAllele);
     }
 
     private boolean combineAltAlleleLikelihoods(final Genotype g, final int plMaxIndex, final double[] dest,

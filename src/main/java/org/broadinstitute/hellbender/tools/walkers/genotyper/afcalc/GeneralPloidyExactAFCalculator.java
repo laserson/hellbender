@@ -14,12 +14,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-public class GeneralPloidyExactAFCalculator extends ExactAFCalculator {
+public final class GeneralPloidyExactAFCalculator extends ExactAFCalculator {
 
     static final int MAX_LENGTH_FOR_POOL_PL_LOGGING = 100; // if PL vectors longer than this # of elements, don't log them
 
 
-    private final static boolean VERBOSE = false;
+    private static final boolean VERBOSE = false;
 
     protected GeneralPloidyExactAFCalculator() {
     }
