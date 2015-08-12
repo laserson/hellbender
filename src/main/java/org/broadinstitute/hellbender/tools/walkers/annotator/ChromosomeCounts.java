@@ -2,14 +2,16 @@ package org.broadinstitute.hellbender.tools.walkers.annotator;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextUtils;
+import htsjdk.variant.vcf.VCFConstants;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
+import htsjdk.variant.vcf.VCFStandardHeaderLines;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
-import org.broadinstitute.hellbender.utils.variant.ChromosomeCountConstants;
 
 import java.util.*;
 
@@ -30,17 +32,28 @@ import java.util.*;
  * The total number of alleles in the genotype should be equivalent to the ploidy of the sample.</p>
  *
  */
-public class ChromosomeCounts extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
+public final class ChromosomeCounts extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
 
-    private Set<String> founderIds = new HashSet<>();
+    public static final String[] keyNames = {
+            VCFConstants.ALLELE_NUMBER_KEY,
+            VCFConstants.ALLELE_COUNT_KEY,
+            VCFConstants.ALLELE_FREQUENCY_KEY };
 
-    ChromosomeCounts(final Set<String> founderIds){
+    public static final VCFInfoHeaderLine[] descriptions = {
+            VCFStandardHeaderLines.getInfoLine(VCFConstants.ALLELE_FREQUENCY_KEY),
+            VCFStandardHeaderLines.getInfoLine(VCFConstants.ALLELE_COUNT_KEY),
+            VCFStandardHeaderLines.getInfoLine(VCFConstants.ALLELE_NUMBER_KEY) };
+
+    private final Set<String> founderIds;
+
+    public ChromosomeCounts(final Set<String> founderIds){
+        Utils.nonNull(founderIds);
         //If families were given, get the founders ids
         this.founderIds = founderIds;
     }
 
-    ChromosomeCounts(){
-        this(null);
+    public ChromosomeCounts(){
+        this(Collections.emptySet());
     }
 
     public Map<String, Object> annotate(final ReferenceContext ref,
@@ -55,8 +68,8 @@ public class ChromosomeCounts extends InfoFieldAnnotation implements StandardAnn
     }
 
     public List<String> getKeyNames() {
-        return Arrays.asList(ChromosomeCountConstants.keyNames);
+        return Arrays.asList(keyNames);
     }
 
-    public List<VCFInfoHeaderLine> getDescriptions() { return Arrays.asList(ChromosomeCountConstants.descriptions); }
+    public List<VCFInfoHeaderLine> getDescriptions() { return Arrays.asList(descriptions); }
 }
