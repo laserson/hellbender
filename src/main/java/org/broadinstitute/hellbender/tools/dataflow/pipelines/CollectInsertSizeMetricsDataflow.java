@@ -18,10 +18,9 @@ import org.broadinstitute.hellbender.cmdline.argumentcollections.OptionalInterva
 import org.broadinstitute.hellbender.cmdline.programgroups.DataFlowProgramGroup;
 import org.broadinstitute.hellbender.engine.dataflow.DataflowCommandLineProgram;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize.InsertSizeMetricsDataflowTransform;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize.InsertSizeMetricsTransform;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
-import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.dataflow.DataflowUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -29,23 +28,22 @@ import org.broadinstitute.hellbender.utils.read.GATKRead;
 import java.util.List;
 
 @CommandLineProgramProperties(summary = "Collect insert size metrics on dataflow" , oneLineSummary = "insert size metrics", programGroup = DataFlowProgramGroup.class)
-public class InsertSizeMetricsDataflow extends DataflowCommandLineProgram {
+public final class CollectInsertSizeMetricsDataflow extends DataflowCommandLineProgram {
     public static final long serialVersionUID = 1l;
 
     @Argument(doc = "uri for the input bam, either a local file path or a gs:// bucket path",
             shortName = StandardArgumentDefinitions.INPUT_SHORT_NAME, fullName = StandardArgumentDefinitions.INPUT_LONG_NAME,
             optional = false)
-    protected String bam;
+    public String bam;
 
     @Argument(doc="a prefix for the dataflow output files", shortName = StandardArgumentDefinitions.OUTPUT_SHORT_NAME, fullName = StandardArgumentDefinitions.OUTPUT_LONG_NAME, optional = false)
-    protected String outputFile;
-
-
-    @ArgumentCollection
-    protected IntervalArgumentCollection intervalArgumentCollection = new OptionalIntervalArgumentCollection();
+    public String outputFile;
 
     @ArgumentCollection
-    InsertSizeMetricsDataflowTransform.Arguments arguments = new InsertSizeMetricsDataflowTransform.Arguments();
+    public IntervalArgumentCollection intervalArgumentCollection = new OptionalIntervalArgumentCollection();
+
+    @ArgumentCollection
+    public InsertSizeMetricsTransform.Arguments arguments = new InsertSizeMetricsTransform.Arguments();
 
 
     @Override
@@ -55,8 +53,7 @@ public class InsertSizeMetricsDataflow extends DataflowCommandLineProgram {
         final ReadsDataflowSource readsDataflowSource = new ReadsDataflowSource(bam, pipeline);
         final SAMFileHeader readsHeader = readsDataflowSource.getHeader();
 
-        final List<SimpleInterval> intervals = intervalArgumentCollection.intervalsSpecified() ? intervalArgumentCollection.getIntervals(readsHeader.getSequenceDictionary())
-                : IntervalUtils.getAllIntervalsForReference(readsHeader.getSequenceDictionary());
+        final List<SimpleInterval> intervals = intervalArgumentCollection.getSpecifiedOrAllIntervals(readsHeader.getSequenceDictionary());
 
         final PCollectionView<SAMFileHeader> headerSingleton = ReadsDataflowSource.getHeaderView(pipeline, readsHeader);
         final PCollection<GATKRead> initialReads = readsDataflowSource.getReadPCollection(intervals);
@@ -64,10 +61,11 @@ public class InsertSizeMetricsDataflow extends DataflowCommandLineProgram {
         final List<Header> defaultHeaders = getDefaultHeaders();
         final PCollectionView<List<Header>> metricHeaders = pipeline.apply("Create view of metric headers", Create.of(defaultHeaders).withCoder(SerializableCoder.of(Header.class))).apply(View.asList());
 
-        final InsertSizeMetricsDataflowTransform insertSizeMetricsDataflowTransform = new InsertSizeMetricsDataflowTransform(arguments, headerSingleton, metricHeaders);
+        final InsertSizeMetricsTransform insertSizeMetricsTransform = new InsertSizeMetricsTransform(arguments, headerSingleton, metricHeaders);
 
-        final PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> metricFile = initialReads.apply(insertSizeMetricsDataflowTransform);
+        final PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> metricFile = initialReads.apply(insertSizeMetricsTransform);
         final PCollection<String> strings = metricFile.apply(DataflowUtils.convertToString());
         strings.apply(TextIO.Write.to(outputFile));
     }
+
 }

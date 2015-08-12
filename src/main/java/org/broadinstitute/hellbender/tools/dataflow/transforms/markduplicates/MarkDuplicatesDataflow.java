@@ -7,7 +7,6 @@ import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PCollectionView;
 import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMSequenceDictionary;
 import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
@@ -18,7 +17,6 @@ import org.broadinstitute.hellbender.cmdline.argumentcollections.OptionalInterva
 import org.broadinstitute.hellbender.cmdline.programgroups.DataFlowProgramGroup;
 import org.broadinstitute.hellbender.engine.dataflow.DataflowCommandLineProgram;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
-import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.dataflow.SmallBamWriter;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -64,9 +62,7 @@ public final class MarkDuplicatesDataflow extends DataflowCommandLineProgram {
     protected void setupPipeline(final Pipeline pipeline) {
         final ReadsDataflowSource readsSource = new ReadsDataflowSource(bam, pipeline);
         final SAMFileHeader header = readsSource.getHeader();
-        final SAMSequenceDictionary sequenceDictionary = header.getSequenceDictionary();
-        final List<SimpleInterval> intervals = intervalArgumentCollection.intervalsSpecified() ? intervalArgumentCollection.getIntervals(sequenceDictionary):
-                IntervalUtils.getAllIntervalsForReference(sequenceDictionary);
+        final List<SimpleInterval> intervals = intervalArgumentCollection.getSpecifiedOrAllIntervals(header.getSequenceDictionary());
 
         final PCollectionView<SAMFileHeader> headerPcolView = pipeline.apply(Create.of(header)).apply(View.<SAMFileHeader>asSingleton());
 

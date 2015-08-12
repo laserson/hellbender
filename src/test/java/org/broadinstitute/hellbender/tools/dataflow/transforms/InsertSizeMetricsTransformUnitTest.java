@@ -3,10 +3,8 @@ package org.broadinstitute.hellbender.tools.dataflow.transforms;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.SerializableCoder;
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner;
-import com.google.cloud.dataflow.sdk.transforms.Combine;
 import com.google.cloud.dataflow.sdk.transforms.Create;
 import com.google.cloud.dataflow.sdk.transforms.View;
-import com.google.cloud.dataflow.sdk.util.SerializableUtils;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PCollectionView;
@@ -14,15 +12,12 @@ import htsjdk.samtools.metrics.Header;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.metrics.StringHeader;
 import htsjdk.samtools.util.Histogram;
-import htsjdk.samtools.util.TestUtil;
 import org.broadinstitute.hellbender.engine.dataflow.GATKTestPipeline;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.metrics.MetricAccumulationLevel;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramCombinerDataflow;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
-import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize.InsertSizeMetricsDataflowTransform;
+import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsize.InsertSizeMetricsTransform;
 import org.broadinstitute.hellbender.tools.picard.analysis.CollectInsertSizeMetrics;
 import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.dataflow.DataflowUtils;
@@ -45,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 
 
@@ -80,9 +74,9 @@ public final class InsertSizeMetricsTransformUnitTest{
         final PCollectionView<List<Header>> metricHeaders = p.apply(Create.of(defaultHeaders).withCoder(SerializableCoder.of(Header.class))).apply(View.asList());
 
 
-        final InsertSizeMetricsDataflowTransform.Arguments args = new InsertSizeMetricsDataflowTransform.Arguments();
+        final InsertSizeMetricsTransform.Arguments args = new InsertSizeMetricsTransform.Arguments();
         args.METRIC_ACCUMULATION_LEVEL = accumulationLevels;
-        InsertSizeMetricsDataflowTransform transform = new InsertSizeMetricsDataflowTransform(args, source.getHeaderView(), metricHeaders);
+        InsertSizeMetricsTransform transform = new InsertSizeMetricsTransform(args, source.getHeaderView(), metricHeaders);
 
         PCollection<MetricsFileDataflow<InsertSizeMetrics,Integer>> presult = preads.apply(transform);
         DirectPipelineRunner.EvaluationResults result = (DirectPipelineRunner.EvaluationResults)p.run();
@@ -92,7 +86,7 @@ public final class InsertSizeMetricsTransformUnitTest{
             expected.read(in);
         }
 
-        assertMetricsFilesEqualUpToOrder(resultMetrics, expected);
+        assertMetricsFilesEqualUpToOrder(resultMetrics, expected, false);
     }
 
     @Test(groups = "dataflow", dataProvider = "testFiles")
@@ -117,9 +111,9 @@ public final class InsertSizeMetricsTransformUnitTest{
         final PCollectionView<List<Header>> metricHeaders = p.apply(Create.of(defaultHeaders).withCoder(SerializableCoder.of(Header.class))).apply(View.asList());
 
 
-        final InsertSizeMetricsDataflowTransform.Arguments args = new InsertSizeMetricsDataflowTransform.Arguments();
+        final InsertSizeMetricsTransform.Arguments args = new InsertSizeMetricsTransform.Arguments();
         args.METRIC_ACCUMULATION_LEVEL = accumulationLevels;
-        InsertSizeMetricsDataflowTransform transform = new InsertSizeMetricsDataflowTransform(args, source.getHeaderView(), metricHeaders);
+        InsertSizeMetricsTransform transform = new InsertSizeMetricsTransform(args, source.getHeaderView(), metricHeaders);
 
         PCollection<MetricsFileDataflow<InsertSizeMetrics,Integer>> presult = preads.apply(transform);
         DirectPipelineRunner.EvaluationResults result = (DirectPipelineRunner.EvaluationResults)p.run();
@@ -129,34 +123,13 @@ public final class InsertSizeMetricsTransformUnitTest{
             expected.read(in);
         }
 
-        assertMetricsFilesEqualUpToOrder(resultMetrics, expected);
-
+        assertMetricsFilesEqualUpToOrder(resultMetrics, expected, true);
     }
 
-    @Test
-    public void testCollectInsertSizeMetric() throws IOException {
-        final CollectInsertSizeMetrics collectInsertSizeMetrics = new CollectInsertSizeMetrics();
-        collectInsertSizeMetrics.METRIC_ACCUMULATION_LEVEL = EnumSet.of(MetricAccumulationLevel.READ_GROUP);
-        collectInsertSizeMetrics.HISTOGRAM_FILE = BaseTest.createTempFile("histogram","pdf");
-        collectInsertSizeMetrics.PRODUCE_PLOT = false;
-        collectInsertSizeMetrics.INPUT = new File(BaseTest.publicTestDir, SMALL_BAM);
-        collectInsertSizeMetrics.OUTPUT = BaseTest.createTempFile("expectedMetric", "insertSizeMetric");
-        collectInsertSizeMetrics.runTool();
-    }
-
-    @Test
-    public void testHistogrammer(){
-        List<Integer> records = IntStream.rangeClosed(1,1000).boxed().collect(Collectors.toList());
-        Combine.CombineFn<Integer, HistogramDataflow<Integer>, HistogramDataflow<Integer>> combiner = new HistogramCombinerDataflow<>();
-
-        HistogramDataflow<Integer> result = combiner.apply(records);
-        Assert.assertEquals(result.getCount(),1000.0);
-        Assert.assertEquals(result.getMax(),1000.0);
-        Assert.assertEquals(result.getMin(),1.0);
-    }
-
-
-    public <K,V> List<KV<K,V>> kvZip(Iterable<K> keys, Iterable<V> values){
+    /**
+     * Zip iterable keys with iterable values into a List<KV<Key<Value>>
+     */
+    private static <K,V> List<KV<K,V>> kvZip(Iterable<K> keys, Iterable<V> values){
         Iterator<K> keysIter = keys.iterator();
         Iterator<V> valuesIter = values.iterator();
         List<KV<K, V>> kvs = new ArrayList<>();
@@ -169,46 +142,28 @@ public final class InsertSizeMetricsTransformUnitTest{
         return kvs;
     }
 
-    @Test
-    public void dataflowSerializeMetricsFileTest(){
-        MetricsFileDataflow<InsertSizeMetrics,Integer> metrics = new MetricsFileDataflow<>();
-        metrics.addHistogram(new HistogramDataflow<>());
 
-        @SuppressWarnings("unchecked")
-        MetricsFileDataflow<InsertSizeMetrics, Integer> newMetrics =
-                SerializableUtils.ensureSerializableByCoder(SerializableCoder.of(MetricsFileDataflow.class), metrics, "error");
-        Assert.assertEquals(newMetrics.getAllHistograms(),metrics.getAllHistograms());
-    }
+    private void assertMetricsFilesEqualUpToOrder(MetricsFile<InsertSizeMetrics,Integer> result, MetricsFile<InsertSizeMetrics,Integer> expected, boolean ignoreHeaders){
 
-    @Test
-    public void javaSerializeMetricsFileTest() throws IOException, ClassNotFoundException {
-        final MetricsFileDataflow<InsertSizeMetrics,Integer> metrics = new MetricsFileDataflow<>();
-        metrics.addHistogram(new HistogramDataflow<>());
-        final MetricsFileDataflow<InsertSizeMetrics,Integer> deserializedMetrics = TestUtil.serializeAndDeserialize(metrics);
-
-        Assert.assertEquals(deserializedMetrics.getAllHistograms(), metrics.getAllHistograms());
-    }
-
-    private void assertMetricsFilesEqualUpToOrder(MetricsFile<InsertSizeMetrics,Integer> result, MetricsFile<InsertSizeMetrics,Integer> expected){
-
-            Assert.assertEquals(result.getNumHistograms(), expected.getNumHistograms(), "Unequal numbers of histograms " +
-                    "\nResult"+ result.toString() + "\nExpected: " + expected.toString());
-            final List<KV<Histogram<Integer>, Histogram<Integer>>> histograms = kvZip(getSortedHistograms(result),
-                    getSortedHistograms(expected));
-            histograms.stream().forEach(kv -> assertHistogramEqualIgnoreZeroes(kv.getKey(), kv.getValue()));
+        Assert.assertEquals(result.getNumHistograms(), expected.getNumHistograms(), "Unequal numbers of histograms " +
+                "\nResult"+ result.toString() + "\nExpected: " + expected.toString());
+        final List<KV<Histogram<Integer>, Histogram<Integer>>> histograms = kvZip(getSortedHistograms(result),
+                getSortedHistograms(expected));
+        histograms.stream().forEach(kv -> assertHistogramEqualIgnoreZeroes(kv.getKey(), kv.getValue()));
 
         Assert.assertEquals(result.getMetrics(), expected.getMetrics());
 
         //time stamps and command lines will differ just check the number.
-//        Assert.assertEquals(result.getHeaders().size(), expected.getHeaders().size(), "Incorrect number of headers: " +
-//                "expected " + expected.getHeaders().size() + " found " + result.getHeaders().size() +".\n" + "Result:\n" +
-//                result.toString() + "\n Expected:\n" + expected.toString());
+        if(!ignoreHeaders) {
+            Assert.assertEquals(result.getHeaders().size(), expected.getHeaders().size(), "Incorrect number of headers: " +
+                    "expected " + expected.getHeaders().size() + " found " + result.getHeaders().size() + ".\n" + "Result:\n" +
+                    result.toString() + "\n Expected:\n" + expected.toString());
+        }
     }
 
     private List<Histogram<Integer>> getSortedHistograms(MetricsFile<InsertSizeMetrics, Integer> result) {
         return result.getAllHistograms().stream().sorted(Comparator.comparing(Histogram::getValueLabel)).collect(Collectors.toList());
     }
-
 
     @SuppressWarnings("rawtypes")
     private  <A extends Comparable,B extends Comparable> void assertHistogramEqualIgnoreZeroes(Histogram<A> a, Histogram<B> b) {

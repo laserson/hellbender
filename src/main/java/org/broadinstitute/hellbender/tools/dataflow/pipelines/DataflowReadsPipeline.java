@@ -10,7 +10,6 @@ import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.ValidationStringency;
 import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollection;
@@ -23,7 +22,6 @@ import org.broadinstitute.hellbender.engine.dataflow.PTransformSAM;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
 import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.transformers.ReadTransformer;
-import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.dataflow.DataflowUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -77,9 +75,7 @@ public abstract class DataflowReadsPipeline extends DataflowCommandLineProgram {
     protected final void setupPipeline(Pipeline pipeline) {
         final ReadsDataflowSource readsDataflowSource = new ReadsDataflowSource(bam, pipeline);
         final SAMFileHeader header = readsDataflowSource.getHeader();
-        final SAMSequenceDictionary sequenceDictionary = header.getSequenceDictionary();
-        final List<SimpleInterval> intervals = intervalArgumentCollection.intervalsSpecified() ? intervalArgumentCollection.getIntervals(sequenceDictionary):
-                IntervalUtils.getAllIntervalsForReference(sequenceDictionary);
+        final List<SimpleInterval> intervals = intervalArgumentCollection.getSpecifiedOrAllIntervals(header.getSequenceDictionary());
 
         final PCollection<GATKRead> preads = readsDataflowSource.getReadPCollection(intervals, ValidationStringency.SILENT);
 

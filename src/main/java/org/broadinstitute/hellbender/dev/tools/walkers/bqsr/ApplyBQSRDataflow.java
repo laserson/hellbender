@@ -18,14 +18,13 @@ import org.broadinstitute.hellbender.cmdline.programgroups.ReadProgramGroup;
 import org.broadinstitute.hellbender.dev.pipelines.bqsr.ApplyBQSRTransform;
 import org.broadinstitute.hellbender.dev.pipelines.bqsr.BaseRecalOutput;
 import org.broadinstitute.hellbender.dev.pipelines.bqsr.BaseRecalOutputSource;
-import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
-import org.broadinstitute.hellbender.utils.dataflow.SmallBamWriter;
 import org.broadinstitute.hellbender.engine.dataflow.DataflowCommandLineProgram;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.tools.ApplyBQSRArgumentCollection;
-import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.dataflow.BucketUtils;
+import org.broadinstitute.hellbender.utils.dataflow.SmallBamWriter;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.io.IOException;
@@ -78,8 +77,7 @@ public final class ApplyBQSRDataflow extends DataflowCommandLineProgram {
         ReadsDataflowSource readsSource = new ReadsDataflowSource(filename, pipeline);
         SAMFileHeader header = readsSource.getHeader();
         final SAMSequenceDictionary sequenceDictionary = header.getSequenceDictionary();
-        final List<SimpleInterval> intervals = intervalArgumentCollection.intervalsSpecified() ? intervalArgumentCollection.getIntervals(sequenceDictionary) :
-                IntervalUtils.getAllIntervalsForReference(sequenceDictionary);
+        final List<SimpleInterval> intervals = intervalArgumentCollection.getSpecifiedOrAllIntervals(sequenceDictionary);
         PCollection<BaseRecalOutput> recalInfoSingletonCollection = BaseRecalOutputSource.loadFileOrRemote(pipeline, BQSR_RECAL_FILE_NAME);
         PCollection<GATKRead> output = readsSource.getReadPCollection(intervals, ValidationStringency.SILENT)
                 .apply(new ApplyBQSRTransform(header, recalInfoSingletonCollection, bqsrOpts));

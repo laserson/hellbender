@@ -1,13 +1,14 @@
 package org.broadinstitute.hellbender.tools.dataflow.pipelines;
 
 import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.coders.SerializableCoder;
-import com.google.cloud.dataflow.sdk.transforms.*;
+import com.google.cloud.dataflow.sdk.transforms.Create;
+import com.google.cloud.dataflow.sdk.transforms.PTransform;
+import com.google.cloud.dataflow.sdk.transforms.ParDo;
+import com.google.cloud.dataflow.sdk.transforms.View;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PCollectionView;
 import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMSequenceDictionary;
 import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
@@ -18,25 +19,25 @@ import org.broadinstitute.hellbender.cmdline.argumentcollections.OptionalInterva
 import org.broadinstitute.hellbender.cmdline.programgroups.DataFlowProgramGroup;
 import org.broadinstitute.hellbender.dev.DoFnWLog;
 import org.broadinstitute.hellbender.dev.tools.walkers.bqsr.BaseRecalibratorDataflow;
-import org.broadinstitute.hellbender.engine.dataflow.*;
-import org.broadinstitute.hellbender.engine.dataflow.datasources.*;
+import org.broadinstitute.hellbender.engine.dataflow.DataflowCommandLineProgram;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadContextData;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsDataflowSource;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.RefAPIMetadata;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.RefAPISource;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.VariantsDataflowSource;
 import org.broadinstitute.hellbender.engine.dataflow.transforms.composite.AddContextDataToRead;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.markduplicates.MarkDuplicates;
 import org.broadinstitute.hellbender.tools.recalibration.RecalibrationArgumentCollection;
 import org.broadinstitute.hellbender.tools.recalibration.RecalibrationTables;
 import org.broadinstitute.hellbender.tools.recalibration.covariates.StandardCovariateList;
-import org.broadinstitute.hellbender.utils.GenomeLocSortedSet;
-import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.dataflow.SmallBamWriter;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.markduplicates.OpticalDuplicateFinder;
 
-import java.sql.Ref;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 @CommandLineProgramProperties(
@@ -80,8 +81,7 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
         // Load the reads.
         final ReadsDataflowSource readsDataflowSource = new ReadsDataflowSource(bam, pipeline);
         final SAMFileHeader readsHeader = readsDataflowSource.getHeader();
-        final List<SimpleInterval> intervals = intervalArgumentCollection.intervalsSpecified() ? intervalArgumentCollection.getIntervals(readsHeader.getSequenceDictionary())
-                : IntervalUtils.getAllIntervalsForReference(readsHeader.getSequenceDictionary());
+        final List<SimpleInterval> intervals = intervalArgumentCollection.getSpecifiedOrAllIntervals(readsHeader.getSequenceDictionary());
 
         final PCollectionView<SAMFileHeader> headerSingleton = ReadsDataflowSource.getHeaderView(pipeline, readsHeader);
         final PCollection<GATKRead> initialReads = readsDataflowSource.getReadPCollection(intervals);

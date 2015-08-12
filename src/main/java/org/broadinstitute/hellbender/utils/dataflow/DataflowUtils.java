@@ -31,6 +31,7 @@ import org.broadinstitute.hellbender.engine.dataflow.datasources.ReferenceShard;
 import org.broadinstitute.hellbender.engine.dataflow.datasources.VariantShard;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.HistogramDataflow;
 import org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.MetricsFileDataflow;
+import org.broadinstitute.hellbender.tools.picard.analysis.InsertSizeMetrics;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.GoogleGenomicsReadToGATKReadAdapter;
@@ -91,6 +92,8 @@ public final class DataflowUtils {
         //metrics coders
         p.getCoderRegistry().registerCoder(MetricsFileDataflow.class, CoderFactories.forCoder(SerializableCoder.of(MetricsFileDataflow.class)));
         p.getCoderRegistry().registerCoder(HistogramDataflow.class, CoderFactories.forCoder(SerializableCoder.of(HistogramDataflow.class)));
+        p.getCoderRegistry().registerCoder(InsertSizeMetrics.class, SerializableCoder.of(InsertSizeMetrics.class));
+
     }
 
     /**

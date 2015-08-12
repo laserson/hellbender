@@ -28,26 +28,4 @@ public abstract class MultiLevelMetrics extends SerializableMetric{
             .thenComparing(a -> a.READ_GROUP != null ? a.READ_GROUP : "")
             .thenComparing(a -> a.LIBRARY != null ? a.LIBRARY : "");
     }
-
-
-    //TODO: remove these methods once htsjdk is updated to 1.138
-    //BEGIN: Nasty hack to get around equality + hashcode bug
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return this.toString().equals(o.toString());
-    }
-
-    //since equals relies on toString subclasses MUST NOT override to string
-    @Override
-    public final String toString(){
-        return super.toString();
-    }
-
-    @Override
-    public int hashCode() {
-        return this.toString().hashCode();
-    }
-    //END: NastyHack
 }

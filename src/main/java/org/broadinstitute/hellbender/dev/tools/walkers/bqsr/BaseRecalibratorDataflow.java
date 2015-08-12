@@ -37,7 +37,6 @@ import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.tools.recalibration.RecalibrationTables;
-import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SequenceDictionaryUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
@@ -221,10 +220,8 @@ public class BaseRecalibratorDataflow extends DataflowCommandLineProgram {
             header = reader.getFileHeader();
             reader.close();
 
-            final SAMSequenceDictionary sequenceDictionary = header.getSequenceDictionary();
             final ReadFilter readFilter = BaseRecalibratorWorker.readFilter(header);
-            final List<SimpleInterval> intervals = BRAC.intervalArgumentCollection.intervalsSpecified() ? BRAC.intervalArgumentCollection.getIntervals(sequenceDictionary) :
-                    IntervalUtils.getAllIntervalsForReference(sequenceDictionary);
+            final List<SimpleInterval> intervals = BRAC.intervalArgumentCollection.getSpecifiedOrAllIntervals(header.getSequenceDictionary());
             return new ReadsDataflowSource(beforePath, pipeline).getReadPCollection(intervals, ValidationStringency.SILENT)
                     // keep only the ones BQSR's interested in.
                     .apply(new DataflowReadFilter(readFilter, header));

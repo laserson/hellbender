@@ -2,7 +2,6 @@ package org.broadinstitute.hellbender.tools.dataflow.transforms.metrics.insertsi
 
 import com.google.cloud.dataflow.sdk.coders.BigEndianIntegerCoder;
 import com.google.cloud.dataflow.sdk.coders.KvCoder;
-import com.google.cloud.dataflow.sdk.coders.SerializableCoder;
 import com.google.cloud.dataflow.sdk.transforms.Combine;
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
@@ -31,7 +30,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<GATKRead>, PCollection<MetricsFileDataflow<InsertSizeMetrics,Integer>>> {
+public class InsertSizeMetricsTransform extends PTransform<PCollection<GATKRead>, PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>>> {
     public static final long serialVersionUID = 1l;
 
     private final Arguments args;
@@ -77,7 +76,7 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
         }
     }
 
-    public InsertSizeMetricsDataflowTransform(Arguments args,PCollectionView<SAMFileHeader> samHeader, PCollectionView<List<Header>> metricHeaders) {
+    public InsertSizeMetricsTransform(Arguments args, PCollectionView<SAMFileHeader> samHeader, PCollectionView<List<Header>> metricHeaders) {
         args.validate();
         this.args = args;
         this.samHeader = samHeader;
@@ -86,56 +85,58 @@ public class InsertSizeMetricsDataflowTransform extends PTransform<PCollection<G
 
     @Override
     public PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> apply(PCollection<GATKRead> input) {
+        PCollection<GATKRead> filtered = input.apply("Filter singletons and first of pair", Filter.by(isSecondInMappedPair));
 
-        input.getPipeline().getCoderRegistry().registerCoder(InsertSizeMetrics.class, SerializableCoder.of(InsertSizeMetrics.class));
+        PCollection<KV<InsertSizeAggregationLevel, Integer>> kvPairs = filtered.apply(ParDo.named("Calculate metric and key")
+                .withSideInputs(samHeader)
+                .of(new DoFn<GATKRead, KV<InsertSizeAggregationLevel, Integer>>() {
+                    private final static long serialVersionUID = 1l;
 
-        PCollection<GATKRead> filtered = input.apply(Filter.by(isSecondInMappedPair)).setName("Filter singletons and first of pair");
+                    @Override
+                    public void processElement(ProcessContext c) throws Exception {
+                        final GATKRead read = c.element();
+                        final SAMFileHeader samFileHeader = c.sideInput(samHeader);
+                        Integer metric = computeMetric(read);
+                        List<InsertSizeAggregationLevel> aggregationLevels = InsertSizeAggregationLevel.getKeysForAllAggregationLevels(read, samFileHeader, args.METRIC_ACCUMULATION_LEVEL);
 
-        PCollection<KV<InsertSizeAggregationLevel, Integer>> kvPairs = filtered.apply(ParDo.withSideInputs(samHeader).of(new DoFn<GATKRead, KV<InsertSizeAggregationLevel, Integer>>() {
-            private final static long serialVersionUID = 1l;
-
-            @Override
-            public void processElement(ProcessContext c) throws Exception {
-                final GATKRead read = c.element();
-                final SAMFileHeader samFileHeader = c.sideInput(samHeader);
-                Integer metric = computeMetric(read);
-                List<InsertSizeAggregationLevel> aggregationLevels = InsertSizeAggregationLevel.getKeysForAllAggregationLevels(read, samFileHeader, args.METRIC_ACCUMULATION_LEVEL);
-
-                aggregationLevels.stream().forEach(k -> c.output(KV.of(k, metric)));
-            }
-        })).setName("Calculate metric and key")
-                .setCoder(KvCoder.of(GenericJsonCoder.of(InsertSizeAggregationLevel.class), BigEndianIntegerCoder.of()));
+                        aggregationLevels.stream().forEach(k -> c.output(KV.of(k, metric)));
+                    }
+                })).setCoder(KvCoder.of(GenericJsonCoder.of(InsertSizeAggregationLevel.class), BigEndianIntegerCoder.of()));
 
         CombineFn<Integer, HistogramDataflow<Integer>, HistogramDataflow<Integer>> combiner = new HistogramCombinerDataflow<>();
-        PCollection<KV<InsertSizeAggregationLevel,HistogramDataflow<Integer>>> histograms = kvPairs.apply(Combine.<InsertSizeAggregationLevel, Integer,HistogramDataflow<Integer>>perKey(combiner)).setName("Add reads to histograms");
+        PCollection<KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>>> histograms = kvPairs.apply("Add reads to histograms",
+                Combine.<InsertSizeAggregationLevel, Integer, HistogramDataflow<Integer>>perKey(combiner));
 
-        PCollection<KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel,HistogramDataflow<Integer>>>> reKeyedHistograms = histograms.apply(ParDo.of(new DoFn<KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>>, KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>>>>() {
-            public final static long serialVersionUID = 1l;
+        PCollection<KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>>>> reKeyedHistograms = histograms.apply(ParDo.named("Re-key histograms").
+                of(new DoFn<KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>>, KV<InsertSizeAggregationLevel, KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>>>>() {
+                    public final static long serialVersionUID = 1l;
 
-            @Override
-            public void processElement(ProcessContext c) throws Exception {
-                KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>> histo = c.element();
-                InsertSizeAggregationLevel oldKey = histo.getKey();
-                InsertSizeAggregationLevel newKey = new InsertSizeAggregationLevel(null, oldKey.getLibrary(), oldKey.getReadGroup(), oldKey.getSample());
-                c.output(KV.of(newKey, histo));
-            }
-        })).setName("Re-key histograms");
+                    @Override
+                    public void processElement(ProcessContext c) throws Exception {
+                        KV<InsertSizeAggregationLevel, HistogramDataflow<Integer>> histo = c.element();
+                        InsertSizeAggregationLevel oldKey = histo.getKey();
+                        InsertSizeAggregationLevel newKey = new InsertSizeAggregationLevel(null, oldKey.getLibrary(), oldKey.getReadGroup(), oldKey.getSample());
+                        c.output(KV.of(newKey, histo));
+                    }
+                }));
 
-        PCollection <KV<InsertSizeAggregationLevel,MetricsFileDataflow< InsertSizeMetrics, Integer >>> metricsFiles = reKeyedHistograms.apply(Combine.perKey(new CombineInsertSizeHistogramsIntoMetricsFile(args.DEVIATIONS, args.HISTOGRAM_WIDTH, args.MINIMUM_PCT)))
-                .setName("Add histograms and metrics to MetricsFile");
+        PCollection<KV<InsertSizeAggregationLevel, MetricsFileDataflow<InsertSizeMetrics, Integer>>> metricsFiles = reKeyedHistograms.apply("Add histograms and metrics to MetricsFile",
+                Combine.perKey(new CombineInsertSizeHistogramsIntoMetricsFile(args.DEVIATIONS, args.HISTOGRAM_WIDTH, args.MINIMUM_PCT)));
 
-        PCollection<MetricsFileDataflow< InsertSizeMetrics, Integer >> metricsFilesNoKeys = metricsFiles.apply(ParDo.of(new DoFn<KV<?, MetricsFileDataflow<InsertSizeMetrics, Integer>>, MetricsFileDataflow<InsertSizeMetrics, Integer>>() {
-            public final static long serialVersionUID = 1l;
+        PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> metricsFilesNoKeys = metricsFiles.apply(ParDo.named("Drop keys")
+                .of(new DoFn<KV<?, MetricsFileDataflow<InsertSizeMetrics, Integer>>, MetricsFileDataflow<InsertSizeMetrics, Integer>>() {
+                    public final static long serialVersionUID = 1l;
 
-            @Override
-            public void processElement(ProcessContext c) throws Exception {
-                c.output(c.element().getValue());
-            }
-        })).setName("Drop keys");
+                    @Override
+                    public void processElement(ProcessContext c) throws Exception {
+                        c.output(c.element().getValue());
+                    }
+                }));
 
-        PCollection<MetricsFileDataflow<InsertSizeMetrics,Integer>> singleMetricsFile = metricsFilesNoKeys.<PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>>>apply(Combine.globally(new CombineInsertSizeMetricsFiles()));
+        PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> singleMetricsFile = metricsFilesNoKeys.<PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>>>apply("Combine aggregation levels",
+                Combine.globally(new CombineInsertSizeMetricsFiles()));
 
-        PCollection<MetricsFileDataflow<InsertSizeMetrics,Integer>> singleMetricsFileWithHeaders = singleMetricsFile.apply(
+        PCollection<MetricsFileDataflow<InsertSizeMetrics, Integer>> singleMetricsFileWithHeaders = singleMetricsFile.apply(
                 ParDo.named("add headers to MetricsFile")
                         .withSideInputs(this.metricHeaders)
                         .of(new AddHeadersToMetricsFile(metricHeaders)));
