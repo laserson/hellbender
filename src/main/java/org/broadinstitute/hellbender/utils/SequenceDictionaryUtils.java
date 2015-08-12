@@ -50,9 +50,11 @@ public class SequenceDictionaryUtils {
     public enum SequenceDictionaryCompatibility {
         IDENTICAL,                      // the dictionaries are identical
         COMMON_SUBSET,                  // there exists a common subset of equivalent contigs
+        TWO_SUPERSETS_ONE,               // the second dict's set of contigs is a superset of the first dict's; used
+        // specifically with reference and reads
         NO_COMMON_CONTIGS,              // no overlap between dictionaries
         UNEQUAL_COMMON_CONTIGS,         // common subset has contigs that have the same name but different lengths
-        NON_CANONICAL_HUMAN_ORDER,      // human reference detected but the order of the contigs is non-standard (lexicographic, for examine)
+        NON_CANONICAL_HUMAN_ORDER,      // human reference detected but the order of the contigs is non-standard (lexicographic, for example)
         OUT_OF_ORDER,                   // the two dictionaries overlap but the overlapping contigs occur in different
         // orders with respect to each other
         DIFFERENT_INDICES               // the two dictionaries overlap and the overlapping contigs occur in the same
@@ -87,6 +89,11 @@ public class SequenceDictionaryUtils {
             case IDENTICAL:
                 return;
             case COMMON_SUBSET:
+                if (isReadsToReferenceComparison) {
+                    throw new UserException.IncompatibleSequenceDictionaries("Reference is missing contigs found in reads", name1, dict1, name2, dict2);
+                }
+                return;
+            case TWO_SUPERSETS_ONE:
                 return;
             case NO_COMMON_CONTIGS:
                 throw new UserException.IncompatibleSequenceDictionaries("No overlapping contigs found", name1, dict1, name2, dict2);
@@ -176,10 +183,29 @@ public class SequenceDictionaryUtils {
             return SequenceDictionaryCompatibility.IDENTICAL;
         else if ( ! commonContigsAreAtSameIndices(commonContigs, dict1, dict2) )
             return SequenceDictionaryCompatibility.DIFFERENT_INDICES;
+        else if ( twoSupersetsOne(commonContigs, dict1, dict2))
+            return SequenceDictionaryCompatibility.TWO_SUPERSETS_ONE;
         else {
             return SequenceDictionaryCompatibility.COMMON_SUBSET;
         }
     }
+
+
+    /**
+     * Utility function that tests whether dict2's set of contigs supersets dict1's
+     *
+     * @param commonContigs
+     * @param dict1
+     * @param dict2
+     * @return true if dict2's set of contigs supersets dict1's
+     */
+    private static boolean twoSupersetsOne(Set<String> commonContigs, SAMSequenceDictionary dict1, SAMSequenceDictionary dict2) {
+        Set<String> nameSetOne = getContigNames(dict1);
+        Set<String> nameSetTwo = getContigNames(dict2);
+        return nameSetTwo.containsAll(nameSetOne);
+    }
+
+
 
     /**
      * Utility function that tests whether the commonContigs in both dicts are equivalent.  Equivalence means

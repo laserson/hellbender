@@ -51,17 +51,15 @@ public class SequenceDictionaryUtilsUnitTest extends BaseTest {
                 { Arrays.asList(CHR1_B37, CHR2_B37, CHR10_B37),    Arrays.asList(CHR1_B37, CHR2_B37, CHR10_B37),    IDENTICAL, null, false, null },
 
                 // Dictionaries with a common subset:
-                { Arrays.asList(CHR1_HG19),                                          Arrays.asList(CHR1_HG19, CHR_NONSTANDARD1),                                   COMMON_SUBSET, null, false, null },
+                { Arrays.asList(CHRM_HG19, CHR1_HG19, CHR2_HG19),                    Arrays.asList(CHRM_HG19, CHR1_HG19, CHR10_HG19),                              COMMON_SUBSET, UserException.IncompatibleSequenceDictionaries.class, true, hg19AllContigsIntervalSet },
                 { Arrays.asList(CHR1_HG19, CHR_NONSTANDARD1),                        Arrays.asList(CHR1_HG19, CHR_NONSTANDARD2),                                   COMMON_SUBSET, null, false, null },
                 { Arrays.asList(CHR_NONSTANDARD1, CHR1_HG19),                        Arrays.asList(CHR_NONSTANDARD2, CHR1_HG19),                                   COMMON_SUBSET, null, false, null },
                 { Arrays.asList(CHR_NONSTANDARD1, CHR1_HG19),                        Arrays.asList(CHR_NONSTANDARD2, CHR1_HG19, CHRM_HG19),                        COMMON_SUBSET, null, false, null },
                 { Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19, CHR_NONSTANDARD1), Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19, CHR_NONSTANDARD2),            COMMON_SUBSET, null, false, null },
                 { Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19, CHR_NONSTANDARD1), Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19),                              COMMON_SUBSET, null, false, null },
-                { Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19),                   Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19, CHR_NONSTANDARD1),            COMMON_SUBSET, null, false, null },
                 { Arrays.asList(CHR_NONSTANDARD1, CHR1_HG19, CHR2_HG19, CHR10_HG19), Arrays.asList(CHR_NONSTANDARD2, CHR1_HG19, CHR2_HG19, CHR10_HG19),            COMMON_SUBSET, null, false, null },
                 { Arrays.asList(CHR_NONSTANDARD1, CHR1_HG19, CHR2_HG19, CHR10_HG19), Arrays.asList(CHR_NONSTANDARD2, CHR1_HG19, CHR2_HG19, CHR10_HG19, CHRM_HG19), COMMON_SUBSET, null, false, null },
                 { Arrays.asList(CHR1_B37, CHR2_B37, CHR10_B37, CHR_NONSTANDARD1),    Arrays.asList(CHR1_B37, CHR2_B37, CHR10_B37, CHR_NONSTANDARD2),               COMMON_SUBSET, null, false, null },
-                { Arrays.asList(CHR1_HG19, CHR2_HG19),                               Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19),                              COMMON_SUBSET, null, false, null },
 
                 // Dictionaries with no common contigs:
                 { Arrays.asList(CHR1_HG19),                        Arrays.asList(CHR2_HG19),                     NO_COMMON_CONTIGS, NO_COMMON_CONTIGS_EXCEPTION, false, null },
@@ -115,6 +113,13 @@ public class SequenceDictionaryUtilsUnitTest extends BaseTest {
                 // These have isReadsToReferenceComparison == false, so we don't expect an exception:
                 { Arrays.asList(CHRM_HG19, CHR1_HG19),                              Arrays.asList(CHR1_HG19),                       DIFFERENT_INDICES, null, false, hg19AllContigsIntervalSet },
                 { Arrays.asList(CHR1_HG19, CHR_NONSTANDARD1, CHR2_HG19, CHRM_HG19), Arrays.asList(CHR1_HG19, CHR2_HG19, CHRM_HG19), DIFFERENT_INDICES, null, false, hg19AllContigsIntervalSet },
+
+                // tests for TWO_SUPERSETS_ONE
+
+                { Arrays.asList(CHR1_HG19),                                          Arrays.asList(CHR1_HG19, CHR2_HG19),                                          TWO_SUPERSETS_ONE, null, true, hg19AllContigsIntervalSet },
+                { Arrays.asList(CHR1_HG19),                                          Arrays.asList(CHR1_HG19, CHR_NONSTANDARD1),                                   TWO_SUPERSETS_ONE, null, false, null },
+                { Arrays.asList(CHR1_HG19, CHR2_HG19),                               Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19),                              TWO_SUPERSETS_ONE, null, false, null },
+                { Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19),                   Arrays.asList(CHR1_HG19, CHR2_HG19, CHR10_HG19, CHR_NONSTANDARD1),            TWO_SUPERSETS_ONE, null, false, null },
         };
     }
 
