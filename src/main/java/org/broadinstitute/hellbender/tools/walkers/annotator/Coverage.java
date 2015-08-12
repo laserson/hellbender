@@ -7,15 +7,11 @@ import htsjdk.variant.vcf.VCFStandardHeaderLines;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
-import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Total depth of coverage per sample and over all samples.
@@ -37,38 +33,33 @@ import java.util.Map;
  */
 public class Coverage extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
 
-    public Map<String, Object> annotate(final AnnotatorCompatible walker,
-                                        final ReferenceContext ref,
+    public Map<String, Object> annotate(final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
-                                        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap ) {
+                                        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap) {
 
         int depth = 0;
         if (stratifiedContexts != null) {
-            if ( stratifiedContexts.size() == 0 ) {
+            if ( stratifiedContexts.isEmpty() ) {
                 return null;
             }
 
             for ( final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
                 depth += sample.getValue().getBasePileup().size();
             }
-        }
-        else if (perReadAlleleLikelihoodMap != null) {
-            if ( perReadAlleleLikelihoodMap.size() == 0 ) {
+        } else if (perReadAlleleLikelihoodMap != null) {
+            if ( perReadAlleleLikelihoodMap.isEmpty() ) {
                 return null;
             }
 
             for (final PerReadAlleleLikelihoodMap maps : perReadAlleleLikelihoodMap.values() ) {
                 depth += maps.getLikelihoodReadMap().size();
             }
-        }
-        else {
+        } else {
             return null;
         }
 
-        final Map<String, Object> map = new HashMap<>();
-        map.put(getKeyNames().get(0), String.format("%d", depth));
-        return map;
+        return Collections.singletonMap(getKeyNames().get(0), String.format("%d", depth));
     }
 
     public List<String> getKeyNames() { return Arrays.asList(VCFConstants.DEPTH_KEY); }

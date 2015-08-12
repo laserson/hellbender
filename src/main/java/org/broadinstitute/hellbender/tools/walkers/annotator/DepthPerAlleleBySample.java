@@ -10,7 +10,6 @@ import htsjdk.variant.vcf.VCFFormatHeaderLine;
 import htsjdk.variant.vcf.VCFStandardHeaderLines;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
-import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.GenotypeAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
 import org.broadinstitute.hellbender.utils.genotyper.MostLikelyAllele;
@@ -44,8 +43,7 @@ import java.util.*;
  */
 public class DepthPerAlleleBySample extends GenotypeAnnotation implements StandardAnnotation {
 
-    public void annotate(final AnnotatorCompatible walker,
-                         final ReferenceContext ref,
+    public void annotate(final ReferenceContext ref,
                          final AlignmentContext stratifiedContext,
                          final VariantContext vc,
                          final Genotype g,

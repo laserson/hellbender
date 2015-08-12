@@ -7,7 +7,6 @@ import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
-import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
 import org.broadinstitute.hellbender.utils.MathUtils;
@@ -49,11 +48,10 @@ public final class QualByDepth extends InfoFieldAnnotation implements StandardAn
     private static final double IDEAL_HIGH_QD = 30;
     private static final double JITTER_SIGMA = 3;
 
-    public Map<String, Object> annotate(final AnnotatorCompatible walker,
-                                        final ReferenceContext ref,
+    public Map<String, Object> annotate(final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
-                                        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap ) {
+                                        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap) {
         if ( !vc.hasLog10PError() ) {
             return null;
         }

@@ -13,8 +13,7 @@ import java.util.List;
 public abstract class GenotypeAnnotation extends VariantAnnotatorAnnotation {
 
     // return annotations for the given contexts/genotype split by sample
-    public abstract void annotate(final AnnotatorCompatible walker,
-                                  final ReferenceContext ref,
+    public abstract void annotate(final ReferenceContext ref,
                                   final AlignmentContext stratifiedContext,
                                   final VariantContext vc,
                                   final Genotype g,

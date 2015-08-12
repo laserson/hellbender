@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
-import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
 import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.genotyper.MostLikelyAllele;
@@ -52,9 +51,8 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
 
     @Override
     //template method for calculating strand bias annotations using the three different methods
-    public Map<String, Object> annotate(final AnnotatorCompatible walker,
-                                        final ReferenceContext ref,
-                                        final Map<String,AlignmentContext> stratifiedContexts,
+    public Map<String, Object> annotate(final ReferenceContext ref,
+                                        final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
 

@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
-import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
 import org.broadinstitute.hellbender.utils.MathUtils;
@@ -62,11 +61,10 @@ public final class InbreedingCoeff extends InfoFieldAnnotation implements Standa
     }
 
     @Override
-    public Map<String, Object> annotate(final AnnotatorCompatible walker,
-                                        final ReferenceContext ref,
+    public Map<String, Object> annotate(final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
-                                        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap ) {
+                                        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap) {
         final GenotypesContext genotypes = (founderIds == null || founderIds.isEmpty()) ? vc.getGenotypes() : vc.getGenotypes(founderIds);
         if (genotypes == null || genotypes.size() < MIN_SAMPLES || !vc.isVariant()) {
             return null;

@@ -78,15 +78,15 @@ public final class InbreedingCoeffUnitTest {
         Assert.assertEquals(count2, 10, "count2");
 
         //test the annotate method
-        final Map<String, Object> annots = new InbreedingCoeff().annotate(null, null, null, test2, null);
+        final Map<String, Object> annots = new InbreedingCoeff().annotate(null, null, test2, null);
         Assert.assertEquals(annots.keySet(), Collections.singleton(GATKVCFConstants.INBREEDING_COEFFICIENT_KEY), "annots");
         Assert.assertEquals(annots.values().size(), 1, "size");
         Assert.assertEquals(Double.parseDouble((String)annots.values().iterator().next()), -1.0, DELTA_PRECISION, "ic");
 
-        final Map<String, Object> annots3 = new InbreedingCoeff(Collections.singleton("s1")).annotate(null, null, null, test2, null);
+        final Map<String, Object> annots3 = new InbreedingCoeff(Collections.singleton("s1")).annotate(null, null, test2, null);
         Assert.assertNull(annots3);//not enough samples
 
-        final Map<String, Object> annots4 = new InbreedingCoeff(new HashSet(Arrays.asList("s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9"))).annotate(null, null, null, test2, null);
+        final Map<String, Object> annots4 = new InbreedingCoeff(new HashSet<>(Arrays.asList("s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9"))).annotate(null, null, test2, null);
         Assert.assertNull(annots4);//not enough samples
     }
 

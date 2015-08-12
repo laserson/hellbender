@@ -6,7 +6,6 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFormatHeaderLine;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
-import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.AnnotatorCompatible;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.GenotypeAnnotation;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
@@ -32,8 +31,7 @@ import java.util.List;
  * </ul>
  */
 public class MappingQualityZeroBySample extends GenotypeAnnotation {
-    public void annotate(final AnnotatorCompatible walker,
-                         final ReferenceContext ref,
+    public void annotate(final ReferenceContext ref,
                          final AlignmentContext stratifiedContext,
                          final VariantContext vc,
                          final Genotype g,
