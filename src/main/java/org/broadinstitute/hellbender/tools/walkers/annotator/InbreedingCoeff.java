@@ -91,15 +91,13 @@ public final class InbreedingCoeff extends InfoFieldAnnotation implements Standa
         int sampleCount = 0; // number of samples that have likelihoods
 
         for ( final Genotype g : genotypes ) {
-            if ( g.isCalled() && g.hasLikelihoods() && g.getPloidy() == 2)  // only work for diploid samples
-            {
+            if ( g.isCalled() && g.hasLikelihoods() && g.getPloidy() == 2){  // only work for diploid samples
                 sampleCount++;
             } else {
                 continue;
             }
             final double[] normalizedLikelihoods = MathUtils.normalizeFromLog10(g.getLikelihoods().getAsVector());
-            if (doMultiallelicMapping)
-            {
+            if (doMultiallelicMapping){
                 if (g.isHetNonRef()) {
                     //all likelihoods go to homCount
                     homCount++;

@@ -8,15 +8,13 @@ import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.pileup.PileupElement;
 import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -34,67 +32,48 @@ import java.util.Map;
  * </ul>
  *
  */
-public class MappingQualityZero extends InfoFieldAnnotation implements ActiveRegionBasedAnnotation {
+public final class MappingQualityZero extends InfoFieldAnnotation implements ActiveRegionBasedAnnotation {
 
     public Map<String, Object> annotate(final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
+        if (vc == null){
+            return null;
+        }
         if ((vc.isSNP() || !vc.isVariant()) && stratifiedContexts != null) {
-            return annotatePileup(ref, stratifiedContexts, vc);
+            return annotatePileup(stratifiedContexts);
         } else if (stratifiedPerReadAlleleLikelihoodMap != null && vc.isVariant()) {
-            return annotateWithLikelihoods(stratifiedPerReadAlleleLikelihoodMap, vc);
+            return annotateWithLikelihoods(stratifiedPerReadAlleleLikelihoodMap);
         } else {
             return null;
         }
     }
 
-    private Map<String, Object> annotatePileup(final ReferenceContext ref,
-                                               final Map<String, AlignmentContext> stratifiedContexts,
-                                               final VariantContext vc) {
+    private Map<String, Object> annotatePileup(final Map<String, AlignmentContext> stratifiedContexts) {
         if ( stratifiedContexts.isEmpty() ) {
             return null;
         }
 
-        int mq0 = 0;
-        for ( final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
-            final AlignmentContext context = sample.getValue();
-            final ReadPileup pileup = context.getBasePileup();
-            for (final PileupElement p : pileup ) {
-                if ( p.getMappingQual() == 0 ) {
-                    mq0++;
-                }
-            }
-        }
-        final Map<String, Object> map = new HashMap<>();
-        map.put(getKeyNames().get(0), String.format("%d", mq0));
-        return map;
+        final long mq0 = stratifiedContexts.values().stream().
+                flatMap(context -> context.getBasePileup().elements().stream()).
+                filter(pe -> pe.getMappingQual() == 0).count();
+        return makeIt(mq0);
     }
 
-    private Map<String, Object> annotateWithLikelihoods(final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap,
-                                                        final VariantContext vc) {
-        if ( stratifiedPerReadAlleleLikelihoodMap == null ) {
-            return null;
-        }
-
-        int mq0 = 0;
-        for ( final PerReadAlleleLikelihoodMap likelihoodMap : stratifiedPerReadAlleleLikelihoodMap.values() ) {
-            for (final GATKRead read : likelihoodMap.getLikelihoodReadMap().keySet()) {
-
-                 if (read.getMappingQuality() == 0 ) {
-                     mq0++;
-                 }
-            }
-        }
-        final Map<String, Object> map = new HashMap<>();
-        map.put(getKeyNames().get(0), String.format("%d", mq0));
-        return map;
+    private Map<String, Object> annotateWithLikelihoods(final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
+        //NOTE: unlike other annotations, this one returns 0 if stratifiedPerReadAlleleLikelihoodMap is empty
+        final long mq0 = stratifiedPerReadAlleleLikelihoodMap.values().stream().flatMap(llm -> llm.getLikelihoodReadMap().keySet().stream()).filter(r -> r.getMappingQuality() == 0).count();
+        return makeIt(mq0);
     }
 
+    private Map<String, Object> makeIt(final long result){
+        return Collections.singletonMap(getKeyNames().get(0), String.format("%d", result));
+    }
 
-    public List<String> getKeyNames() { return Arrays.asList(VCFConstants.MAPPING_QUALITY_ZERO_KEY); }
+    public List<String> getKeyNames() { return Collections.singletonList(VCFConstants.MAPPING_QUALITY_ZERO_KEY); }
 
     public List<VCFInfoHeaderLine> getDescriptions() {
-        return Arrays.asList(VCFStandardHeaderLines.getInfoLine(getKeyNames().get(0)));
+        return Collections.singletonList(VCFStandardHeaderLines.getInfoLine(getKeyNames().get(0)));
     }
 }

@@ -31,40 +31,35 @@ import java.util.*;
  *     <li><b><a href="https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_annotator_DepthPerSampleHC.php">DepthPerSampleHC</a></b> calculates depth of coverage after filtering by HaplotypeCaller.</li>
  * </ul>
  */
-public class Coverage extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
+public final class Coverage extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
 
     public Map<String, Object> annotate(final ReferenceContext ref,
                                         final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap) {
 
-        int depth = 0;
         if (stratifiedContexts != null) {
             if ( stratifiedContexts.isEmpty() ) {
                 return null;
             }
-
-            for ( final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
-                depth += sample.getValue().getBasePileup().size();
-            }
+            final int depth = stratifiedContexts.entrySet().stream().mapToInt(e -> e.getValue().getBasePileup().size()).sum();
+            return Collections.singletonMap(getKeyNames().get(0), String.format("%d", depth));
         } else if (perReadAlleleLikelihoodMap != null) {
             if ( perReadAlleleLikelihoodMap.isEmpty() ) {
                 return null;
             }
 
-            for (final PerReadAlleleLikelihoodMap maps : perReadAlleleLikelihoodMap.values() ) {
-                depth += maps.getLikelihoodReadMap().size();
-            }
+            final int depth = perReadAlleleLikelihoodMap.values().stream().mapToInt(maps -> maps.getLikelihoodReadMap().size()).sum();
+            return Collections.singletonMap(getKeyNames().get(0), String.format("%d", depth));
         } else {
             return null;
         }
 
-        return Collections.singletonMap(getKeyNames().get(0), String.format("%d", depth));
     }
 
-    public List<String> getKeyNames() { return Arrays.asList(VCFConstants.DEPTH_KEY); }
+    public List<String> getKeyNames() { return Collections.singletonList(VCFConstants.DEPTH_KEY); }
 
     public List<VCFInfoHeaderLine> getDescriptions() {
-        return Arrays.asList(VCFStandardHeaderLines.getInfoLine(getKeyNames().get(0)));
+        return Collections.singletonList(VCFStandardHeaderLines.getInfoLine(getKeyNames().get(0)));
     }
 }

@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Annotations relevant to the INFO field of the variant file (ie annotations for sites).
+ */
 public abstract class InfoFieldAnnotation extends VariantAnnotatorAnnotation {
 
     public Map<String, Object> annotate(final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap, final VariantContext vc) {

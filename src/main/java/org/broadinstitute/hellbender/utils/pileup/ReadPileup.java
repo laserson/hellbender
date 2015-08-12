@@ -224,7 +224,14 @@ public final class ReadPileup implements Iterable<PileupElement> {
      * Provides efficient iteration of the data.
      */
     public Iterator<PileupElement> iterator() {
-        return Collections.unmodifiableList(pileupElements).iterator();
+        return elements().iterator();
+    }
+
+    /**
+     * Returns an unmodifiable view of the list of elements in this pileup.
+     */
+    public List<PileupElement> elements() {
+        return Collections.unmodifiableList(pileupElements);
     }
 
     /**
