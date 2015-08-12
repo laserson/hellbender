@@ -31,6 +31,7 @@ import scala.Tuple2;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 @CommandLineProgramProperties(
@@ -81,6 +82,13 @@ public class ReadsPipelineSpark extends SparkCommandLineProgram {
         GCSOptions options = PipelineOptionsFactory.as(GCSOptions.class);
         options.setApiKey(apiKey);
         Map<String, String> referenceNameToIdTable = RefAPISource.buildReferenceNameToIdTable(options, referenceName);
+        System.out.println("##################################################");
+        System.out.println("##################################################");
+        for (Map.Entry<String, String> entry : referenceNameToIdTable.entrySet()) {
+            System.out.println(entry.getKey() + "," + entry.getValue());
+        }
+        System.out.println("##################################################");
+        System.out.println("##################################################");
         RefAPIMetadata refAPIMetadata = new RefAPIMetadata(referenceName, referenceNameToIdTable, BaseRecalibratorDataflow.BQSR_REFERENCE_WINDOW_FUNCTION, apiKey);
 
         JavaPairRDD<GATKRead, ReadContextData> rddReadContext = AddContextDataToReadSpark.JoinContextData(markedReads, refAPIMetadata, variants);

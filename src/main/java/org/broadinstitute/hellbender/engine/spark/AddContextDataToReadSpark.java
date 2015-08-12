@@ -60,8 +60,10 @@ public class AddContextDataToReadSpark {
         JavaPairRDD<GATKRead, Iterable<Variant>> readiVariants = JoinReadsWithVariants.Join(reads, variants);
         JavaPairRDD<GATKRead, ReferenceBases> readRefBases = JoinReadsWithRefBases.Pair(refAPIMetadata, reads);
 
-        boolean assertsEnabled = false;
-        assert assertsEnabled = true; // Intentional side-effect!!!
+        final List<Tuple2<GATKRead, ReferenceBases>> collect = readRefBases.collect();
+
+        boolean assertsEnabled = true;
+        //assert assertsEnabled = true; // Intentional side-effect!!!
         // Now assertsEnabled is set to the correct value
         if (assertsEnabled) {
             assertSameReads(reads, readRefBases, readiVariants);
@@ -80,6 +82,13 @@ public class AddContextDataToReadSpark {
                     lVariants = Lists.newArrayList(iVariant);
                 }
             }
+
+            List<ReferenceBases> liRefBases = Lists.newArrayList(in._2()._2());
+            if (liRefBases.isEmpty()) {
+                System.out.println("==============================@" + in._1().getName());
+                return new Tuple2<>(in._1(), new ReadContextData(null, lVariants));
+            }
+
 
             ReferenceBases refBases = Iterables.getOnlyElement(in._2()._2());
             ReadContextData readContextData = new ReadContextData(refBases, lVariants);

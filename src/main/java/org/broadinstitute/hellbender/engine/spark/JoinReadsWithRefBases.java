@@ -68,6 +68,13 @@ public class JoinReadsWithRefBases {
             SimpleInterval interval = SimpleInterval.getSpanningInterval(reads1);
             RefAPISource refAPISource = RefAPISource.getRefAPISource();
             ReferenceBases bases = refAPISource.getReferenceBases(refAPIMetadata, interval);
+            /*
+            System.out.println("**************************************************");
+            System.out.println("**************************************************");
+            System.out.println(bases);
+            System.out.println("**************************************************");
+            System.out.println("**************************************************");
+            */
             for (GATKRead r : reads1) {
                 final ReferenceBases subset = bases.getSubset(new SimpleInterval(r));
                 out.add(new Tuple2<>(r, subset));

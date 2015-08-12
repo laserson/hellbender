@@ -20,6 +20,7 @@ import org.seqdoop.hadoop_bam.SAMRecordWritable;
 
 import java.io.File;
 import java.util.List;
+import java.util.UUID;
 
 public class ReadsSparkSource {
     private final JavaSparkContext ctx;
@@ -54,7 +55,7 @@ public class ReadsSparkSource {
                     if (read == null) {
                         throw new GATKException("null read");
                     }
-                    return (GATKRead) (new GoogleGenomicsReadToGATKReadAdapter(read));
+                    return (GATKRead) (new GoogleGenomicsReadToGATKReadAdapter(read, new UUID(0,0)));
                 } catch (SAMException e) {
                     // do nothing if silent
                 }
