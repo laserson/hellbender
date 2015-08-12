@@ -43,3 +43,9 @@ public class ReadsPreprocessingPipelineIntegrationTest extends CommandLineProgra
         IntegrationTestSpec.assertEqualBamFiles(output, expectedOutput);
     }
 }
+// -I /Users/davidada/dev/git_projects/broad/hellbender_branch/src/test/resources/org/broadinstitute/hellbender/engine/reads_data_source_test1.bam
+// -R EOSt9JOVhp3jkwE
+// -BQSRKnownVariants /Users/davidada/dev/git_projects/broad/hellbender_branch/src/test/resources/org/broadinstitute/hellbender/engine/feature_data_source_test.vcf
+// --apiKey AIzaSyDjKyy2KWcEVgtlOlJBdqy4O4oUVMxluE4
+// --project broad-dsde-dev
+// --staging gs://hellbender-test-davidada/staging/

@@ -254,6 +254,7 @@ task fatJar(type: Jar) {
           'Main-Class': 'org.broadinstitute.hellbender.Main'
     }
     baseName = project.name + '-all'
+    zip64 true
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
@@ -273,6 +274,7 @@ shadowJar {
         // exclude Hadoop dependencies, since they are provided when running with Spark
         exclude(dependency('org.apache.hadoop:.*:.*'))
         exclude(dependency('org.xerial.snappy:snappy-java:.*'))
+        //exclude(dependency('org.apache.spark:.*:.*'))
     }
 }
 

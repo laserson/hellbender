@@ -81,7 +81,7 @@ public class ReadsPipelineSpark extends SparkCommandLineProgram {
         GCSOptions options = PipelineOptionsFactory.as(GCSOptions.class);
         options.setApiKey(apiKey);
         Map<String, String> referenceNameToIdTable = RefAPISource.buildReferenceNameToIdTable(options, referenceName);
-        RefAPIMetadata refAPIMetadata = new RefAPIMetadata(referenceName, referenceNameToIdTable, BaseRecalibratorDataflow.BQSR_REFERENCE_WINDOW_FUNCTION, "apiKey");
+        RefAPIMetadata refAPIMetadata = new RefAPIMetadata(referenceName, referenceNameToIdTable, BaseRecalibratorDataflow.BQSR_REFERENCE_WINDOW_FUNCTION, apiKey);
 
         JavaPairRDD<GATKRead, ReadContextData> rddReadContext = AddContextDataToReadSpark.JoinContextData(markedReads, refAPIMetadata, variants);
 
