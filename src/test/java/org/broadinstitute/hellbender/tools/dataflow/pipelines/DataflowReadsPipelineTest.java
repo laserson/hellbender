@@ -24,6 +24,8 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
+import static org.broadinstitute.hellbender.transformers.ReadTransformer.*;
+
 
 public final class DataflowReadsPipelineTest {
 
@@ -72,9 +74,9 @@ public final class DataflowReadsPipelineTest {
                 new Object[] { Lists.newArrayList(none), Collections.emptyList(), 0},
                 new Object[] { Collections.<ReadFilter>emptyList(), Lists.newArrayList(replaceBasesWithA), 7},
                 new Object[] { Lists.newArrayList(all), Lists.newArrayList(replaceBasesWithA), 7},
-                new Object[] { Lists.newArrayList(all), Lists.newArrayList(replaceBasesWithA.andThen(ReadTransformer.identity())), 7},
-                new Object[] { Lists.newArrayList(none.negate().and(all)), Lists.newArrayList(replaceBasesWithA.compose(ReadTransformer.identity())), 7},
-                new Object[] { Lists.newArrayList(none.negate(),all, all), Lists.newArrayList(replaceBasesWithA, replaceBasesWithA, ReadTransformer.identity()), 7}
+                new Object[] { Lists.newArrayList(all), Lists.newArrayList(replaceBasesWithA.andThen(identity())), 7},
+                new Object[] { Lists.newArrayList(none.negate().and(all)), Lists.newArrayList(replaceBasesWithA.compose(identity())), 7},
+                new Object[] { Lists.newArrayList(none.negate(),all, all), Lists.newArrayList(replaceBasesWithA, replaceBasesWithA, identity()), 7}
         };
     }
 
