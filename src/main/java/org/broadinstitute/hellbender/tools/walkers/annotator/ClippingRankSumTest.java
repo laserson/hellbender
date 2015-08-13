@@ -7,6 +7,7 @@ import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,12 +22,12 @@ import java.util.List;
  * <p>The clipping rank sum test cannot be calculated for sites without a mixture of reads showing both the reference and alternate alleles.</p>
  *
  */
-public class ClippingRankSumTest extends RankSumTest {
+public final class ClippingRankSumTest extends RankSumTest {
     @Override
-    public List<String> getKeyNames() { return Arrays.asList(GATKVCFConstants.CLIPPING_RANK_SUM_KEY); }
+    public List<String> getKeyNames() { return Collections.singletonList(GATKVCFConstants.CLIPPING_RANK_SUM_KEY); }
 
     @Override
-    public List<VCFInfoHeaderLine> getDescriptions() { return Arrays.asList(GATKVCFHeaderLines.getInfoLine(getKeyNames().get(0))); }
+    public List<VCFInfoHeaderLine> getDescriptions() { return Collections.singletonList(GATKVCFHeaderLines.getInfoLine(getKeyNames().get(0))); }
 
     @Override
     protected Double getElementForRead(final GATKRead read, final int refLoc) {

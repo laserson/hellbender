@@ -1,11 +1,9 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
-import com.google.common.annotations.VisibleForTesting;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
@@ -42,9 +40,11 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
         if (stratifiedContexts == null && stratifiedPerReadAlleleLikelihoodMap == null){
             throw new IllegalArgumentException("either stratifiedContexts or stratifiedPerReadAlleleLikelihoodMap has to be non-null");
         }
-
+        if (vc == null){
+            return null;
+        }
         final GenotypesContext genotypes = vc.getGenotypes();
-        if (genotypes == null || genotypes.isEmpty()) {
+        if (genotypes == null || genotypes.isEmpty() || stratifiedPerReadAlleleLikelihoodMap == null) {
             return null;
         }
 
@@ -52,75 +52,24 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
         final List<Double> altQuals = new ArrayList<>();
 
         for ( final Genotype genotype : genotypes.iterateInSampleNameOrder() ) {
-
-            boolean usePileup = true;
-
-            if ( stratifiedPerReadAlleleLikelihoodMap != null ) {
                 final PerReadAlleleLikelihoodMap likelihoodMap = stratifiedPerReadAlleleLikelihoodMap.get(genotype.getSampleName());
                 if ( likelihoodMap != null && !likelihoodMap.isEmpty() ) {
                     fillQualsFromLikelihoodMap(vc.getAlleles(), vc.getStart(), likelihoodMap, refQuals, altQuals);
-                    usePileup = false;
                 }
-            }
-
-            // the old UG SNP-only path through the annotations
-            if ( usePileup && stratifiedContexts != null ) {
-                final AlignmentContext context = stratifiedContexts.get(genotype.getSampleName());
-                if ( context != null ) {
-                    final ReadPileup pileup = context.getBasePileup();
-                    if ( pileup != null ) {
-                        fillQualsFromPileup(vc.getAlleles(), pileup, refQuals, altQuals);
-                    }
-                }
-            }
         }
 
         if ( refQuals.isEmpty() && altQuals.isEmpty() ) {
             return null;
         }
 
-        final double p = oneSidedTest(refQuals, altQuals, useDithering);
-        final Map<String, Object> map = new HashMap<>();
-        if (!Double.isNaN(p)) {
-            map.put(getKeyNames().get(0), String.format("%.3f", p));
-        }
-        return map;
-    }
-
-    @VisibleForTesting
-    double oneSidedTest(List<Double> refQuals, List<Double> altQuals, final boolean useDithering){
-        final MannWhitneyU mannWhitneyU = new MannWhitneyU(useDithering);
-        for (final Double qual : altQuals) {
-            mannWhitneyU.add(qual, MannWhitneyU.USet.SET1);
-        }
-        for (final Double qual : refQuals) {
-            mannWhitneyU.add(qual, MannWhitneyU.USet.SET2);
-        }
-
         // we are testing that set1 (the alt bases) have lower quality scores than set2 (the ref bases)
-        final Pair<Double, Double> testResults = mannWhitneyU.runOneSidedTest(MannWhitneyU.USet.SET1);
-        return testResults.getLeft();
-    }
-
-    private void fillQualsFromPileup(final List<Allele> alleles,
-                                     final ReadPileup pileup,
-                                     final List<Double> refQuals,
-                                     final List<Double> altQuals) {
-        for ( final PileupElement p : pileup ) {
-            if ( isUsableBase(p) ) {
-                final Double value = getElementForPileupElement(p);
-                if ( value == null ) {
-                    continue;
-                }
-
-                if ( alleles.get(0).equals(Allele.create(p.getBase(), true)) ) {
-                    refQuals.add(value);
-                } else if ( alleles.contains(Allele.create(p.getBase())) ) {
-                    altQuals.add(value);
-                }
-            }
+        final double p = MannWhitneyU.runOneSidedTest(useDithering, altQuals, refQuals).getLeft();
+        if (Double.isNaN(p)) {
+            return Collections.emptyMap();
+        } else {
+            return Collections.singletonMap(getKeyNames().get(0), String.format("%.3f", p));
         }
-     }
+    }
 
     private void fillQualsFromLikelihoodMap(final List<Allele> alleles,
                                             final int refLoc,

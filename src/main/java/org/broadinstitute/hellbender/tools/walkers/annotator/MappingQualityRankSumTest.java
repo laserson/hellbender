@@ -29,7 +29,8 @@ import java.util.List;
  * </ul>
  *
  */
-public class MappingQualityRankSumTest extends RankSumTest implements StandardAnnotation {
+public final class MappingQualityRankSumTest extends RankSumTest implements StandardAnnotation {
+
     @Override
     public List<String> getKeyNames() { return Arrays.asList(GATKVCFConstants.MAP_QUAL_RANK_SUM_KEY); }
 

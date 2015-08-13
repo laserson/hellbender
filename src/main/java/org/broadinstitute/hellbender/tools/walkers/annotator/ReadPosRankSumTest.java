@@ -32,7 +32,7 @@ import java.util.List;
  * <p>The read position rank sum test can not be calculated for sites without a mixture of reads showing both the reference and alternate alleles.</p>
  *
  */
-public class ReadPosRankSumTest extends RankSumTest implements StandardAnnotation {
+public final class ReadPosRankSumTest extends RankSumTest implements StandardAnnotation {
 
     @Override
     public List<String> getKeyNames() { return Arrays.asList(GATKVCFConstants.READ_POS_RANK_SUM_KEY); }

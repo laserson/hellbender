@@ -21,7 +21,8 @@ import java.util.List;
  * <p>The read position rank sum test can not be calculated for sites without a mixture of reads showing both the reference and alternate alleles.</p>
  *
  */
-public class LikelihoodRankSumTest extends RankSumTest {
+public final class LikelihoodRankSumTest extends RankSumTest {
+
     @Override
     public List<String> getKeyNames() { return Arrays.asList(GATKVCFConstants.LIKELIHOOD_RANK_SUM_KEY); }
 

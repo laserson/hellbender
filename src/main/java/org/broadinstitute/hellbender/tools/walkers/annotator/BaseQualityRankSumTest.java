@@ -24,7 +24,7 @@ import java.util.List;
  * <p>The base quality rank sum test can not be calculated for sites without a mixture of reads showing both the reference and alternate alleles.</p>
  *
  */
-public class BaseQualityRankSumTest extends RankSumTest implements StandardAnnotation {
+public final class BaseQualityRankSumTest extends RankSumTest implements StandardAnnotation {
     @Override
     public List<String> getKeyNames() { return Arrays.asList(GATKVCFConstants.BASE_QUAL_RANK_SUM_KEY); }
 

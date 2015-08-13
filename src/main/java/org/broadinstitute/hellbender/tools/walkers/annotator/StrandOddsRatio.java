@@ -92,7 +92,7 @@ public final class StrandOddsRatio extends StrandBiasTest implements StandardAnn
      * @return the SOR annotation value
      */
     @VisibleForTesting
-    double calculateSOR(final int[][] originalTable) {
+    static double calculateSOR(final int[][] originalTable) {
         final double[][] augmentedTable = augmentContingencyTable(originalTable);
 
         double ratio = 0;

@@ -8,6 +8,7 @@ import org.broadinstitute.hellbender.exceptions.GATKException;
 
 import java.io.Serializable;
 import java.util.Comparator;
+import java.util.List;
 import java.util.TreeSet;
 
 public final class MannWhitneyU {
@@ -45,7 +46,7 @@ public final class MannWhitneyU {
      * @param set: whether the observation comes from set 1 or set 2
      */
     public void add(Number n, USet set) {
-        observations.add(new MutablePair<>(n,set));
+        observations.add(new MutablePair<>(n, set));
         if ( set == USet.SET1 ) {
             ++sizeSet1;
         } else {
@@ -74,22 +75,24 @@ public final class MannWhitneyU {
         return calculateP(n, m, u, false, exactMode);
     }
 
-//    /**
-//     * Runs the standard two-sided test,
-//     * returns the u-based z-approximate and p values.
-//     * @return a pair holding the u and p-value.
-//     */
-//    public Pair<Double,Double> runTwoSidedTest() {
-//        Pair<Long,USet> uPair = calculateTwoSidedU(observations);
-//        long u = uPair.getLeft();
-//        int n = uPair.getRight() == USet.SET1 ? sizeSet1 : sizeSet2;
-//        int m = uPair.getRight() == USet.SET1 ? sizeSet2 : sizeSet1;
-//        if ( n == 0 || m == 0 ) {
-//            // test is uninformative as one or both sets have no observations
-//            return new MutablePair<>(Double.NaN, Double.NaN);
-//        }
-//        return calculateP(n, m, u, true, exactMode);
-//    }
+
+    /**
+     * Runs the one-sided test under the hypothesis that the data in set "vals2" stochastically
+     * dominates the vals1 set
+     * @return - u-based z-approximation, and p-value associated with the test (p-value is exact for small n,m)
+     */
+    public static Pair<Double,Double> runOneSidedTest(final boolean dithering, final List<? extends Number> vals1, final List<? extends Number> vals2) {
+        Utils.nonNull(vals1);
+        Utils.nonNull(vals2);
+        final MannWhitneyU mannWhitneyU = new MannWhitneyU(dithering);
+        for (final Number qual : vals1) {
+            mannWhitneyU.add(qual, MannWhitneyU.USet.SET1);
+        }
+        for (final Number qual : vals2) {
+            mannWhitneyU.add(qual, MannWhitneyU.USet.SET2);
+        }
+        return mannWhitneyU.runOneSidedTest(MannWhitneyU.USet.SET1);
+    }
 
     /**
      * Given a u statistic, calculate the p-value associated with it, dispatching to approximations where appropriate
@@ -123,7 +126,7 @@ public final class MannWhitneyU {
     public static Pair<Double,Double> calculatePFromTable(int n, int m, long u, boolean twoSided) {
         // todo -- actually use a table for:
         // todo      - n large, m small
-        return calculatePNormalApproximation(n,m,u, twoSided);
+        return calculatePNormalApproximation(n, m, u, twoSided);
     }
 
     /**

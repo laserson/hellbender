@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class StrandOddsRatioUnitTest {
+public final class StrandOddsRatioUnitTest {
     private static double DELTA_PRECISION = 0.001;
 
     @DataProvider(name = "UsingSOR")
@@ -48,7 +48,7 @@ public class StrandOddsRatioUnitTest {
         contingencyTable[0][1] = refneg;
         contingencyTable[1][0] = altpos;
         contingencyTable[1][1] = altneg;
-        final double ratio = new StrandOddsRatio(Collections.emptySet()).calculateSOR(contingencyTable);
+        final double ratio = StrandOddsRatio.calculateSOR(contingencyTable);
         Assert.assertEquals(ratio, expectedOddsRatio, DELTA_PRECISION, "Pass");
         Assert.assertEquals(Double.parseDouble((String)new StrandOddsRatio(Collections.emptySet()).annotationForOneTable(ratio).get(GATKVCFConstants.STRAND_ODDS_RATIO_KEY)), expectedOddsRatio, DELTA_PRECISION, "Pass");
 
