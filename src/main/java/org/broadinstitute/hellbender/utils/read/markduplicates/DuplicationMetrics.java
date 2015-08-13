@@ -140,5 +140,4 @@ public final class DuplicationMetrics extends MetricBase implements Serializable
 
         return histo;
     }
-
 }
