@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-public final class ClippingRankSumTestUnitTest {
+public final class MappingQualityRankSumTestUnitTest {
 
     private final String sample1 = "NA1";
     private final String sample2 = "NA2";
@@ -35,25 +35,25 @@ public final class ClippingRankSumTestUnitTest {
                 .alleles(Arrays.asList(refAllele, altAllele)).chr("1").start(15L).stop(15L).genotypes(testGC).make();
     }
 
-    private GATKRead makeRead(final int hardClip, final int mq) {
-        Cigar cigar = hardClip == 0 ? TextCigarCodec.decode("10M") : TextCigarCodec.decode("10M" + hardClip + "H");
+    private GATKRead makeRead(final int mq) {
+        Cigar cigar = TextCigarCodec.decode("10M");
         final GATKRead read = ArtificialReadUtils.createArtificialRead(cigar);
         read.setMappingQuality(mq);
         return read;
     }
     @Test
-    public void testClipping(){
+    public void testMQ(){
         final PerReadAlleleLikelihoodMap map= new PerReadAlleleLikelihoodMap();
 
         final Allele alleleRef = Allele.create("T", true);
         final Allele alleleAlt = Allele.create("A", false);
 
-        final int[] hardAlts = {1, 2};
-        final int[] hardRefs = {10, 0};
-        final GATKRead read1 = makeRead(hardAlts[0], 30);
-        final GATKRead read2 = makeRead(hardAlts[1], 30);
-        final GATKRead read3 = makeRead(hardRefs[0], 30);
-        final GATKRead read4 = makeRead(hardRefs[1], 30);
+        final int[] hardAlts = {10, 20};
+        final int[] hardRefs = {100, 110};
+        final GATKRead read1 = makeRead(hardAlts[0]);
+        final GATKRead read2 = makeRead(hardAlts[1]);
+        final GATKRead read3 = makeRead(hardRefs[0]);
+        final GATKRead read4 = makeRead(hardRefs[1]);
         map.add(read1, alleleAlt, -1.0);
         map.add(read1, alleleRef, -100.0);
 
@@ -72,19 +72,19 @@ public final class ClippingRankSumTestUnitTest {
         final ReferenceContext ref= null;
         final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= makeVC(alleleRef, alleleAlt);
-        final InfoFieldAnnotation ann = new ClippingRankSumTest();
+        final InfoFieldAnnotation ann = new MappingQualityRankSumTest();
 
         final Map<String, Object> annotate = ann.annotate(ref, stratifiedContexts, vc, stratifiedPerReadAlleleLikelihoodMap);
 
         final double val= MannWhitneyU.runOneSidedTest(false, Arrays.asList(hardAlts[0], hardAlts[1]),
                                                               Arrays.asList(hardRefs[0], hardRefs[1])).getLeft();
         final String valStr= String.format("%.3f", val);
-        Assert.assertEquals(annotate.get(GATKVCFConstants.CLIPPING_RANK_SUM_KEY), valStr);
+        Assert.assertEquals(annotate.get(GATKVCFConstants.MAP_QUAL_RANK_SUM_KEY), valStr);
 
         Assert.assertEquals(ann.getDescriptions().size(), 1);
-        Assert.assertEquals(ann.getDescriptions().get(0).getID(), GATKVCFConstants.CLIPPING_RANK_SUM_KEY);
+        Assert.assertEquals(ann.getDescriptions().get(0).getID(), GATKVCFConstants.MAP_QUAL_RANK_SUM_KEY);
         Assert.assertEquals(ann.getKeyNames().size(), 1);
-        Assert.assertEquals(ann.getKeyNames().get(0), GATKVCFConstants.CLIPPING_RANK_SUM_KEY);
+        Assert.assertEquals(ann.getKeyNames().get(0), GATKVCFConstants.MAP_QUAL_RANK_SUM_KEY);
 
 
     }

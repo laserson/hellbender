@@ -8,6 +8,7 @@ import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -32,10 +33,10 @@ import java.util.List;
 public final class MappingQualityRankSumTest extends RankSumTest implements StandardAnnotation {
 
     @Override
-    public List<String> getKeyNames() { return Arrays.asList(GATKVCFConstants.MAP_QUAL_RANK_SUM_KEY); }
+    public List<String> getKeyNames() { return Collections.singletonList(GATKVCFConstants.MAP_QUAL_RANK_SUM_KEY); }
 
     @Override
-    public List<VCFInfoHeaderLine> getDescriptions() { return Arrays.asList(GATKVCFHeaderLines.getInfoLine(getKeyNames().get(0))); }
+    public List<VCFInfoHeaderLine> getDescriptions() { return Collections.singletonList(GATKVCFHeaderLines.getInfoLine(getKeyNames().get(0))); }
 
     @Override
     protected Double getElementForRead(final GATKRead read, final int refLoc) {
