@@ -33,13 +33,13 @@ public final class LikelihoodRankSumTest extends RankSumTest {
     @Override
     protected Double getElementForRead(final GATKRead read, final int refLoc, final MostLikelyAllele mostLikelyAllele) {
         if ( ! mostLikelyAllele.isInformative() ) {
-            throw new IllegalStateException("Should never have seen non-informative read " + read + " MostLikelyAllele " + mostLikelyAllele);
+            throw new IllegalStateException("Should never see a non-informative allele for read " + read + " MostLikelyAllele " + mostLikelyAllele);
         }
         return mostLikelyAllele.getLog10LikelihoodOfMostLikely();
     }
 
     @Override
     protected Double getElementForRead(final GATKRead read, final int refLoc) {
-        throw new IllegalStateException("This method should never have been called as getElementForRead(read,refloc,mostLikelyAllele) was overloaded");
+        throw new IllegalStateException("This method should never have been called as getElementForRead(read,refloc,mostLikelyAllele) was overriden");
     }
 }

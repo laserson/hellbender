@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-public final class ReadPosRankSumTestUnitTest extends BaseTest {
+public final class LikelihoodRankSumTestUnitTest extends BaseTest {
     private final String sample1 = "NA1";
     private final String sample2 = "NA2";
 
@@ -51,32 +51,34 @@ public final class ReadPosRankSumTestUnitTest extends BaseTest {
         final Allele alleleRef = Allele.create("T", true);
         final Allele alleleAlt = Allele.create("A", false);
 
-        final int[] startAlts = {3, 4};
-        final int[] startRefs = {1, 2};
-        final GATKRead read1 = makeRead(contig, startAlts[0],  30);
-        final GATKRead read2 = makeRead(contig, startAlts[1], 30);
-        final GATKRead read3 = makeRead(contig, startRefs[0], 30);
-        final GATKRead read4 = makeRead(contig, startRefs[1], 30);
-        map.add(read1, alleleAlt, -1.0);
-        map.add(read1, alleleRef, -100.0);
+        final double[] altBestAlleleLL = {-1.0, -2.0};
+        final double[] refBadAlleleLL =  {-100.0, -100.0};
 
-        map.add(read2, alleleAlt, -1.0);
-        map.add(read2, alleleRef, -100.0);
+        final double[] altBadAlleleLL =  {-100.0, -100.0};
+        final double[] refBestAlleleLL = {-5.0, -7.0};
+        final GATKRead read1 = makeRead(contig, 1,  30);
+        final GATKRead read2 = makeRead(contig, 1, 30);
+        final GATKRead read3 = makeRead(contig, 1, 30);
+        final GATKRead read4 = makeRead(contig, 1, 30);
+        map.add(read1, alleleAlt, altBestAlleleLL[0]);
+        map.add(read1, alleleRef, refBadAlleleLL[0]);
 
-        map.add(read3, alleleAlt, -100.0);
-        map.add(read3, alleleRef, -1.0);
+        map.add(read2, alleleAlt, altBestAlleleLL[1]);
+        map.add(read2, alleleRef, refBadAlleleLL[0]);
 
-        map.add(read4, alleleAlt, -100.0);
-        map.add(read4, alleleRef, -1.0);
+        map.add(read3, alleleAlt, altBadAlleleLL[0]);
+        map.add(read3, alleleRef, refBestAlleleLL[0]);
+
+        map.add(read4, alleleAlt, altBadAlleleLL[1]);
+        map.add(read4, alleleRef, refBestAlleleLL[1]);
 
         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap = Collections.singletonMap(sample1, map);
 
-        final InfoFieldAnnotation ann = new ReadPosRankSumTest();
+        final InfoFieldAnnotation ann = new LikelihoodRankSumTest();
         Assert.assertEquals(ann.getDescriptions().size(), 1);
-        Assert.assertEquals(ann.getDescriptions().get(0).getID(), GATKVCFConstants.READ_POS_RANK_SUM_KEY);
+        Assert.assertEquals(ann.getDescriptions().get(0).getID(), GATKVCFConstants.LIKELIHOOD_RANK_SUM_KEY);
         Assert.assertEquals(ann.getKeyNames().size(), 1);
-        Assert.assertEquals(ann.getKeyNames().get(0), GATKVCFConstants.READ_POS_RANK_SUM_KEY);
-
+        Assert.assertEquals(ann.getKeyNames().get(0), GATKVCFConstants.LIKELIHOOD_RANK_SUM_KEY);
 
         final ReferenceContext ref= null;
         final Map<String, AlignmentContext> stratifiedContexts= null;
@@ -86,29 +88,10 @@ public final class ReadPosRankSumTestUnitTest extends BaseTest {
 
         final Map<String, Object> annotate = ann.annotate(ref, stratifiedContexts, vc, stratifiedPerReadAlleleLikelihoodMap);
         final double val= MannWhitneyU.runOneSidedTest(false,
-                Arrays.asList(position - startAlts[0], position - startAlts[1]),
-                Arrays.asList(position - startRefs[0], position - startRefs[1])).getLeft();
+                Arrays.asList(altBestAlleleLL[0], altBestAlleleLL[1]),
+                Arrays.asList(refBestAlleleLL[0], refBestAlleleLL[1])).getLeft();
         final String valStr= String.format("%.3f", val);
-        Assert.assertEquals(annotate.get(GATKVCFConstants.READ_POS_RANK_SUM_KEY), valStr);
-
-
-        final long positionEnd = 8L;  //past middle
-        final VariantContext vcEnd= makeVC(contig, positionEnd, alleleRef, alleleAlt);
-
-        //Note: past the middle of the read we compute the position from the end.
-        final Map<String, Object> annotateEnd = ann.annotate(ref, stratifiedContexts, vcEnd, stratifiedPerReadAlleleLikelihoodMap);
-        final double valEnd= MannWhitneyU.runOneSidedTest(false,
-                Arrays.asList(startAlts[0], startAlts[1]),
-                Arrays.asList(startRefs[0], startRefs[1])).getLeft();
-        final String valStrEnd= String.format("%.3f", valEnd);
-        Assert.assertEquals(annotateEnd.get(GATKVCFConstants.READ_POS_RANK_SUM_KEY), valStrEnd);
-
-        final long positionPastEnd = 20L;  //past middle
-        final VariantContext vcPastEnd= makeVC(contig, positionPastEnd, alleleRef, alleleAlt);
-
-        //Note: past the end of the read, there's nothing
-        final Map<String, Object> annotatePastEnd = ann.annotate(ref, stratifiedContexts, vcPastEnd, stratifiedPerReadAlleleLikelihoodMap);
-        Assert.assertNull(annotatePastEnd);
+        Assert.assertEquals(annotate.get(GATKVCFConstants.LIKELIHOOD_RANK_SUM_KEY), valStr);
 
     }
 }
