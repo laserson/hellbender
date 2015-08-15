@@ -8,7 +8,6 @@ import org.broadinstitute.hellbender.exceptions.GATKException;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * MathUtils is a static class (no instantiation allowed!) with some useful math methods.
@@ -44,7 +43,11 @@ public final class MathUtils {
         return count;
     }
 
+    /**
+     * Computes the root mean square of the given array or 0.0 if the array is empty.
+     */
     public static double rms(final Collection<Integer> list) {
+        Utils.nonNull(list);
         return Math.sqrt(list.stream().mapToInt(i -> i * i).average().orElse(0.0));
     }
 

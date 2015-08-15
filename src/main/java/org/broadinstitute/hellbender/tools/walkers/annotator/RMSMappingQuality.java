@@ -12,10 +12,10 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.Standard
 import org.broadinstitute.hellbender.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
-import org.broadinstitute.hellbender.utils.pileup.PileupElement;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -39,47 +39,20 @@ public class RMSMappingQuality extends InfoFieldAnnotation implements StandardAn
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap) {
 
-        final List<Integer> qualities = new ArrayList<>();
-        if ( stratifiedContexts != null ) {
-            if ( stratifiedContexts.size() == 0 ) {
-                return null;
-            }
-
-            for ( final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
-                final AlignmentContext context = sample.getValue();
-                for ( final PileupElement p : context.getBasePileup() ) {
-                    fillMappingQualitiesFromPileup(p.getRead().getMappingQuality(), qualities);
-                }
-            }
-        }
-        else if (perReadAlleleLikelihoodMap != null) {
-            if ( perReadAlleleLikelihoodMap.size() == 0 ) {
-                return null;
-            }
-
-            for ( final PerReadAlleleLikelihoodMap perReadLikelihoods : perReadAlleleLikelihoodMap.values() ) {
-                for ( final GATKRead read : perReadLikelihoods.getStoredElements() ) {
-                    fillMappingQualitiesFromPileup(read.getMappingQuality(), qualities);
-                }
-            }
-        }
-        else {
+        if (perReadAlleleLikelihoodMap == null || perReadAlleleLikelihoodMap.isEmpty() ) {
             return null;
         }
 
+        final List<Integer> qualities = perReadAlleleLikelihoodMap.values().stream().
+                flatMap(pprl -> pprl.getStoredElements().stream().map(read -> read.getMappingQuality()).filter(mq -> mq != QualityUtils.MAPPING_QUALITY_UNAVAILABLE))
+                .collect(Collectors.toList());
         final double rms = MathUtils.rms(qualities);
-        return Collections.singletonMap(getKeyNames().get(0), (Object) String.format("%.2f", rms));
+        return Collections.singletonMap(getKeyNames().get(0), String.format("%.2f", rms));
     }
 
-    private static void fillMappingQualitiesFromPileup(final int mq, final List<Integer> qualities) {
-        if ( mq != QualityUtils.MAPPING_QUALITY_UNAVAILABLE ) {
-            qualities.add(mq);
-        }
-    }
-
-    public List<String> getKeyNames() { return Arrays.asList(VCFConstants.RMS_MAPPING_QUALITY_KEY); }
+    public List<String> getKeyNames() { return Collections.singletonList(VCFConstants.RMS_MAPPING_QUALITY_KEY); }
 
     public List<VCFInfoHeaderLine> getDescriptions() {
-        return Arrays.asList(VCFStandardHeaderLines.getInfoLine(getKeyNames().get(0)));
+        return Collections.singletonList(VCFStandardHeaderLines.getInfoLine(getKeyNames().get(0)));
     }
 }
