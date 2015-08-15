@@ -12,8 +12,6 @@ import org.broadinstitute.hellbender.utils.MannWhitneyU;
 import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.genotyper.MostLikelyAllele;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
-import org.broadinstitute.hellbender.utils.pileup.PileupElement;
-import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.*;
@@ -118,36 +116,6 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
      * @return a Double representing the element to be used in the rank sum test, or null if it should not be used
      */
     protected abstract Double getElementForRead(final GATKRead read, final int refLoc);
-
-    // TODO -- until the ReadPosRankSumTest stops treating these differently, we need to have separate methods for GATKSAMRecords and PileupElements.  Yuck.
-
-    /**
-     * Get the element for the given read at the given reference position
-     *
-     * By default this function returns null, indicating that the test doesn't support the old style of pileup calculations
-     *
-     * @param p        the pileup element
-     * @return a Double representing the element to be used in the rank sum test, or null if it should not be used
-     */
-    protected Double getElementForPileupElement(final PileupElement p) {
-        // does not work in pileup mode
-        return null;
-    }
-
-    /**
-     * Can the base in this pileup element be used in comparative tests between ref / alt bases?
-     *
-     * Note that this function by default does not allow deletion pileup elements
-     *
-     * @param p the pileup element to consider
-     * @return true if this base is part of a meaningful read for comparison, false otherwise
-     */
-    protected boolean isUsableBase(final PileupElement p) {
-        return !(p.isDeletion() ||
-                 p.getMappingQual() == 0 ||
-                 p.getMappingQual() == QualityUtils.MAPPING_QUALITY_UNAVAILABLE ||
-                 ((int) p.getQual()) < QualityUtils.MIN_USABLE_Q_SCORE); // need the unBAQed quality score here
-    }
 
     /**
      * Can the read be used in comparative tests between ref / alt bases?

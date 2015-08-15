@@ -36,9 +36,4 @@ public final class BaseQualityRankSumTest extends RankSumTest implements Standar
     protected Double getElementForRead(final GATKRead read, final int refLoc) {
         return (double)read.getBaseQualities()[ReadUtils.getReadCoordinateForReferenceCoordinateUpToEndOfRead(read, refLoc, ReadUtils.ClippingTail.RIGHT_TAIL)];
     }
-
-    @Override
-    protected Double getElementForPileupElement(final PileupElement p) {
-        return (double)p.getQual();
-    }
 }

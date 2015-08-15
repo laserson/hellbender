@@ -42,9 +42,4 @@ public final class MappingQualityRankSumTest extends RankSumTest implements Stan
     protected Double getElementForRead(final GATKRead read, final int refLoc) {
         return (double)read.getMappingQuality();
     }
-
-    @Override
-    protected Double getElementForPileupElement(final PileupElement p) {
-        return (double)p.getRead().getMappingQuality();
-    }
 }

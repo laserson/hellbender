@@ -60,15 +60,6 @@ public final class AlignmentContext implements HasGenomeLocation {
     public boolean hasPileupBeenDownsampled() { return hasPileupBeenDownsampled; }
 
     /**
-     * get all of the reads within this context
-     * 
-     * @return
-     */
-    @Deprecated
-    //todo: unsafe and tailored for current usage only; both pileups can be null or worse, bot can be not null in theory
-    public List<GATKRead> getReads() { return ( basePileup.getReads() ); }
-
-    /**
      * Are there any reads associated with this locus?
      *
      * @return

@@ -1,19 +1,13 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
-import htsjdk.samtools.Cigar;
-import htsjdk.samtools.CigarElement;
-import htsjdk.samtools.CigarOperator;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
-import org.broadinstitute.hellbender.tools.walkers.indels.PairHMMIndelErrorModel;
-import org.broadinstitute.hellbender.utils.pileup.PileupElement;
 import org.broadinstitute.hellbender.utils.read.AlignmentUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,6 +46,8 @@ public final class ReadPosRankSumTest extends RankSumTest implements StandardAnn
 
         int readPos = AlignmentUtils.calcAlignmentByteArrayOffset(read.getCigar(), offset, false, 0, 0);
         final int numAlignedBases = AlignmentUtils.getNumAlignedBasesCountingSoftClips( read );
+
+        //After the middle of the read, we compute the postion from the end of the read.
         if (readPos > numAlignedBases / 2) {
             readPos = numAlignedBases - (readPos + 1);
         }
@@ -59,86 +55,7 @@ public final class ReadPosRankSumTest extends RankSumTest implements StandardAnn
     }
 
     @Override
-    protected Double getElementForPileupElement(final PileupElement p) {
-        final int offset = AlignmentUtils.calcAlignmentByteArrayOffset(p.getRead().getCigar(), p, 0, 0);
-        return (double)getFinalReadPosition(p.getRead(), offset);
-    }
-
-    @Override
-    protected boolean isUsableBase(final PileupElement p) {
-        return super.isUsableBase(p) && p.getRead().getCigar() != null;
-    }
-
-    @Override
     protected boolean isUsableRead(final GATKRead read, final int refLoc) {
         return super.isUsableRead(read, refLoc) && ReadUtils.getSoftStart(read) + read.getCigar().getReadLength() > refLoc;
-    }
-
-    private int getFinalReadPosition(final GATKRead read, final int initialReadPosition) {
-        final int numAlignedBases = getNumAlignedBases(read);
-
-        int readPos = initialReadPosition;
-        if (initialReadPosition > numAlignedBases / 2) {
-            readPos = numAlignedBases - (initialReadPosition + 1);
-        }
-        return readPos;
-
-    }
-
-    private int getNumClippedBasesAtStart(final GATKRead read) {
-        // compute total number of clipped bases (soft or hard clipped)
-        // check for hard clips (never consider these bases):
-        final Cigar c = read.getCigar();
-        final CigarElement first = c.getCigarElement(0);
-
-        int numStartClippedBases = 0;
-        if (first.getOperator() == CigarOperator.H) {
-            numStartClippedBases = first.getLength();
-        }
-        final byte[] unclippedReadBases = read.getBases();
-        final byte[] unclippedReadQuals = read.getBaseQualities();
-
-        // Do a stricter base clipping than provided by CIGAR string, since this one may be too conservative,
-        // and may leave a string of Q2 bases still hanging off the reads.
-        for (int i = numStartClippedBases; i < unclippedReadBases.length; i++) {
-            if (unclippedReadQuals[i] < PairHMMIndelErrorModel.BASE_QUAL_THRESHOLD) {
-                numStartClippedBases++;
-            } else {
-                break;
-            }
-
-        }
-
-        return numStartClippedBases;
-    }
-
-    private int getNumAlignedBases(final GATKRead read) {
-        return read.getLength() - getNumClippedBasesAtStart(read) - getNumClippedBasesAtEnd(read);
-    }
-
-    private int getNumClippedBasesAtEnd(final GATKRead read) {
-        // compute total number of clipped bases (soft or hard clipped)
-        // check for hard clips (never consider these bases):
-        final Cigar c = read.getCigar();
-        final CigarElement last = c.getCigarElement(c.numCigarElements() - 1);
-
-        int numEndClippedBases = 0;
-        if (last.getOperator() == CigarOperator.H) {
-            numEndClippedBases = last.getLength();
-        }
-        final byte[] unclippedReadBases = read.getBases();
-        final byte[] unclippedReadQuals = read.getBaseQualities();
-
-        // Do a stricter base clipping than provided by CIGAR string, since this one may be too conservative,
-        // and may leave a string of Q2 bases still hanging off the reads.
-        for (int i = unclippedReadBases.length - numEndClippedBases - 1; i >= 0; i--) {
-            if (unclippedReadQuals[i] < PairHMMIndelErrorModel.BASE_QUAL_THRESHOLD) {
-                numEndClippedBases++;
-            } else {
-                break;
-            }
-        }
-
-        return numEndClippedBases;
     }
 }
