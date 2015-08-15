@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * </ul>
  *
  */
-public class RMSMappingQuality extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
+public final class RMSMappingQuality extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
 
     public Map<String, Object> annotate(final ReferenceContext ref,
                                         final VariantContext vc,

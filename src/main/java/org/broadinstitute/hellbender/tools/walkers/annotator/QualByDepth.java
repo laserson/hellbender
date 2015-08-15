@@ -1,10 +1,10 @@
 package org.broadinstitute.hellbender.tools.walkers.annotator;
 
+import com.google.common.annotations.VisibleForTesting;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
-import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
@@ -44,8 +44,11 @@ import java.util.*;
  */
 public final class QualByDepth extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
 
-    private static final double MAX_QD_BEFORE_FIXING = 35;
-    private static final double IDEAL_HIGH_QD = 30;
+    @VisibleForTesting
+    static final double MAX_QD_BEFORE_FIXING = 35;
+
+    @VisibleForTesting
+    static final double IDEAL_HIGH_QD = 30;
     private static final double JITTER_SIGMA = 3;
 
     public Map<String, Object> annotate(final ReferenceContext ref,
@@ -60,11 +63,10 @@ public final class QualByDepth extends InfoFieldAnnotation implements StandardAn
             return null;
         }
 
-        int standardDepth = 0;
+        int depth = 0;
         int ADrestrictedDepth = 0;
 
         for ( final Genotype genotype : genotypes ) {
-
             // we care only about variant calls with likelihoods
             if ( !genotype.isHet() && !genotype.isHomVar() ) {
                 continue;
@@ -81,39 +83,33 @@ public final class QualByDepth extends InfoFieldAnnotation implements StandardAn
                 if ( totalADdepth - AD[0] > 1 ) {
                     ADrestrictedDepth += totalADdepth;
                 }
-                standardDepth += totalADdepth;
-                continue;
-            }
-
-            if (perReadAlleleLikelihoodMap != null) {
+                depth += totalADdepth;
+            } else if (perReadAlleleLikelihoodMap != null) {
                 final PerReadAlleleLikelihoodMap perReadAlleleLikelihoods = perReadAlleleLikelihoodMap.get(genotype.getSampleName());
-                if (perReadAlleleLikelihoods == null || perReadAlleleLikelihoods.isEmpty()) {
-                    continue;
+                if (perReadAlleleLikelihoods != null && !perReadAlleleLikelihoods.isEmpty()) {
+                    depth += perReadAlleleLikelihoods.getNumberOfStoredElements();
                 }
-
-                standardDepth += perReadAlleleLikelihoods.getNumberOfStoredElements();
             } else if ( genotype.hasDP() ) {
-                standardDepth += genotype.getDP();
+                depth += genotype.getDP();
             }
         }
 
         // if the AD-restricted depth is a usable value (i.e. not zero), then we should use that one going forward
         if ( ADrestrictedDepth > 0 ) {
-            standardDepth = ADrestrictedDepth;
+            depth = ADrestrictedDepth;
         }
 
-        if ( standardDepth == 0 ) {
+        if ( depth == 0 ) {
             return null;
         }
 
-        double QD = -10.0 * vc.getLog10PError() / ((double)standardDepth);
+        final double qual = -10.0 * vc.getLog10PError();
+        double QD = qual / depth;
 
         // Hack: see note in the fixTooHighQD method below
         QD = fixTooHighQD(QD);
 
-        final Map<String, Object> map = new HashMap<>();
-        map.put(getKeyNames().get(0), String.format("%.2f", QD));
-        return map;
+        return Collections.singletonMap(getKeyNames().get(0), String.format("%.2f", QD));
     }
 
     /**
@@ -140,6 +136,4 @@ public final class QualByDepth extends InfoFieldAnnotation implements StandardAn
     public List<VCFInfoHeaderLine> getDescriptions() {
         return Collections.singletonList(GATKVCFHeaderLines.getInfoLine(getKeyNames().get(0)));
     }
-
-
 }
