@@ -24,11 +24,10 @@ public final class RMSMappingQualityUnitTest {
     @Test
     public void testAllNull() throws Exception {
         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = null;
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= null;
         final ReferenceContext referenceContext= null;
         final InfoFieldAnnotation cov = new RMSMappingQuality();
-        final Map<String, Object> annotate = cov.annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = cov.annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertNull(annotate);
 
         Assert.assertEquals(cov.getDescriptions().size(), 1);
@@ -38,11 +37,10 @@ public final class RMSMappingQualityUnitTest {
     @Test
     public void testNullStratifiedPerReadAlleleLikelihoodMap() throws Exception {
         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = null;
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= makeVC();
         final ReferenceContext referenceContext= null;
         final InfoFieldAnnotation cov = new RMSMappingQuality();
-        final Map<String, Object> annotate = cov.annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = cov.annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertNull(annotate);
 
         Assert.assertEquals(cov.getDescriptions().size(), 1);
@@ -84,10 +82,9 @@ public final class RMSMappingQualityUnitTest {
         }
 
         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = Collections.singletonMap("sample1", map);
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc = makeVC();
         final ReferenceContext referenceContext= null;
-        final Map<String, Object> annotate = new RMSMappingQuality().annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = new RMSMappingQuality().annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertEquals(annotate.size(), 1, "size");
         Assert.assertEquals(annotate.keySet(), Collections.singleton(VCFConstants.RMS_MAPPING_QUALITY_KEY), "annots");
         final double rms= MathUtils.rms(MQsListOK); //only those are MQ0
@@ -97,10 +94,9 @@ public final class RMSMappingQualityUnitTest {
     @Test
     public void testPerReadAlleleLikelihoodMapEmpty() throws Exception {
         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = Collections.emptyMap();
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= makeVC();
         final ReferenceContext referenceContext= null;
-        final Map<String, Object> annotate = new RMSMappingQuality().annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = new RMSMappingQuality().annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertNull(annotate);
     }
 }

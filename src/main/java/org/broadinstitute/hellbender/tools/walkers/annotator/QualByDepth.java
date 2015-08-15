@@ -49,7 +49,6 @@ public final class QualByDepth extends InfoFieldAnnotation implements StandardAn
     private static final double JITTER_SIGMA = 3;
 
     public Map<String, Object> annotate(final ReferenceContext ref,
-                                        final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap) {
         if ( !vc.hasLog10PError() ) {
@@ -86,14 +85,7 @@ public final class QualByDepth extends InfoFieldAnnotation implements StandardAn
                 continue;
             }
 
-            if (stratifiedContexts!= null && !stratifiedContexts.isEmpty()) {
-                final AlignmentContext context = stratifiedContexts.get(genotype.getSampleName());
-                if ( context == null ) {
-                    continue;
-                }
-                standardDepth += context.getBasePileup().size();
-
-            } else if (perReadAlleleLikelihoodMap != null) {
+            if (perReadAlleleLikelihoodMap != null) {
                 final PerReadAlleleLikelihoodMap perReadAlleleLikelihoods = perReadAlleleLikelihoodMap.get(genotype.getSampleName());
                 if (perReadAlleleLikelihoods == null || perReadAlleleLikelihoods.isEmpty()) {
                     continue;

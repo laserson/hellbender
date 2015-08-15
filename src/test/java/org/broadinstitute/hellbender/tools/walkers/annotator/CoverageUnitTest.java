@@ -28,62 +28,24 @@ public final class CoverageUnitTest extends BaseTest {
     @Test
     public void testAllNull() throws Exception {
         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = null;
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= null;
         final ReferenceContext referenceContext= null;
         final InfoFieldAnnotation cov = new Coverage();
-        final Map<String, Object> annotate = cov.annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = cov.annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertNull(annotate);
 
         Assert.assertEquals(cov.getDescriptions().size(), 1);
         Assert.assertEquals(cov.getDescriptions().get(0).getID(), VCFConstants.DEPTH_KEY);
     }
 
-    @Test
-    public void testStratifiedContextsEmpty() throws Exception {
-        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = null;
-        final Map<String, AlignmentContext> stratifiedContexts= Collections.emptyMap();
-        final VariantContext vc= null;
-        final ReferenceContext referenceContext= null;
-        final Map<String, Object> annotate = new Coverage().annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
-        Assert.assertNull(annotate);
-    }
 
     @Test
     public void testPerReadAlleleLikelihoodMapEmpty() throws Exception {
         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = Collections.emptyMap();
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= null;
         final ReferenceContext referenceContext= null;
-        final Map<String, Object> annotate = new Coverage().annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = new Coverage().annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertNull(annotate);
-    }
-
-    @Test
-    public void testStratifiedContexts() throws Exception {
-        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = null;
-        final Locatable loc= new SimpleInterval("1",1,1);
-        final List<PileupElement> elements= new ArrayList<>();
-
-        final int n = 15;
-        for (int i = 0; i < n; i++) {
-            final GATKRead read= ArtificialReadUtils.createArtificialRead(TextCigarCodec.decode("10M"));
-            final int baseOffset= 0;
-            final CigarElement currentElement= read.getCigar().getCigarElement(0);
-            final int currentCigarOffset= 0;
-            final int offsetInCurrentCigar= 0;
-            final PileupElement el= new PileupElement(read, baseOffset, currentElement, currentCigarOffset, offsetInCurrentCigar);
-            elements.add(el);
-        }
-        final ReadPileup pileup= new ReadPileup(loc, elements);
-        final AlignmentContext ac= new AlignmentContext(loc, pileup);
-        final Map<String, AlignmentContext> stratifiedContexts= Collections.singletonMap("sample1", ac);
-        final VariantContext vc= null;
-        final ReferenceContext referenceContext= null;
-        final Map<String, Object> annotate = new Coverage().annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
-        Assert.assertEquals(annotate.size(), 1, "size");
-        Assert.assertEquals(annotate.keySet(), Collections.singleton(VCFConstants.DEPTH_KEY), "annots");
-        Assert.assertEquals(annotate.get(VCFConstants.DEPTH_KEY), String.valueOf(n));
     }
 
     @Test
@@ -107,10 +69,9 @@ public final class CoverageUnitTest extends BaseTest {
         }
 
         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = Collections.singletonMap("sample1", map);
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= null;
         final ReferenceContext referenceContext= null;
-        final Map<String, Object> annotate = new Coverage().annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = new Coverage().annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertEquals(annotate.size(), 1, "size");
         Assert.assertEquals(annotate.keySet(), Collections.singleton(VCFConstants.DEPTH_KEY), "annots");
         final int n= n1A + n1T;

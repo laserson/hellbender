@@ -10,6 +10,7 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRe
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
 import org.broadinstitute.hellbender.utils.MannWhitneyU;
 import org.broadinstitute.hellbender.utils.QualityUtils;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.genotyper.MostLikelyAllele;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -32,17 +33,14 @@ public abstract class RankSumTest extends InfoFieldAnnotation implements ActiveR
     }
 
     public Map<String, Object> annotate(final ReferenceContext ref,
-                                        final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
-        if (stratifiedContexts == null && stratifiedPerReadAlleleLikelihoodMap == null){
-            throw new IllegalArgumentException("either stratifiedContexts or stratifiedPerReadAlleleLikelihoodMap has to be non-null");
-        }
+        Utils.nonNull(stratifiedPerReadAlleleLikelihoodMap, "stratifiedPerReadAlleleLikelihoodMap has to be non-null");
         if (vc == null){
             return null;
         }
         final GenotypesContext genotypes = vc.getGenotypes();
-        if (genotypes == null || genotypes.isEmpty() || stratifiedPerReadAlleleLikelihoodMap == null) {
+        if (genotypes == null || genotypes.isEmpty()) {
             return null;
         }
 

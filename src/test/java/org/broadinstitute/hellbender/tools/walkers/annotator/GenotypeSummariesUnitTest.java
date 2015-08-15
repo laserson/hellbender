@@ -27,7 +27,7 @@ public final class GenotypeSummariesUnitTest {
                                         .alleles(Arrays.asList(refAllele, altAllele)).chr("1").start(15L).stop(15L).genotypes(testGC).make();
 
         final GenotypeSummaries GS = new GenotypeSummaries();
-        final Map<String,Object> resultMap = GS.annotate(null, null, testVC, null);
+        final Map<String,Object> resultMap = GS.annotate(null, testVC, null);
 
         Assert.assertEquals(resultMap.get(GATKVCFConstants.NOCALL_CHROM_KEY), 1); // 1 no-called called sample
         Assert.assertEquals(Double.parseDouble((String) resultMap.get(GATKVCFConstants.GQ_MEAN_KEY)), 30.0, 1E-4); // mean GQ is 30
@@ -52,7 +52,7 @@ public final class GenotypeSummariesUnitTest {
                 .alleles(Arrays.asList(refAllele, altAllele)).chr("1").start(15L).stop(15L).genotypes(testGC).make();
 
         final GenotypeSummaries GS = new GenotypeSummaries();
-        final Map<String,Object> resultMap = GS.annotate(null, null, testVC, null);
+        final Map<String,Object> resultMap = GS.annotate(null, testVC, null);
 
         Assert.assertEquals(resultMap.get(GATKVCFConstants.NOCALL_CHROM_KEY), 0); // 1 no-called called sample
         Assert.assertEquals(Double.parseDouble((String) resultMap.get(GATKVCFConstants.GQ_MEAN_KEY)), 35.0, 1E-4); // mean GQ is 35
@@ -77,7 +77,7 @@ public final class GenotypeSummariesUnitTest {
                 .alleles(Arrays.asList(refAllele, altAllele)).chr("1").start(15L).stop(15L).make();
 
         final GenotypeSummaries GS = new GenotypeSummaries();
-        final Map<String,Object> resultMap = GS.annotate(null, null, testVC, null);
+        final Map<String,Object> resultMap = GS.annotate(null, testVC, null);
         Assert.assertNull(resultMap);
     }
 

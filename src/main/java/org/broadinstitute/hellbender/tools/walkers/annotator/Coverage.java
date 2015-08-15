@@ -4,7 +4,6 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFConstants;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import htsjdk.variant.vcf.VCFStandardHeaderLines;
-import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
@@ -34,17 +33,9 @@ import java.util.*;
 public final class Coverage extends InfoFieldAnnotation implements StandardAnnotation, ActiveRegionBasedAnnotation {
 
     public Map<String, Object> annotate(final ReferenceContext ref,
-                                        final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap) {
-
-        if (stratifiedContexts != null) {
-            if ( stratifiedContexts.isEmpty() ) {
-                return null;
-            }
-            final int depth = stratifiedContexts.entrySet().stream().mapToInt(e -> e.getValue().getBasePileup().size()).sum();
-            return Collections.singletonMap(getKeyNames().get(0), String.format("%d", depth));
-        } else if (perReadAlleleLikelihoodMap != null) {
+        if (perReadAlleleLikelihoodMap != null) {
             if ( perReadAlleleLikelihoodMap.isEmpty() ) {
                 return null;
             }
@@ -54,7 +45,6 @@ public final class Coverage extends InfoFieldAnnotation implements StandardAnnot
         } else {
             return null;
         }
-
     }
 
     public List<String> getKeyNames() { return Collections.singletonList(VCFConstants.DEPTH_KEY); }

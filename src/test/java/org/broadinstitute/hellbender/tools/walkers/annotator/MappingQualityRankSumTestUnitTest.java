@@ -70,11 +70,10 @@ public final class MappingQualityRankSumTestUnitTest {
 
 
         final ReferenceContext ref= null;
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= makeVC(alleleRef, alleleAlt);
         final InfoFieldAnnotation ann = new MappingQualityRankSumTest();
 
-        final Map<String, Object> annotate = ann.annotate(ref, stratifiedContexts, vc, stratifiedPerReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = ann.annotate(ref, vc, stratifiedPerReadAlleleLikelihoodMap);
 
         final double val= MannWhitneyU.runOneSidedTest(false, Arrays.asList(hardAlts[0], hardAlts[1]),
                                                               Arrays.asList(hardRefs[0], hardRefs[1])).getLeft();

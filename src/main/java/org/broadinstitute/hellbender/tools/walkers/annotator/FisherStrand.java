@@ -6,7 +6,6 @@ import htsjdk.variant.vcf.VCFHeaderLine;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.ActiveRegionBasedAnnotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.StandardAnnotation;
 import org.broadinstitute.hellbender.utils.QualityUtils;
@@ -59,16 +58,6 @@ public final class FisherStrand extends StrandBiasTest implements StandardAnnota
     }
 
     @Override
-    protected Map<String, Object> calculateAnnotationFromStratifiedContexts(final Map<String, AlignmentContext> stratifiedContexts,
-                                                                                     final VariantContext vc){
-        final int[][] tableNoFiltering = getSNPContingencyTable(stratifiedContexts, vc.getReference(), vc.getAlternateAlleles(), -1, MIN_COUNT);
-        final int[][] tableFiltering = getSNPContingencyTable(stratifiedContexts, vc.getReference(), vc.getAlternateAlleles(), MIN_QUAL_FOR_FILTERED_TEST, MIN_COUNT);
-        printTable("unfiltered", tableNoFiltering);
-        printTable("filtered", tableFiltering);
-        return pValueForBestTable(tableFiltering, tableNoFiltering);
-    }
-
-    @Override
     protected Map<String, Object> calculateAnnotationFromLikelihoodMap(final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap,
                                                                                 final VariantContext vc){
         // either SNP with no alignment context, or indels: per-read likelihood map needed
@@ -77,8 +66,6 @@ public final class FisherStrand extends StrandBiasTest implements StandardAnnota
         //printTable(table, 0.0);
         return pValueForBestTable(table, null);
     }
-
-
 
     /**
      * Create an annotation for the highest (i.e., least significant) p-value of table1 and table2

@@ -26,11 +26,10 @@ public final class MappingQualityZeroUnitTest {
     @Test
     public void testAllNull() throws Exception {
         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = null;
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= null;
         final ReferenceContext referenceContext= null;
         final InfoFieldAnnotation cov = new MappingQualityZero();
-        final Map<String, Object> annotate = cov.annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = cov.annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertNull(annotate);
 
         Assert.assertEquals(cov.getDescriptions().size(), 1);
@@ -40,62 +39,14 @@ public final class MappingQualityZeroUnitTest {
     @Test
     public void testNullStratifiedPerReadAlleleLikelihoodMap() throws Exception {
         final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = null;
-        final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= makeVC();
         final ReferenceContext referenceContext= null;
         final InfoFieldAnnotation cov = new MappingQualityZero();
-        final Map<String, Object> annotate = cov.annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = cov.annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertNull(annotate);
 
         Assert.assertEquals(cov.getDescriptions().size(), 1);
         Assert.assertEquals(cov.getDescriptions().get(0).getID(), VCFConstants.MAPPING_QUALITY_ZERO_KEY);
-    }
-
-    @Test
-    public void testStratifiedContexts() throws Exception {
-        final Map<String, PerReadAlleleLikelihoodMap> perReadAlleleLikelihoodMap = null;
-        final Locatable loc= new SimpleInterval("1",1,1);
-        final List<PileupElement> elements= new ArrayList<>();
-
-        final int nZero = 15;
-        final int nNonZero = 17;
-        for (int i = 0; i < nZero; i++) {
-            final GATKRead read= ArtificialReadUtils.createArtificialRead(TextCigarCodec.decode("10M"));
-            read.setMappingQuality(0);
-            final int baseOffset= 0;
-            final CigarElement currentElement= read.getCigar().getCigarElement(0);
-            final int currentCigarOffset= 0;
-            final int offsetInCurrentCigar= 0;
-            final PileupElement el= new PileupElement(read, baseOffset, currentElement, currentCigarOffset, offsetInCurrentCigar);
-            elements.add(el);
-        }
-        for (int i = 0; i < nNonZero; i++) {
-            final GATKRead read= ArtificialReadUtils.createArtificialRead(TextCigarCodec.decode("10M"));
-            read.setMappingQuality(10);
-            final int baseOffset= 0;
-            final CigarElement currentElement= read.getCigar().getCigarElement(0);
-            final int currentCigarOffset= 0;
-            final int offsetInCurrentCigar= 0;
-            final PileupElement el= new PileupElement(read, baseOffset, currentElement, currentCigarOffset, offsetInCurrentCigar);
-            elements.add(el);
-        }
-
-        final ReadPileup pileup= new ReadPileup(loc, elements);
-        final AlignmentContext ac= new AlignmentContext(loc, pileup);
-        final Map<String, AlignmentContext> stratifiedContexts= Collections.singletonMap("sample1", ac);
-
-        final VariantContext testVC = makeVC();
-
-        final ReferenceContext referenceContext= null;
-        final Map<String, Object> annotate = new MappingQualityZero().annotate(referenceContext, stratifiedContexts, testVC, perReadAlleleLikelihoodMap);
-        Assert.assertEquals(annotate.size(), 1, "size");
-        Assert.assertEquals(annotate.keySet(), Collections.singleton(VCFConstants.MAPPING_QUALITY_ZERO_KEY), "annots");
-        Assert.assertEquals(annotate.get(VCFConstants.MAPPING_QUALITY_ZERO_KEY), String.valueOf(nZero));
-
-        final Map<String, AlignmentContext> emptyStratifiedContexts= Collections.emptyMap();
-        final Map<String, Object> annotateEmptyStratifiedContexts = new MappingQualityZero().annotate(referenceContext, emptyStratifiedContexts, testVC, perReadAlleleLikelihoodMap);
-        Assert.assertNull(annotateEmptyStratifiedContexts);
-
     }
 
     private VariantContext makeVC() {
@@ -134,7 +85,7 @@ public final class MappingQualityZeroUnitTest {
         final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc = makeVC();
         final ReferenceContext referenceContext= null;
-        final Map<String, Object> annotate = new MappingQualityZero().annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = new MappingQualityZero().annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
         Assert.assertEquals(annotate.size(), 1, "size");
         Assert.assertEquals(annotate.keySet(), Collections.singleton(VCFConstants.MAPPING_QUALITY_ZERO_KEY), "annots");
         final int n= n1T; //only those are MQ0
@@ -149,7 +100,7 @@ public final class MappingQualityZeroUnitTest {
         final Map<String, AlignmentContext> stratifiedContexts= null;
         final VariantContext vc= makeVC();
         final ReferenceContext referenceContext= null;
-        final Map<String, Object> annotate = new MappingQualityZero().annotate(referenceContext, stratifiedContexts, vc, perReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = new MappingQualityZero().annotate(referenceContext, vc, perReadAlleleLikelihoodMap);
 
         final int n= 0; //strangely,  MappingQualityZero returns 0 if perReadAlleleLikelihoodMap is empty
         Assert.assertEquals(annotate.get(VCFConstants.MAPPING_QUALITY_ZERO_KEY), String.valueOf(n));

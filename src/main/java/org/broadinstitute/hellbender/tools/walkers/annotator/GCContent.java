@@ -27,7 +27,6 @@ import java.util.Map;
 public class GCContent extends InfoFieldAnnotation {
 
     public Map<String, Object> annotate(final ReferenceContext ref,
-                                        final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
         final double content = computeGCContent(ref);

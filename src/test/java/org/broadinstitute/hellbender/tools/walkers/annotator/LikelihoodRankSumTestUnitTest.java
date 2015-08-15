@@ -81,12 +81,11 @@ public final class LikelihoodRankSumTestUnitTest extends BaseTest {
         Assert.assertEquals(ann.getKeyNames().get(0), GATKVCFConstants.LIKELIHOOD_RANK_SUM_KEY);
 
         final ReferenceContext ref= null;
-        final Map<String, AlignmentContext> stratifiedContexts= null;
 
         final long position = 5L;  //middle of the read
         final VariantContext vc= makeVC(contig, position, alleleRef, alleleAlt);
 
-        final Map<String, Object> annotate = ann.annotate(ref, stratifiedContexts, vc, stratifiedPerReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = ann.annotate(ref, vc, stratifiedPerReadAlleleLikelihoodMap);
         final double val= MannWhitneyU.runOneSidedTest(false,
                 Arrays.asList(altBestAlleleLL[0], altBestAlleleLL[1]),
                 Arrays.asList(refBestAlleleLL[0], refBestAlleleLL[1])).getLeft();

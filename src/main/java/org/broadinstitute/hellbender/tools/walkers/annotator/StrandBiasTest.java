@@ -8,13 +8,10 @@ import htsjdk.variant.vcf.VCFFormatHeaderLine;
 import htsjdk.variant.vcf.VCFHeaderLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.tools.walkers.annotator.interfaces.InfoFieldAnnotation;
-import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.genotyper.MostLikelyAllele;
 import org.broadinstitute.hellbender.utils.genotyper.PerReadAlleleLikelihoodMap;
-import org.broadinstitute.hellbender.utils.pileup.PileupElement;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 
@@ -27,7 +24,7 @@ import java.util.StringTokenizer;
  * Class of tests to detect strand bias.
  */
 public abstract class StrandBiasTest extends InfoFieldAnnotation {
-    private final static Logger logger = LogManager.getLogger(StrandBiasTest.class);
+    private static final Logger logger = LogManager.getLogger(StrandBiasTest.class);
     private static boolean stratifiedPerReadAlleleLikelihoodMapWarningLogged = false;
     private static boolean inputVariantContextWarningLogged = false;
     private static boolean getTableFromSamplesWarningLogged = false;
@@ -52,11 +49,8 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
     @Override
     //template method for calculating strand bias annotations using the three different methods
     public Map<String, Object> annotate(final ReferenceContext ref,
-                                        final Map<String, AlignmentContext> stratifiedContexts,
                                         final VariantContext vc,
                                         final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap) {
-
-        // do not process if not a variant
         if ( !vc.isVariant() ) {
             return null;
         }
@@ -70,29 +64,18 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
             }
         }
 
-        // if a the variant is a snp and has stratified contexts, calculate the annotation from the stratified contexts
-        //stratifiedContexts can come come from VariantAnnotator, but will be empty if no reads were provided
-        if (vc.isSNP() && stratifiedContexts != null  && !stratifiedContexts.isEmpty()) {
-            return calculateAnnotationFromStratifiedContexts(stratifiedContexts, vc);
-        }
-
-        // calculate the annotation from the stratified per read likelihood map
-        // stratifiedPerReadAllelelikelihoodMap can come from HaplotypeCaller call to VariantAnnotatorEngine
-        else if (stratifiedPerReadAlleleLikelihoodMap != null) {
+        if (stratifiedPerReadAlleleLikelihoodMap != null) {
+            // calculate the annotation from the stratified per read likelihood map
+            // stratifiedPerReadAllelelikelihoodMap can come from HaplotypeCaller call to VariantAnnotatorEngine
             return calculateAnnotationFromLikelihoodMap(stratifiedPerReadAlleleLikelihoodMap, vc);
         }
-        else {
-            // for non-snp variants, we need per-read likelihoods.
-            // for snps, we can get same result from simple pileup
-            // for indels that do not have a computed strand bias (SB) or strand bias by sample (SBBS)
-            return null;
-        }
+        // for non-snp variants, we need per-read likelihoods.
+        // for snps, we can get same result from simple pileup
+        // for indels that do not have a computed strand bias (SB) or strand bias by sample (SBBS)
+        return null;
     }
 
     protected abstract Map<String, Object> calculateAnnotationFromGTfield(final GenotypesContext genotypes);
-
-    protected abstract Map<String, Object> calculateAnnotationFromStratifiedContexts(final Map<String, AlignmentContext> stratifiedContexts,
-                                                                                     final VariantContext vc);
 
     protected abstract Map<String, Object> calculateAnnotationFromLikelihoodMap(final Map<String, PerReadAlleleLikelihoodMap> stratifiedPerReadAlleleLikelihoodMap,
                                                                                 final VariantContext vc);
@@ -132,45 +115,6 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
         }
 
         return ( foundData ? decodeSBBS(sbArray) : null );
-    }
-
-    /**
-     Allocate and fill a 2x2 strand contingency table.  In the end, it'll look something like this:
-     *             fw      rc
-     *   allele1   #       #
-     *   allele2   #       #
-     * @return a 2x2 contingency table
-     */
-    protected static int[][] getSNPContingencyTable(final Map<String, AlignmentContext> stratifiedContexts,
-                                                  final Allele ref,
-                                                  final List<Allele> allAlts,
-                                                  final int minQScoreToConsider,
-                                                  final int minCount ) {
-        final int[][] table = new int[ARRAY_DIM][ARRAY_DIM];
-
-        for (final Map.Entry<String, AlignmentContext> sample : stratifiedContexts.entrySet() ) {
-            final int[] myTable = new int[ARRAY_SIZE];
-            for (final PileupElement p : sample.getValue().getBasePileup()) {
-
-                if ( ! isUsableBase(p) ) // ignore deletions and bad MQ
-                {
-                    continue;
-                }
-
-                if ( p.getQual() < minQScoreToConsider || p.getMappingQual() < minQScoreToConsider ) {
-                    continue;
-                }
-
-                updateTable(myTable, Allele.create(p.getBase(), false), p.getRead(), ref, allAlts);
-            }
-
-            if ( passesMinimumThreshold( myTable, minCount ) ) {
-                copyToMainTable(myTable, table);
-            }
-
-        }
-
-        return table;
     }
 
     /**
@@ -229,21 +173,6 @@ public abstract class StrandBiasTest extends InfoFieldAnnotation {
         mainTable[0][1] += perSampleTable[1];
         mainTable[1][0] += perSampleTable[2];
         mainTable[1][1] += perSampleTable[3];
-    }
-
-
-    /**
-     * Can the base in this pileup element be used in comparative tests?
-     *
-     * @param p the pileup element to consider
-     *
-     * @return true if this base is part of a meaningful read for comparison, false otherwise
-     */
-    private static boolean isUsableBase(final PileupElement p) {
-        return !( p.isDeletion() ||
-                p.getMappingQual() == 0 ||
-                p.getMappingQual() == QualityUtils.MAPPING_QUALITY_UNAVAILABLE ||
-                ((int) p.getQual()) < QualityUtils.MIN_USABLE_Q_SCORE);
     }
 
     private static void updateTable(final int[] table, final Allele allele, final GATKRead read, final Allele ref, final List<Allele> allAlts) {

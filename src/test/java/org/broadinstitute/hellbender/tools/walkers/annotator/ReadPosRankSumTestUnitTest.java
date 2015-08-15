@@ -79,12 +79,11 @@ public final class ReadPosRankSumTestUnitTest extends BaseTest {
 
 
         final ReferenceContext ref= null;
-        final Map<String, AlignmentContext> stratifiedContexts= null;
 
         final long position = 5L;  //middle of the read
         final VariantContext vc= makeVC(contig, position, alleleRef, alleleAlt);
 
-        final Map<String, Object> annotate = ann.annotate(ref, stratifiedContexts, vc, stratifiedPerReadAlleleLikelihoodMap);
+        final Map<String, Object> annotate = ann.annotate(ref, vc, stratifiedPerReadAlleleLikelihoodMap);
         final double val= MannWhitneyU.runOneSidedTest(false,
                 Arrays.asList(position - startAlts[0], position - startAlts[1]),
                 Arrays.asList(position - startRefs[0], position - startRefs[1])).getLeft();
@@ -96,7 +95,7 @@ public final class ReadPosRankSumTestUnitTest extends BaseTest {
         final VariantContext vcEnd= makeVC(contig, positionEnd, alleleRef, alleleAlt);
 
         //Note: past the middle of the read we compute the position from the end.
-        final Map<String, Object> annotateEnd = ann.annotate(ref, stratifiedContexts, vcEnd, stratifiedPerReadAlleleLikelihoodMap);
+        final Map<String, Object> annotateEnd = ann.annotate(ref, vcEnd, stratifiedPerReadAlleleLikelihoodMap);
         final double valEnd= MannWhitneyU.runOneSidedTest(false,
                 Arrays.asList(startAlts[0], startAlts[1]),
                 Arrays.asList(startRefs[0], startRefs[1])).getLeft();
@@ -107,7 +106,7 @@ public final class ReadPosRankSumTestUnitTest extends BaseTest {
         final VariantContext vcPastEnd= makeVC(contig, positionPastEnd, alleleRef, alleleAlt);
 
         //Note: past the end of the read, there's nothing
-        final Map<String, Object> annotatePastEnd = ann.annotate(ref, stratifiedContexts, vcPastEnd, stratifiedPerReadAlleleLikelihoodMap);
+        final Map<String, Object> annotatePastEnd = ann.annotate(ref, vcPastEnd, stratifiedPerReadAlleleLikelihoodMap);
         Assert.assertNull(annotatePastEnd);
 
     }

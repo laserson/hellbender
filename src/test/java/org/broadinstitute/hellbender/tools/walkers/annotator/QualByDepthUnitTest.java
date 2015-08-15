@@ -41,7 +41,7 @@ public class QualByDepthUnitTest extends BaseTest {
 
     @Test(dataProvider = "UsingAD")
     public void testUsingAD(final VariantContext vc, final double expectedQD) {
-        final Map<String, Object> annotatedMap = new QualByDepth().annotate(null, null, vc, null);
+        final Map<String, Object> annotatedMap = new QualByDepth().annotate(null, vc, null);
         Assert.assertNotNull(annotatedMap, vc.toString());
         final String QD = (String)annotatedMap.get("QD");
         Assert.assertEquals(Double.valueOf(QD), expectedQD, 0.0001);
